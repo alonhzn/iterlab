@@ -17,9 +17,9 @@ Principle I requires that they be two modes of one program, switched from inside
 The library equivalent, for researchers who prefer to launch from a script or an IDE:
 
 ```python
-from iterlab import launch
+from iterlab import run
 
-launch("demo")
+run("demo")
 ```
 
 Both forms are the same public surface. Neither offers any way to construct a layout in code — that

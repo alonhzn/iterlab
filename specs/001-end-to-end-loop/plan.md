@@ -108,7 +108,7 @@ specs/001-end-to-end-loop/
 
 ```text
 src/iterlab/
-├── __init__.py           # Public API: launch(name), __version__
+├── __init__.py           # Public API: run(name), __version__
 ├── cli.py                # Console entry point; tkinter-absence diagnostic
 ├── errors.py             # Exception types used across layers
 ├── layout/               # NO GUI IMPORTS

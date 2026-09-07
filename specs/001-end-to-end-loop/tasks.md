@@ -100,7 +100,7 @@ button and then move it — without ever leaving the program (SC-001, SC-010).
 - [ ] T036 [US1] Wire designer creation in `src/iterlab/ui/designer.py` to `layout/store.save()` and `codegen/inject.append()` so an element persists and its stub appears with no explicit save action (FR-008)
 - [ ] T037 [US1] Implement `src/iterlab/ui/runner.py`: realize a `Layout` into the content frame, populate `ev` with element handles, invoke `on_startup` once, and wire every element to `dispatch`
 - [ ] T038 [US1] Implement mode switching in `src/iterlab/ui/app.py`: teardown discards all content widgets and the `ev`; build creates the other mode, and entering GUI mode creates a fresh `ev` and runs startup (FR-015d, FR-015e, R13)
-- [ ] T039 [US1] Implement `launch(name)` in `src/iterlab/__init__.py` and connect it in `src/iterlab/cli.py`, creating a missing pair before opening and choosing the start mode by whether elements exist (FR-001, FR-001a, FR-002)
+- [ ] T039 [US1] Implement `run(name)` in `src/iterlab/__init__.py` and connect it in `src/iterlab/cli.py`, creating a missing pair before opening and choosing the start mode by whether elements exist (FR-001, FR-001a, FR-002)
 
 **Checkpoint**: The two-minute path in quickstart.md works end to end. **This is the MVP.**
 
