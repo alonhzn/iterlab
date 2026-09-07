@@ -38,4 +38,6 @@ Minimal dependencies is a constraint, not an aspiration.
 
 ## License
 
-TBD.
+[Apache License 2.0](LICENSE). You may use, modify, and redistribute this code, including in
+closed-source and commercial work. If you do, you must retain the copyright notice, the license,
+and the [NOTICE](NOTICE) file, and state which files you changed.
