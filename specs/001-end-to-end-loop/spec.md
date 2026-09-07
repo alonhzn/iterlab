@@ -27,15 +27,16 @@ reloading data. Narrow in element types, complete in flow.
   automatically. Picking up a code change refreshes handler behavior only; startup is not re-run, so
   loaded data is never silently discarded.
 - Q: *(revised after clarification)* What if the researcher edits the startup code itself? → A:
-  Startup runs on startup. Changing it takes effect by relaunching, and no in-session re-run is
+  Startup runs on startup. Changing it takes effect by starting a fresh session — see the revision
+  session below, where the mode toggle makes that a single click — and no in-session re-run is
   offered — running setup again over a populated session risks double-opening connections and
   double-registering callbacks. The one exception is a startup that never completed successfully,
   which is attempted again once the code loads; that is a deferred first run rather than a re-run,
   and it is what lets a researcher recover from a typo in startup without relaunching.
 - Q: Should a researcher be able to choose an element's name, and to change it later? → A: Name it at
-  creation, with a sensible default pre-filled so it can simply be accepted. Renaming an existing
-  element is deferred to a later feature, keeping the only path that rewrites researcher code out of
-  this release.
+  creation, with a sensible default pre-filled so it can simply be accepted. ~~Renaming an existing
+  element is deferred to a later feature.~~ **Superseded below** — the properties panel makes the name
+  editable, so renaming is in scope after all.
 - Q: When the researcher resizes the interface window, how should elements behave? → A: Element
   geometry — position and size — scales proportionally with the window, so the layout as drawn is
   always the layout as rendered. Text is exempt and renders at a fixed readable size at any window
@@ -48,41 +49,81 @@ reloading data. Narrow in element types, complete in flow.
   speculative one. A layout written by a newer version is reported and left unopened rather than
   partially understood.
 
+### Session 2026-09-07 (revision: one program, two modes)
+
+- Q: Should editing the layout and using the interface be one program or two? → A: **One program, one
+  command.** A toggle in the top-left corner switches between editor mode and GUI mode. The researcher
+  never edits Python and never runs a different command to switch. This reverses the earlier assumption
+  that editing and running are separate activities.
+- Q: When toggling from editor mode back to GUI mode, does the running session survive? → A: Not in
+  this feature. Toggling to the editor ends the session; toggling back starts a fresh one and runs
+  startup again. Applying layout edits to a live session with data and plots preserved is recorded as
+  the **aim**, not promised, because it has not been attempted yet.
+- Q: Which mode does the single command open in? → A: Editor mode when the interface has no elements
+  yet, GUI mode when it has. A new interface opens where the researcher has to start anyway, and an
+  existing one opens ready to use.
+- Q: What can the properties panel edit? → A: For a button — position, name, and label. For a plot area
+  — position and name. All are editable, including the name, so **renaming is in scope**, superseding
+  the earlier deferral. Geometry can be typed as numbers instead of dragged, for when precision matters
+  more than speed.
+- Q: How is a graphical tool verified before release? → A: Automatically wherever possible, plus a
+  recorded manual checklist worked through by the maintainer for what genuinely cannot be automated.
+  Both are release gates.
+
 ## User Scenarios & Testing *(mandatory)*
 
 The actor throughout is a **researcher** — an engineer or scientist developing an algorithm, who is
 comfortable writing analysis code but is not a GUI programmer and does not want to become one.
 
-### User Story 1 - Draw an interface and run it (Priority: P1)
+### User Story 1 - Draw an interface and use it, in one program (Priority: P1)
 
-A researcher wants to try an idea that needs a plot and a button to trigger it. They open a new
-interface by name, and are given a blank canvas. They drag out a rectangle for a plot area and
-another for a button, and close the canvas. A code file now exists containing an empty handler for
-the button and one for the plot area, each clearly commented. They open that file, write two lines
-that plot something, and run the interface. A window appears with their plot area and their button.
-They click the button and their code runs.
+A researcher wants to try an idea that needs a plot and a button. They run one command naming an
+interface that does not exist yet. A window opens in **editor mode**: a blank canvas, and a sidebar
+holding a palette of the element types they can add and a properties panel for whatever is selected.
 
-At no point did they write, read, or edit any layout code.
+They pick "plot area" from the palette and drag out a rectangle. The properties panel fills in with a
+name already suggested, which they change to `spectrum`. They pick "button", drag a smaller rectangle,
+name it `run_fit`, and type "Run fit" as its label. The code file now holds one empty, clearly
+commented handler for each, and nothing else in it has changed.
+
+They click the toggle in the top-left corner. The window becomes **GUI mode** — their plot area and
+their button, laid out as drawn. They click the button and their code runs. One more click and they
+are back in the editor, moving things around.
+
+At no point did they write, read, or edit any layout code. At no point did they edit Python, run a
+different command, or restart anything in order to move between building the interface and using it.
 
 **Why this priority**: Nothing else in the product is reachable without this. It is also the first
-moment a researcher sees the paradigm work — a functioning graphical interface they never programmed
-— and by itself it already replaces the write-run-close-edit-rerun cycle for simple cases.
+moment a researcher sees the paradigm work — a functioning graphical interface they never programmed —
+and by itself it already replaces the write-run-close-edit-rerun cycle for simple cases. The single
+command and the toggle matter as much as the drawing: a researcher who must stop and edit a launcher
+in order to move a button has been handed back exactly the ceremony this project exists to remove.
 
-**Independent Test**: A researcher who has never used the tool is given only its name and asked to
-produce a window with a working button in front of them. Fully testable with no other story built.
+**Independent Test**: A researcher who has never used the tool is given only its name, and asked to
+produce a window with a working button and then to move that button — without ever leaving the
+program. Fully testable with no other story built.
 
 **Acceptance Scenarios**:
 
-1. **Given** no interface named `demo` exists, **When** the researcher opens `demo` for editing,
-   **Then** a blank canvas appears and both a layout file and a starter code file are created for it.
-2. **Given** a blank canvas, **When** the researcher drags out a region and designates it a plot area,
-   **Then** they are offered a name with a usable default already filled in, and the region appears on
-   the canvas labeled with the name they accept or type.
-3. **Given** the researcher has drawn a button, **When** they finish editing, **Then** the code file
+1. **Given** no interface named `demo` exists, **When** the researcher runs the single command naming
+   `demo`, **Then** a window opens in editor mode with a blank canvas, and both a layout file and a
+   starter code file are created for it.
+2. **Given** a blank canvas, **When** the researcher chooses a type from the palette and drags out a
+   region, **Then** the element appears on the canvas and the properties panel shows its properties
+   with a usable default name already filled in.
+3. **Given** the researcher has drawn a button, **When** the element is created, **Then** the code file
    contains a handler for that button that did not previously exist, and no other part of the file has
    changed.
-4. **Given** an interface with a plot area and a button, **When** the researcher runs it, **Then** a
-   window appears containing both elements positioned as drawn.
+4. **Given** an interface in editor mode with a plot area and a button, **When** the researcher clicks
+   the toggle, **Then** the window switches to GUI mode showing both elements positioned as drawn.
+4a. **Given** an interface in GUI mode, **When** the researcher clicks the toggle, **Then** the window
+    returns to editor mode with the canvas, palette, and properties panel.
+4b. **Given** an interface that already has elements, **When** the researcher runs the single command,
+    **Then** it opens directly in GUI mode rather than the editor.
+4c. **Given** an interface with no elements, **When** the researcher runs the single command, **Then**
+    it opens in editor mode.
+4d. **Given** either mode, **When** the researcher looks at the top-left corner, **Then** the toggle is
+    visible and is never obscured by any element they have drawn.
 5. **Given** a running interface, **When** the researcher clicks the button, **Then** the handler in
    their code file executes.
 6. **Given** a handler that draws into the plot area by its assigned name, **When** it executes,
@@ -136,8 +177,8 @@ re-trigger. Verify the new behavior runs and that the load did not repeat. Measu
    code itself and then interacts with the interface, **Then** the data loaded earlier is still intact
    and the startup code has not been re-run.
 9. **Given** the researcher has edited the startup code, **When** they want that change to take effect,
-   **Then** they relaunch the interface — there is no way to re-run startup in a live session, and none
-   is offered.
+   **Then** starting a fresh session applies it — by relaunching, or simply by toggling to editor mode
+   and back — and there is no way to re-run startup within a live session.
 10. **Given** an interface launched while its startup code was broken, so startup never completed,
     **When** the researcher fixes the code and interacts with the interface, **Then** startup runs for
     the first time and the session becomes usable without relaunching.
@@ -182,18 +223,23 @@ requires only fixing the code.
 
 ---
 
-### User Story 4 - Rearrange the interface without disturbing the code (Priority: P4)
+### User Story 4 - Refine elements without disturbing the code (Priority: P4)
 
 Two weeks and four hundred lines later, the researcher wants the plot bigger and needs a second button.
-They reopen the canvas, drag the plot area larger, move the first button, and draw a second one. When
-they run the interface again, the layout has changed, their four hundred lines are exactly as they left
-them, and a single new empty handler has appeared for the new button. The first button still works.
+They toggle into the editor, drag the plot area larger, nudge the first button, and draw a second one.
+Selecting the plot area, they see its properties and type exact numbers for its position rather than
+fighting to align it by hand. They also realize `axes_0` was a poor name and change it to `spectrum` —
+and the handler in their code file is renamed to match, with nothing else touched.
+
+They toggle back. The layout has changed, their four hundred lines are as they left them apart from the
+renamed handler and one new empty stub, and everything still works.
 
 **Why this priority**: This is what makes the paradigm survivable past the first hour — but it is the
 last of the four to become necessary, because it only matters once there is code worth protecting.
 
-**Independent Test**: Take an interface with substantial hand-written code, make several layout changes,
-and compare the code file before and after. The only difference must be added stubs.
+**Independent Test**: Take an interface with substantial hand-written code, make several layout and
+property changes including a rename, and compare the code file before and after. The only differences
+may be appended stubs and the renamed handler.
 
 **Acceptance Scenarios**:
 
@@ -201,12 +247,25 @@ and compare the code file before and after. The only difference must be added st
    elements, **Then** the code file is byte-for-byte unchanged.
 2. **Given** the same interface, **When** the researcher adds a new element, **Then** exactly one new
    stub is appended and no existing content is modified, reordered, or removed.
-3. **Given** an interface previously edited, **When** the researcher reopens the canvas, **Then** all
-   existing elements appear at their saved positions and sizes.
+3. **Given** an interface previously edited, **When** the researcher returns to editor mode, **Then**
+   all existing elements appear at their saved positions and sizes.
 4. **Given** an element that already has a handler, **When** the layout is edited and saved again,
    **Then** no duplicate handler is created.
-5. **Given** the researcher deletes an element, **When** they run the interface, **Then** the element is
-   gone from the window and its handler remains untouched in the code file.
+5. **Given** the researcher deletes an element, **When** they toggle to GUI mode, **Then** the element
+   is gone from the window and its handler remains untouched in the code file.
+6. **Given** an element is selected, **When** the researcher types new numbers into its position
+   fields, **Then** the element moves to exactly those coordinates on the canvas.
+7. **Given** a button is selected, **When** the researcher edits its label, **Then** the displayed text
+   changes and neither the element's name nor any handler is affected.
+8. **Given** an element named `axes_0` with a handler `on_clicked_axes_0`, **When** the researcher
+   renames it to `spectrum`, **Then** the handler becomes `on_clicked_spectrum` and **nothing else in
+   the code file changes**.
+9. **Given** a rename, **When** the researcher had also written other handlers for the same element,
+   **Then** all of them are renamed together, and handlers belonging to other elements are untouched.
+10. **Given** the researcher types a name that is not usable in code, or one already in use, **When**
+    they attempt to apply it, **Then** it is rejected with an explanation and nothing is renamed.
+11. **Given** the code file does not currently parse, **When** the researcher attempts a rename,
+    **Then** it is refused and reported, and the file is left exactly as it was.
 
 ---
 
@@ -232,9 +291,16 @@ and compare the code file before and after. The only difference must be added st
   existing handlers, and does not duplicate them.
 - **A name that would not work in code** — rejected when typed, with an explanation, rather than
   accepted and producing a broken handler later.
-- **Wanting a different name after the fact** — not supported in this feature. The researcher's
-  recourse is to delete the element and draw a new one, accepting that the old handler is left behind
-  as dead code. Renaming properly, with handlers rewritten to match, is deferred.
+- **Wanting a different name after the fact** — supported. Renaming through the properties panel
+  rewrites the element's handlers to match and touches nothing else in the code file.
+- **Renaming while the code file is broken** — refused and reported, with the file untouched. A rename
+  cannot be performed safely on a file that will not parse.
+- **Renaming an element that has no handlers yet** — succeeds; there is simply nothing in the code file
+  to rename.
+- **An element drawn beneath the mode toggle** — permitted, but the toggle stays on top and remains
+  clickable. Editor mode shows the toggle's footprint so this can be avoided deliberately.
+- **Toggling with unsaved work** — cannot arise: layout changes are persisted as they are made, so a
+  mode switch never risks losing an edit.
 - **A handler that runs for a long time** — the interface is unresponsive while it runs. Accepted for
   this feature; see Assumptions.
 - **An interface left running while its layout is edited elsewhere** — the running window continues to
@@ -248,12 +314,17 @@ and compare the code file before and after. The only difference must be added st
 
 **Creating and editing an interface**
 
-- **FR-001**: A researcher MUST be able to open an interface for visual editing using a single command
-  that names it, with no other setup, registration, or configuration step.
+- **FR-001**: A researcher MUST be able to open an interface using a **single command** that names it,
+  with no other setup, registration, or configuration step. There MUST NOT be separate commands for
+  editing and for using an interface.
+- **FR-001a**: An interface with no elements MUST open in editor mode; an interface that has elements
+  MUST open in GUI mode.
 - **FR-002**: Opening an interface that does not yet exist MUST create it — a blank layout and a
   starter code file — rather than reporting an error.
-- **FR-003**: The system MUST allow elements to be created by direct manipulation — dragging out a
-  region on a canvas — and MUST NOT require any layout code to be written.
+- **FR-003**: The system MUST allow elements to be created by direct manipulation — choosing a type and
+  dragging out a region on a canvas — and MUST NOT require any layout code to be written.
+- **FR-003a**: Editor mode MUST present a palette of every element type that can be added, so that the
+  available vocabulary is discoverable without documentation.
 - **FR-004**: The system MUST support two element types in this feature: a **plot area** and a
   **button**.
 - **FR-005**: Every element MUST have a name that is unique within its interface. The system MUST
@@ -263,10 +334,28 @@ and compare the code file before and after. The only difference must be added st
 - **FR-005b**: A name MUST be valid for use in the researcher's code, since it becomes part of a
   handler's name and is used to reach the element. Names that would not be usable there MUST be
   rejected at the point of entry, with an explanation, rather than accepted and failing later.
-- **FR-005c**: Renaming an element after creation is **out of scope** for this feature. The system MUST
-  NOT offer a rename action that it cannot honor.
+- **FR-005c**: The researcher MUST be able to rename an element after creation, through the properties
+  panel.
+- **FR-005d**: Renaming an element MUST rename **every** handler belonging to it in the researcher's
+  code file, and MUST change nothing else in that file. Handlers belonging to other elements MUST NOT
+  be touched.
+- **FR-005e**: A rename MUST be rejected, with an explanation and no change made, if the new name is
+  not usable in code (FR-005b) or is already in use by another element.
+- **FR-005f**: If the code file does not currently parse, a rename MUST be refused and reported, and
+  the file MUST be left exactly as it was. Renaming by guesswork on an unparseable file is prohibited.
 - **FR-006**: The system MUST allow existing elements to be moved and resized by direct manipulation,
   and MUST allow them to be deleted.
+- **FR-006a**: Editor mode MUST present a properties panel showing the properties of the currently
+  selected element, and MUST indicate when nothing is selected.
+- **FR-006b**: The properties panel MUST expose, for a **button**: position, name, and label. For a
+  **plot area**: position and name. Every one of these MUST be editable.
+- **FR-006c**: Any property that can be set by dragging MUST also be settable as a typed value, so that
+  exact alignment does not depend on a steady hand. A value typed into the panel and a change made by
+  dragging MUST produce identical results.
+- **FR-006d**: A change made in the properties panel MUST be reflected on the canvas immediately, and a
+  change made on the canvas MUST be reflected in the panel immediately.
+- **FR-006e**: An invalid property value MUST be rejected with an explanation, leaving the element as
+  it was. The panel MUST NOT accept a value it will silently discard.
 - **FR-007**: Element positions and sizes MUST be preserved across editing sessions and MUST be
   reproduced faithfully when the interface is run.
 - **FR-008**: Layout changes MUST be persisted without the researcher taking an explicit save action.
@@ -277,10 +366,10 @@ and compare the code file before and after. The only difference must be added st
   handler per FR-017d — to the researcher's code file, commented to explain what it does and that it
   may be deleted. Stubs for the other available interactions MUST NOT be generated.
 - **FR-010**: The system MUST NOT delete, rewrite, reorder, or otherwise modify any content the
-  researcher wrote in their code file. The project reserves exactly one exception to this — renaming
-  handlers when their element is renamed — and that exception is **not exercised in this feature**,
-  because renaming is out of scope (FR-005c). Within this feature, generated edits are purely
-  additive with no exception at all.
+  researcher wrote in their code file. There is exactly one exception: renaming handlers when their
+  element is renamed (FR-005c, FR-005d). That exception **is** exercised in this feature, and it is
+  the only code path permitted to modify existing lines. It MUST change handler names and nothing
+  else — not formatting, not ordering, not surrounding code.
 - **FR-011**: The system MUST detect handlers that already exist and MUST NOT duplicate them, including
   when the researcher has reformatted or reorganized the file.
 - **FR-012**: Deleting an element MUST NOT delete its handler.
@@ -291,7 +380,21 @@ and compare the code file before and after. The only difference must be added st
 
 **Running an interface**
 
-- **FR-015**: A researcher MUST be able to run an interface using a single command that names it.
+- **FR-015**: The researcher MUST be able to switch between editor mode and GUI mode by a single
+  action from within the interface itself — a toggle in the top-left corner — without editing Python,
+  running a different command, or leaving the program.
+- **FR-015a**: The toggle MUST be present and operable in **both** modes.
+- **FR-015b**: The toggle MUST be rendered above every element and MUST NOT be obscured by anything the
+  researcher draws. Editor mode MUST make its footprint visible so a researcher can choose not to place
+  something important beneath it.
+- **FR-015c**: The toggle and the editor sidebar are application chrome, not layout. They MUST NOT
+  appear in the layout file, MUST NOT be movable or deletable by the researcher, and MUST NOT be
+  reachable from the researcher's code as elements.
+- **FR-015d**: Switching from GUI mode to editor mode MUST end the running session. Switching from
+  editor mode to GUI mode MUST begin a fresh session and run startup. Session state does **not** carry
+  across a mode switch in this feature.
+- **FR-015e**: Because a mode switch begins a fresh session, toggling out and back MUST be sufficient
+  to apply a change to the startup code, without leaving the program (see FR-026c).
 - **FR-016**: The system MUST present a window containing every element in the layout, positioned as
   drawn.
 - **FR-017**: Interacting with an element MUST invoke its correspondingly named handler if one exists.
@@ -344,8 +447,9 @@ and compare the code file before and after. The only difference must be added st
 - **FR-026b**: Picking up a code change MUST NOT re-run the researcher's startup code. Applying a
   change refreshes handler behavior only. This holds even when the startup code is itself what
   changed.
-- **FR-026c**: Changing the startup code takes effect by **relaunching** the interface. This feature
-  MUST NOT provide a way to re-run startup within a live session. Re-running setup over a populated
+- **FR-026c**: Changing the startup code takes effect by **starting a fresh session** — either by
+  relaunching, or simply by toggling to editor mode and back (FR-015e). This feature MUST NOT provide
+  a way to re-run startup within a live session. Re-running setup over a populated
   session risks double-opening connections, double-registering callbacks, and double-appending data;
   a clean slate is what starting up means.
 - **FR-026d**: If startup has **never completed successfully** in this session — because the code was
@@ -354,7 +458,7 @@ and compare the code file before and after. The only difference must be added st
   double-initialization is possible. Without it, a researcher who launches with a typo in startup
   would be unable to recover without relaunching, which Principle III forbids.
 - **FR-026e**: Once startup has completed successfully, it MUST NOT run again for any reason short of
-  relaunching the interface.
+  a fresh session — that is, a relaunch or a mode switch.
 
 **Surviving faults**
 
@@ -436,6 +540,13 @@ and compare the code file before and after. The only difference must be added st
   time spent waiting on reloads across a session is **zero** after the first load.
 - **SC-009**: A researcher can recover from a typo and resume work in under **10 seconds**, without
   losing session state.
+- **SC-010**: Switching between editor mode and GUI mode takes **one action** and completes in under
+  **1 second** for an interface of 20 elements. At no point does switching require leaving the program,
+  editing a file, or issuing a command.
+- **SC-011**: A researcher can place an element at an exact position by typing coordinates, achieving
+  in **one attempt** an alignment that dragging would take several tries to approximate.
+- **SC-012**: Renaming an element leaves the code file differing **only** in handler names — zero other
+  modified lines, verified by diff.
 
 ## Assumptions
 
@@ -449,23 +560,37 @@ and compare the code file before and after. The only difference must be added st
   decided for a deferred type: a **text box** commits its value on Enter or on leaving the field, never
   on every keystroke, so that a handler sees complete input rather than a stream of fragments. It is
   recorded here so the convention is not re-litigated when text boxes are built.
-- Property editing beyond position, size, name, and a button's label is out of scope. The richer
-  property set is acknowledged as necessary and is deferred.
+- The properties panel covers position, size, name, and a button's label — all editable, including
+  the name. Visual properties such as colors, fonts, borders, and cursors are acknowledged as
+  necessary and deferred; each would be a new schema field, and the schema is public surface that is
+  expensive to change once shipped.
 - Editing convenience features — undo, multi-select, alignment guides, snapping, keyboard nudge,
   duplication, stacking order — are out of scope.
 - A single window per interface. Tabs, panels, multiple windows, and detachable plots are out of scope.
 
 **Deliberate trade-offs**
 
-- **Editing the layout and running the interface are separate activities.** Changing the layout requires
-  relaunching; changing the code does not. This is the governing trade-off: layout changes are far rarer
-  than code changes, so the cost is accepted here. Reducing it further is a known open problem and is
-  not attempted in this feature.
+- **Editing and using the interface are two modes of one program**, not two programs. Switching is a
+  single click and never involves editing Python or running another command.
+- **A mode switch ends the session.** Toggling to the editor discards the running session; toggling
+  back starts a fresh one and runs startup again, so loaded data is reloaded. Applying layout edits to
+  a *live* session, with data and plots preserved, is the **aim** and is deliberately not promised
+  here: it has not been attempted, and per the constitution what avoids a restart is an empirical
+  question answered per feature rather than asserted in advance. Recorded as this feature's known
+  limit, expected to shrink.
 - **Handlers run to completion while the interface waits.** A long computation makes the window
   unresponsive. Keeping the interface live during slow work is a real and important problem, but it is
   deferred rather than solved here.
 - Deleting an element leaves its handler behind as dead code. This follows from never destroying
   researcher-written work, and is preferred over the alternative.
+
+**Verification**
+
+- Not everything in a graphical tool can be asserted by a machine. Whether a layout looks right, an
+  interaction feels immediate, or a fault banner is actually noticeable requires a person. This feature
+  is therefore verified by two gates: automated tests for everything automatable, and a written
+  checklist the maintainer works through and records before any release. The manual list holds only
+  what genuinely cannot be automated, and is expected to shrink.
 
 **Environment and users**
 

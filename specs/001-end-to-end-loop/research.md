@@ -52,8 +52,8 @@ Measured cost is a single `os.stat` per interaction — microseconds, and far be
 **Alternatives considered**:
 - *A background file watcher* — considered and rejected during clarification. Adds a thread, and a
   reload can land in the middle of an interaction.
-- *Re-resolve on layout change only* — permitted by Principle IV's wording, but layout changes require
-  a relaunch in this feature, so it would never fire.
+- *Re-resolve on layout change only* — permitted by Principle IV's wording, but a layout change now
+  means a mode switch, which ends the session and reloads everything anyway, so it would never fire.
 - *Explicit reload control* — rejected during clarification: one manual step per iteration is exactly
   the friction the tool removes.
 
@@ -295,3 +295,70 @@ which does not tell them what to do.
 **Alternatives considered**:
 - *Declare it as a dependency* — impossible; it is not on PyPI in any usable form.
 - *Let the import error surface* — technically informative, practically useless to the target audience.
+
+
+---
+
+## R13. Switching modes inside one window
+
+**Decision**: `ui/app.py` owns a single `Tk` root for the life of the process and holds the current
+mode. A switch destroys every child widget of the content frame and builds the other mode's widgets in
+its place. The root, the window geometry, and the mode toggle survive; nothing else does.
+
+**Rationale**: Keeping one root is what makes this a toggle rather than a relaunch — the window does
+not blink out of existence, and geometry is preserved. Destroying and rebuilding the contents, rather
+than hiding one mode behind the other, is what stops the two modes accumulating shared state that
+neither owns. Hidden widgets in a GUI toolkit are a classic source of stale bindings and phantom event
+handlers, and this project's whole architecture exists to make behavior inspectable.
+
+Teardown also gives the session semantics for free. Discarding GUI-mode widgets discards the `ev` that
+holds them, which is exactly FR-015d, and rebuilding creates a fresh `ev` and runs startup, which is
+FR-015e. The behavior the spec promises falls out of the mechanism rather than needing to be enforced
+on top of it.
+
+**Consequence worth stating**: this is also why a session cannot yet survive a mode switch. Preserving
+it would mean reconciling a live `ev` with a changed layout — elements added, moved, renamed, deleted —
+while a researcher may already hold references to the old handles. That is a real design problem, and
+per the constitution it is not promised until attempted.
+
+**Alternatives considered**:
+- *Two `Toplevel` windows, one per mode* — the researcher's window would move, resize, and change
+  stacking on every switch, which feels like a relaunch even though it is not.
+- *Build both modes and raise one* — leaves the inactive mode's widgets live, with bindings that can
+  still fire, and doubles the state to reason about.
+- *A second process for the editor* — reintroduces the two-program split that Principle I now forbids.
+
+---
+
+## R14. Renaming an element's handlers
+
+**Decision**: `codegen/rename.py` parses the researcher's file with `ast`, locates top-level function
+definitions whose names match `on_<interaction>_<old_name>` for any known interaction, and rewrites
+**only those identifiers** — by line and column offset from the AST, not by text search. Everything
+else in the file is copied through unchanged, byte for byte. The write is atomic. If the file does not
+parse, the rename is refused and reported, and the file is not touched.
+
+**Rationale**: This is the single exception to Principle V, so it must be as narrow as it can possibly
+be. Using AST node positions rather than string replacement is what keeps it narrow: a textual
+substitution of `axes_0` would also hit a comment mentioning the old name, a string literal, a
+variable the researcher happens to have called `axes_0`, and any handler belonging to a *different*
+element whose name merely contains it. Rewriting only the identifiers at known `FunctionDef`
+positions cannot do any of that.
+
+Refusing on an unparseable file matters for the same reason. Without an AST there is no way to
+distinguish a handler definition from an incidental mention, and guessing would put the researcher's
+work at risk — which the exception exists to avoid, not to create.
+
+The layout side of a rename is a separate, ordinary edit to the layout file. The two are sequenced so
+that the code file is rewritten first: if it fails, the layout is left alone and the two stay
+consistent. A layout naming an element whose handlers were never renamed is a broken interface; a code
+file with correctly named handlers for an element still under its old name is merely a no-op.
+
+**Alternatives considered**:
+- *Regex or `str.replace` across the file* — hits comments, strings, and unrelated identifiers. This
+  is the obvious implementation and it is wrong.
+- *Rewrite the whole file from the AST* (`ast.unparse`) — discards every comment and all original
+  formatting. A catastrophic violation of Principle V, for a rename.
+- *Leave handlers alone and record an alias in the layout* — keeps the code untouched, but the
+  researcher's file then permanently disagrees with what the designer shows, which is the confusion
+  the naming convention exists to prevent.

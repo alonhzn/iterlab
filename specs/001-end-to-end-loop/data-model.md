@@ -65,7 +65,7 @@ One visual item. The name is the sole link to the researcher's code (Principle I
 
 | Field | Type | Default | Rules |
 |---|---|---|---|
-| `name` | str | assigned | Unique within the layout. MUST satisfy `isidentifier()`, MUST NOT be a Python keyword, MUST NOT start with `_` (R10, FR-005b). Set at creation; **not changeable** in this feature (FR-005c). |
+| `name` | str | assigned | Unique within the layout. MUST satisfy `isidentifier()`, MUST NOT be a Python keyword, MUST NOT start with `_` (R10, FR-005b). Set at creation and **changeable** through the properties panel; renaming rewrites the element's handlers in the code file and nothing else (FR-005c, FR-005d, R14). |
 | `type` | enum | — | `plot_area` \| `button`. Closed set this feature. |
 | `position` | Rect | — | Normalized `[0, 1]` fractions (Principle II, FR-021a). |
 | `label` | str | `""` | Buttons only. Display text; never affects the name or any handler. |
@@ -103,14 +103,47 @@ Principle IV's "reload discards nothing" is achieved.
 **Reserved**: attribute names beginning with `_` are iterlab's. This is why element names may not start
 with an underscore (R10).
 
-**Lifetime**: created once at launch, destroyed only when the window closes. Explicitly **survives**
-every code reload and every fault. It is replaced only by relaunching, which is also the only way to
-re-run startup (FR-026c).
+**Lifetime**: created when GUI mode begins; destroyed when GUI mode ends — that is, on window close
+**or on a switch to editor mode** (FR-015d). Explicitly **survives** every code reload and every fault
+within a session. A fresh `ev` and a fresh run of startup are what a mode switch back to GUI mode
+produces, which is also the only way to re-run startup (FR-026c, R13).
 
 **Collision rule**: an element name that would shadow an attribute the researcher already set is a
 name conflict, resolved in favor of the element, since names are validated as unique at creation.
 
 ---
+
+### Mode
+
+Which of the two faces of the program is currently built. Owned by `ui/app.py`, one per process.
+
+| Value | What exists |
+|---|---|
+| `editor` | Canvas, palette, properties panel. No `ev`, no running session |
+| `gui` | The realized layout, a live `ev`, handlers wired |
+
+**State transitions**:
+
+```text
+   (open, no elements) → EDITOR ⇄ GUI ← (open, has elements)
+                            │       │
+                            │       └─ toggle: destroy ev, tear down widgets
+                            └───────── toggle: build widgets, new ev, run startup
+```
+
+Both transitions destroy every content widget and build the other mode's. The Tk root, the window
+geometry, and the mode toggle persist across both (R13). Nothing else does — which is precisely why a
+session does not survive a switch.
+
+### Selection
+
+Editor mode only. Which element the properties panel is describing.
+
+| Field | Type | Rules |
+|---|---|---|
+| `element_name` | str or `None` | `None` means nothing selected, and the panel MUST say so rather than showing a blank form (FR-006a) |
+
+Transient: discarded on every mode switch, and never written to the layout file.
 
 ### LoadedModule
 

@@ -60,6 +60,10 @@ so an invalid name would produce uncompilable generated code.
 **Unknown keys** within a recognized `schema_version` are a validation error, not silently ignored —
 silently dropping them would delete them on the next save.
 
+**Chrome is never in the layout.** The mode toggle, the palette, and the properties panel are
+application furniture, not elements. They never appear in this file, and a layout file therefore
+describes exactly what the researcher drew (FR-015c).
+
 ---
 
 ## Version gate

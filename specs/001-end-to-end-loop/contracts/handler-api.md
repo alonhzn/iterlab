@@ -27,8 +27,9 @@ is never an error (FR-017b, FR-029).
 
 **Startup**: `on_startup(ev)` runs once at launch, before any interaction is possible. It is never
 re-run implicitly, including when it is itself what changed (FR-026b). Changing it takes effect by
-relaunching; there is no in-session re-run (FR-026c). The sole exception is a startup that never
-completed successfully, which is attempted again once the code loads (FR-026d).
+starting a fresh session — which the mode toggle provides in one click — and there is no in-session
+re-run (FR-026c, FR-015e). The sole exception is a startup that never completed successfully, which is
+attempted again once the code loads (FR-026d).
 
 ---
 
@@ -140,8 +141,8 @@ Created alongside a new layout when an interface is opened for the first time (F
 ```python
 """<name> — an iterlab interface.
 
-Run it:   iterlab run <name>
-Edit it:  iterlab edit <name>
+Open it:  iterlab <name>
+Switch between editing and using it with the toggle in the top-left corner.
 """
 
 
@@ -157,6 +158,37 @@ The comment about module-level code is deliberate, and is the mitigation for the
 limitation in this design (research.md R3): reloading a module necessarily re-executes its top level,
 so a researcher who loads data there will see it reload. Making the safe path the obvious one is the
 only available defense.
+
+---
+
+## Renaming an element
+
+Renaming an element in the properties panel rewrites **that element's handlers** in the code file, and
+nothing else (FR-005c, FR-005d).
+
+```python
+# before — element named axes_0
+def on_clicked_axes_0(ev, event): ...
+def on_motion_axes_0(ev, event): ...
+
+# after — renamed to spectrum
+def on_clicked_spectrum(ev, event): ...
+def on_motion_spectrum(ev, event): ...
+```
+
+**Contract on renaming:**
+
+- Every handler for that element is renamed together; handlers for other elements are untouched, even
+  if their names contain the old name as a substring.
+- Only the identifiers in the function definitions change. Comments, string literals, local variables,
+  formatting, and ordering are preserved byte for byte — the rewrite is driven by AST node positions,
+  never by text substitution (R14).
+- A rename is refused, with nothing modified, if the new name is unusable in code or already taken
+  (FR-005e), or if the code file does not currently parse (FR-005f).
+- The code file is rewritten before the layout file, so a failure leaves the two consistent.
+- The write is atomic.
+
+This is the **only** operation in iterlab permitted to modify a line the researcher wrote.
 
 ---
 

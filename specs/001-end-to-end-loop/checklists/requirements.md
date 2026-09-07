@@ -75,6 +75,37 @@ One dangling statement was also repaired: FR-010 reserved an exception for renam
 FR-005c has now placed out of scope. FR-010 now states that the exception exists at project level but
 is not exercised in this feature, so no reader can conclude that rename is buildable here.
 
+**Iteration 4 (2026-09-07, revision: one program, two modes)** — 16 of 16 items still pass. The spec
+grew from 57 to 72 functional requirements and from 9 to 12 success criteria.
+
+Scope changes driven by the author, each reversing an earlier decision:
+
+- **One command, two modes.** FR-001 and FR-015 were rewritten; FR-001a, FR-015a-e added. This
+  reverses the Assumptions statement that editing and running are separate activities, and reinstates
+  rule R5 in `reference/LEARNINGS.md`, withdrawn at constitution 1.0.0 as possibly unsolvable.
+- **Element palette and properties panel.** FR-003a and FR-006a-e added, with the requirement that any
+  property settable by dragging also be settable as a typed value (FR-006c).
+- **Renaming is in scope.** FR-005c was inverted and FR-005d-f added. This reactivates Principle V's
+  sole exception, which the previous iteration had recorded as inert for this feature, so FR-010 was
+  rewritten to describe a live exception rather than a dormant one.
+- **Mode switch ends the session.** FR-015d states this plainly; FR-015e records the useful
+  consequence that toggling out and back now applies a startup change without leaving the program,
+  which simplified FR-026c and FR-026e.
+
+Contradictions found and repaired during re-validation, rather than left for the reader:
+
+- FR-010 still described the rename exception as "not exercised in this feature".
+- The Edge Case "wanting a different name after the fact — not supported" directly contradicted the
+  new FR-005c.
+- Two statements asserted that a startup change requires relaunching, without acknowledging that a
+  mode toggle now achieves the same thing.
+- The superseded rename clarification is struck through and marked, rather than deleted, so the
+  decision history stays legible.
+
+Coverage gaps closed alongside the new requirements: 5 new acceptance scenarios in User Story 1
+(toggle behavior, start mode, toggle visibility), 6 new in User Story 4 (numeric geometry, label
+editing, rename semantics, rename rejection, unparseable-file refusal), and 5 new edge cases.
+
 ## Notes
 
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
