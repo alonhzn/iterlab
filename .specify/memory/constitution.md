@@ -1,10 +1,66 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.1.0 → 2.0.0
-Bump rationale: MAJOR. Principle IV is NON-NEGOTIABLE, and this narrows what it guarantees, which
-Governance requires be recorded as MAJOR with an explicit argument. Applying that rule the first
-time it actually binds is what keeps it from becoming decorative.
+Version change: 2.0.0 → 3.0.0
+Bump rationale: MAJOR. Two principles redefined in backward-incompatible ways — I (two commands
+becomes one, with an in-interface mode toggle) and VII (a single automation gate becomes two
+gates, one of them human). VII is NON-NEGOTIABLE, so Governance requires MAJOR with a recorded
+argument regardless.
+
+Modified principles (titles unchanged):
+  - I.   Layout Is Drawn, Never Programmed
+  - VII. Tested Before Released (still NON-NEGOTIABLE)
+  - IV.  Reload Without Loss — one consequential note updated, not redefined
+
+PRINCIPLE I — what changed:
+  Removed: "Creating an interface MUST take one command, and running it MUST take one command."
+  Added: a single command opens an interface; editing and using it are two modes of one program,
+  switched from within the interface; switching MUST NOT require editing Python or running a
+  different command. Editor mode MUST provide an element palette and a properties panel, and any
+  property settable by dragging MUST also be editable as a value.
+
+  Argument on record: the two-command split forced a researcher who wanted to move a button to
+  stop, edit a launcher, and start a different program. That is precisely the ceremony this
+  project exists to remove, and it was inherited from the 2024 spike rather than chosen. This
+  also reinstates rule R5 from reference/LEARNINGS.md, withdrawn at 1.0.0 because the split was
+  thought possibly unsolvable; it is now being solved.
+
+PRINCIPLE VII — what changed:
+  Removed: "A test that requires a human to look at a window or click something is not a test."
+  Added: two release gates. Gate 1 is the automated headless suite, mandatory for everything
+  automatable, and explicitly including all Principle III and IV failure modes. Gate 2 is a
+  recorded manual verification pass by the maintainer against a checklist kept in the repository,
+  covering only what genuinely cannot be automated, with the list expected to shrink and
+  forbidden from growing to absorb work that was merely easier by hand.
+
+  Argument on record: the removed sentence was false for this class of software. Whether a layout
+  looks right, an interaction feels immediate, or a fault banner is actually noticeable cannot be
+  asserted by a machine. Demanding otherwise would have produced a release process that was either
+  dishonest or unusable, and an unusable gate is bypassed rather than met. The requirement that
+  Gate 2 be written down and its result recorded is what keeps "verified manually" from decaying
+  into "not verified" — and the rule that Gate 2 may hold only non-automatable items keeps it from
+  absorbing Gate 1's work.
+
+PRINCIPLE IV — note updated, not redefined:
+  The "known today" note said changing startup requires a relaunch. It now observes that the
+  Principle I mode toggle supplies that restart without leaving the program, so a startup change
+  no longer costs the researcher their whole process.
+
+Consequences for feature 001 (spec, plan, contracts and tasks all require revision):
+  - Two commands collapse to one; contracts/commands.md is largely rewritten.
+  - A mode toggle, an element palette, and a properties panel are new scope.
+  - Renaming an element is back IN scope, because the properties panel makes the name editable.
+    This reverses spec FR-005c and reactivates Principle V's sole exception, which 2.0.0's plan
+    had recorded as inert for this feature.
+  - Toggling to editor mode and back ends the session and starts a fresh one for v1. Applying
+    layout edits to a live session without losing state is recorded as the aim, not promised.
+
+---
+PRIOR AMENDMENTS
+---
+2.0.0 (2026-09-07) — MAJOR. Principle IV is NON-NEGOTIABLE, and this narrowed what it guarantees,
+which Governance requires be recorded as MAJOR with an explicit argument. Applying that rule the
+first time it actually bound is what keeps it from becoming decorative.
 
 Modified principle:
   - IV. Code Changes Take Effect Without Restart → IV. Reload Without Loss (still NON-NEGOTIABLE)
@@ -30,9 +86,6 @@ Consequence for feature 001: editing the startup function requires a relaunch. T
 session risks double-opening connections and double-registering callbacks, so a restart is the
 correct mechanism rather than a fallback.
 
----
-PRIOR AMENDMENTS
----
 1.1.0 (2026-09-07) — MINOR. One principle and one section added; no existing principle removed,
 weakened, or redefined. Occasioned by the decision to distribute iterlab as a PyPI package,
 which introduces obligations (a release gate and a public-surface compatibility contract)
@@ -102,16 +155,25 @@ Visual layout MUST be created and modified by direct manipulation — drag, drop
 visual elements on a canvas. iterlab MUST NOT require, or offer as the primary path, the
 construction of layout in Python code.
 
-Creating an interface MUST take one command, and running it MUST take one command. Opening an
-interface that does not yet exist MUST create a blank one, together with its starter code file.
-There is no project scaffolding step, no registration, and no configuration necessary beyond the
-interface's name (although some pre-configurations may be added in the future, like the canvas
-size or the color template, the defaults should work well).
+**A single command opens an interface.** Editing the layout and using the interface are two modes
+of one program, and the researcher MUST be able to switch between them from within the interface
+itself. Switching modes MUST NOT require editing Python, running a different command, or knowing
+anything beyond the interface's name. Opening an interface that does not yet exist MUST create a
+blank one, together with its starter code file. There is no project scaffolding step, no
+registration, and no configuration necessary beyond the interface's name (although some
+pre-configurations may be added in the future, like the canvas size or the color template, the
+defaults should work well).
+
+Editor mode MUST provide a palette of the element types that can be added, and a properties panel
+for the selected element. Properties that can be set by dragging MUST also be editable as values,
+so that precise alignment does not depend on a steady hand.
 
 **Rationale**: Hand-coding a layout is the practice this project exists to replace. A tool that
 permits it as a convenience will drift toward it, and researchers who have never seen the
 alternative will assume it is the intended path. Ceremony at the start of a session is
-iteration cost like any other.
+iteration cost like any other — and being made to stop, edit a launcher, and start a different
+program in order to move a button is exactly that ceremony, which is why the two modes belong in
+one program.
 
 ### II. Layout And Code Are Separate, Name-Linked Files
 
@@ -174,9 +236,11 @@ work well, so this document deliberately does **not** declare which changes are 
 restart until that has been established in practice. Each feature records what currently requires
 a relaunch, and that list is expected to shrink, never to grow.
 
-Known today: changing the startup function requires a relaunch. Re-running setup over a populated
-session can double-open connections, double-register callbacks, and double-append data, and a
-clean slate is what "startup" means.
+Known today: changing the startup function requires restarting the session. Re-running setup over
+a populated session can double-open connections, double-register callbacks, and double-append
+data, and a clean slate is what "startup" means. Note that the mode toggle in Principle I supplies
+that restart without leaving the program — switching to editor mode and back ends the session and
+begins a fresh one, so a startup change no longer costs the researcher their whole process.
 
 **Rationale**: The paradigm's core economic claim is that expensive data loading happens once per
 session rather than once per edit, and that claim rests entirely on reload preserving state. The
@@ -225,26 +289,50 @@ Both failures resolve under this single division of labor.
 
 ### VII. Tested Before Released (NON-NEGOTIABLE)
 
-No version of iterlab may be published to PyPI unless the full test suite passes. There is no
-"small fix" exemption, no "docs only" exemption, and no manual override.
+No version of iterlab may be published to PyPI unless **both** release gates pass. There is no
+"small fix" exemption, no "docs only" exemption, and no override of either gate.
 
-- The suite MUST run headlessly and unattended. A test that requires a human to look at a window
-  or click something is not a test, and a suite that cannot run in continuous integration cannot
-  serve as a release gate.
-- Principles III and IV describe behavior under breakage and MUST be covered by automated tests,
-  not by inspection: a control with no handler, a handler whose module will not parse, a handler
-  that raises, a fault present at launch, and a code edit applied mid-session.
-- Every defect fixed MUST arrive with a regression test that fails before the fix and passes
-  after it.
+**Gate 1 — the automated suite.** Everything that can be tested automatically MUST be, and the
+suite MUST pass.
+
+- The automated suite MUST run headlessly and unattended, so that it can serve as a gate in
+  continuous integration rather than depending on someone's desktop.
+- Principles III and IV describe behavior under breakage and MUST be covered automatically, never
+  by inspection: a control with no handler, a handler whose module will not parse, a handler that
+  raises, a fault present at launch, and a code edit applied mid-session. These are testable
+  without a display by design, and that is not an accident — it is why the architecture separates
+  the GUI layer from everything else.
+- Every defect fixed MUST arrive with a regression test that fails before the fix and passes after.
 - Every change to the public surface defined in *Release And Versioning* MUST be accompanied by
-  tests demonstrating that artifacts produced by prior versions still work.
+  tests showing that artifacts produced by prior versions still work.
+
+**Gate 2 — recorded manual verification.** Some behavior in a graphical tool genuinely cannot be
+asserted by a machine: whether a layout looks right, whether an interaction feels immediate,
+whether a fault banner is actually noticeable. Before each release the maintainer MUST work
+through a written verification checklist and record the result — version, date, outcome, and any
+defect found.
+
+- The checklist MUST be written down and kept in the repository. Verification performed from
+  memory is not verification.
+- A pass that was not recorded did not happen. An unrecorded release is a defect in the process,
+  not a technicality.
+- The checklist MUST contain **only** what genuinely cannot be automated. Anything on it that
+  could be automated is a gap in Gate 1, and belongs there instead.
+- The list is expected to shrink as automation improves, and MUST NOT grow to cover work that was
+  simply easier to do by hand.
 
 **Rationale**: A published version cannot be withdrawn in any meaningful sense. PyPI allows a
 release to be deleted but never allows the version number to be reused, and by then it may
 already be pinned in someone's environment. The pre-publish gate is the only point at which
-enforcement is still possible, so it is absolute rather than advisory. The headless requirement
-is not pedantry either: this is a GUI project, and a GUI project that defers automated testing
-because "it needs a display" ends up with no release gate at all.
+enforcement is still possible, so it is absolute rather than advisory.
+
+An earlier version of this principle demanded that everything be automated, on the reasoning that
+a GUI project which defers testing because "it needs a display" ends up with no gate at all. That
+reasoning still holds, and Gate 1 carries it: the layering exists precisely so that almost
+everything is automatable. But the stronger claim — that a check requiring a human is not a real
+check — was false for this kind of software, and pretending otherwise would have produced a
+release process that was either dishonest or unusable. Two honest gates are worth more than one
+that gets quietly bypassed.
 
 ## Technology Constraints
 
@@ -291,7 +379,8 @@ for why the simpler alternative was rejected.
 **Failure modes are tested, not assumed.** Principles III and IV describe behavior under
 breakage, which cannot be verified by inspection. A control with no handler, a handler whose
 module has a syntax error, a handler that raises, and a code edit applied mid-session MUST each
-have automated coverage asserting that the process survives and that the researcher is informed.
+have **automated** coverage asserting that the process survives and that the researcher is
+informed. These belong to Gate 1 and MUST NOT be deferred to manual verification.
 
 ## Release And Versioning
 
@@ -380,13 +469,14 @@ changed code upholds Principles III, IV, and V in particular, since these govern
 is easy to regress and invisible until a researcher loses work or time. Complexity that is not
 justified MUST be removed rather than documented.
 
-**Release review**: Every release additionally verifies, before publishing, that the full test
-suite passes (Principle VII), that the version bump matches the rules in *Release And Versioning*,
-that the changelog entry exists, and that any breaking change carries migration instructions. A
-release that cannot satisfy all four is not made.
+**Release review**: Every release additionally verifies, before publishing, that the automated
+suite passes and the manual verification checklist has been worked through and recorded (both
+gates of Principle VII), that the version bump matches the rules in *Release And Versioning*, that
+the changelog entry exists, and that any breaking change carries migration instructions. A release
+that cannot satisfy all of these is not made.
 
 **Runtime guidance**: agent-specific development guidance lives alongside the project (e.g.
 `CLAUDE.md`) and MUST remain consistent with this constitution. Where the two disagree, this
 document governs and the guidance file is corrected.
 
-**Version**: 2.0.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-07
+**Version**: 3.0.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-07
