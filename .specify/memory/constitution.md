@@ -1,7 +1,29 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 2.0.0 → 3.0.0
+Version change: 3.0.0 → 3.1.0
+Bump rationale: MINOR. Guidance in one section materially expanded; no principle
+added, removed, weakened or redefined.
+
+Modified section: Release And Versioning -> Version rules
+
+What changed: below 1.0.0, every change to the code now bumps MINOR, no matter how
+small. The MINOR/PATCH distinction is explicitly suspended until 1.0.0, at which
+point the ordinary rules resume unchanged.
+
+Argument on record: this was already the practice, and the document contradicted it,
+which is worse than either rule on its own. The distinction buys nothing during a
+phase where one person tests by hand against builds that change several times an
+hour, while a version that moves on every change answers the question actually being
+asked - "is the thing in front of me the thing I just changed?". A version that moves
+only on release-worthy changes does not answer it, and guessing wrong means hunting a
+bug in the wrong build. Nothing about the 1.0.0 rules changes; they are simply
+deferred.
+
+---
+PRIOR AMENDMENTS
+---
+3.0.0 (2026-09-07) — MAJOR.
 Bump rationale: MAJOR. Two principles redefined in backward-incompatible ways — I (two commands
 becomes one, with an in-interface mode toggle) and VII (a single automation gate becomes two
 gates, one of them human). VII is NON-NEGOTIABLE, so Governance requires MAJOR with a recorded
@@ -491,4 +513,4 @@ that cannot satisfy all of these is not made.
 `CLAUDE.md`) and MUST remain consistent with this constitution. Where the two disagree, this
 document governs and the guidance file is corrected.
 
-**Version**: 3.0.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-07
+**Version**: 3.1.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-07
