@@ -13,7 +13,11 @@ out of the way — including staying alive while you edit, so you stop paying to
 
 ## Install
 
-iterlab is not on PyPI yet, so install from the repository:
+```console
+pip install iterlab
+```
+
+Or from source, if you want to change iterlab itself:
 
 ```console
 git clone https://github.com/alonhzn/iterlab.git
@@ -497,5 +501,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 0.20.2.** Everything above is verified against that release. If a description here
+**Guide version 0.21.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

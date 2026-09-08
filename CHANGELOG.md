@@ -6,6 +6,27 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.21.0] — 2026-09-08
+
+**First release published to PyPI.** `pip install iterlab`.
+
+Everything in the entries below shipped in this one release; they were written
+as the work happened and are kept as the development record. Their "unreleased"
+labels are accurate for what they were at the time — nothing before this had
+ever been published.
+
+### Changed
+
+- Install instructions in `README.md` and `GUIDE.md` now say `pip install
+  iterlab`, since that is true from this release onward. The guide keeps the
+  source install for anyone who wants to change iterlab itself.
+- `README.md` links and the logo are absolute URLs. PyPI renders this README on
+  its own page, where a repository-relative path resolves to nothing — the logo
+  would have been a broken image and every link a 404, visible to everyone
+  arriving at the project for the first time.
+- Added `Documentation`, `Repository`, `Changelog` and `Issues` project URLs, a
+  3.13 classifier, and operating-system and environment classifiers.
+
 ## [0.20.2] — unreleased
 
 ### Documentation

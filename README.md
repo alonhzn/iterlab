@@ -1,4 +1,4 @@
-<h1><img src="docs/logo.png" alt="" width="40" height="40"> iterlab</h1>
+<h1><img src="https://raw.githubusercontent.com/alonhzn/iterlab/main/docs/logo.png" alt="" width="40" height="40"> iterlab</h1>
 
 
 You are a **scientist**, not a software developer, **focus on what matters to you!**
@@ -15,13 +15,8 @@ Science and research are iterative processes and they require a lot of graphs, p
 
 ## Usage
 
-iterlab is not on PyPI yet, so install it from the repository:
-
 ```console
-git clone https://github.com/alonhzn/iterlab.git
-cd iterlab
-pip install -e .
-
+pip install iterlab
 iterlab demo
 ```
 
@@ -55,7 +50,7 @@ it.
 
 **On Linux**, tkinter is packaged separately: `apt install python3-tk` or `dnf install python3-tkinter`.
 
-**New here?** [GUIDE.md](GUIDE.md) walks through installing, drawing your first interface, and the
+**New here?** [GUIDE.md](https://github.com/alonhzn/iterlab/blob/main/GUIDE.md) walks through installing, drawing your first interface, and the
 code API for every element.
 
 ## Status
@@ -70,6 +65,6 @@ Tk and matplotlib, both used deliberately: Tk for every control, matplotlib for 
 
 ## License
 
-[Apache License 2.0](LICENSE). You may use, modify, and redistribute this code, including in
+[Apache License 2.0](https://github.com/alonhzn/iterlab/blob/main/LICENSE). You may use, modify, and redistribute this code, including in
 closed-source and commercial work. If you do, you must retain the copyright notice, the license,
-and the [NOTICE](NOTICE) file, and state which files you changed.
+and the [NOTICE](https://github.com/alonhzn/iterlab/blob/main/NOTICE) file, and state which files you changed.

@@ -19,7 +19,12 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Scientific/Engineering",
+    "Environment :: X11 Applications",
+    "Environment :: Win32 (MS Windows)",
+    "Operating System :: OS Independent",
 ]
 
 # tkinter is deliberately absent: it ships with CPython and is not installable
@@ -40,12 +45,36 @@ iterlab = "iterlab.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/alonhzn/iterlab"
+Documentation = "https://github.com/alonhzn/iterlab/blob/main/GUIDE.md"
+Repository = "https://github.com/alonhzn/iterlab"
+Changelog = "https://github.com/alonhzn/iterlab/blob/main/CHANGELOG.md"
+Issues = "https://github.com/alonhzn/iterlab/issues"
 
 [tool.hatch.version]
 path = "src/iterlab/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/iterlab"]
+
+# An allowlist, not an exclusion list. The default sdist swept in two entire
+# virtualenvs sitting in the working tree - 157 MB of site-packages, including
+# numpy's OpenBLAS DLL - and would have published them. Naming what belongs in a
+# release cannot go wrong that way: something new in the working tree is left
+# out by default rather than shipped by default.
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/tools",
+    "/docs",
+    "/pyproject.toml",
+    "/README.md",
+    "/GUIDE.md",
+    "/CHANGELOG.md",
+    "/VERIFICATION.md",
+    "/LICENSE",
+    "/NOTICE",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
