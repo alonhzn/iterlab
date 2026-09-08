@@ -6,6 +6,34 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.18.0] — unreleased
+
+### Added
+
+- **An application icon**, replacing Tk's default feather — which tells a
+  researcher nothing and makes the window look like a stray interpreter in a
+  taskbar full of real applications.
+
+  A plot with a loop: the rising curve is every plotting library's icon, and the
+  circular arrow is what makes it this one, since iterating inside the interface
+  rather than re-running a script is the whole product.
+
+- `tools/make_icon.py`, which *is* the icon — checked in as the source rather
+  than a binary somebody would have to open an image editor to change.
+
+  It draws at 8x and downsamples, and brushes strokes as overlapping discs
+  rather than using `draw.line`, which leaves notches exactly where this curve
+  turns. The `.ico` carries **three detail levels across seven sizes**: below
+  48 px the axes are dropped and the brush fattens, and at 16 px only the curve
+  survives. An icon is not one drawing scaled — the thin marks close into mud —
+  and a test asserts the 16 px frame is not merely the 256 resampled.
+
+  Applied through both `iconphoto` (portable, honoured by X11 and macOS) and
+  `iconbitmap` (what Windows uses for the title bar and taskbar, and crisper
+  there). Neither can raise: an icon is decoration, and decoration must not be
+  able to end a session. The `PhotoImage` is held for the life of the process,
+  since Tk silently reverts to the feather when one is collected.
+
 ## [0.17.0] — unreleased
 
 ### Added

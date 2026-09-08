@@ -71,6 +71,10 @@ class App:
 
         theme.apply_theme(self.root)
         self.root.title(f"iterlab — {interface.name}")
+
+        from . import icon
+
+        icon.apply(self.root)
         self.root.geometry("{}x{}".format(*self._size_for(start_mode)))
 
         # Chrome lives outside the content frame so it survives every rebuild.
