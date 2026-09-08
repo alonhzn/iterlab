@@ -213,6 +213,10 @@ class PlotHandle(ElementHandle):
         self._apply_visibility()
 
     def __getattr__(self, item):
+        # A style property this handle can set must also be readable; the Axes
+        # knows nothing about `visible`, so answer that here before delegating.
+        if item in self.STYLE_PROPERTIES:
+            return getattr(self.__dict__["_style"], item)
         # Delegate to the Axes so `ev.spectrum.plot(...)` works.
         return getattr(self.__dict__["axes"], item)
 

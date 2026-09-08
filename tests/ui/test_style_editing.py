@@ -181,3 +181,31 @@ def test_an_unstyled_element_keeps_its_type_tint(editor):
         if editor.canvas.type(item) == "rectangle"
     ]
     assert theme.ELEMENT_FILL["button"] in fills
+
+
+def test_a_plot_style_property_can_be_read_back(editor):
+    """Anything settable must be readable, or the API is a trap.
+
+    A plot handle delegates unknown attributes to its matplotlib Axes, which
+    knows nothing about `visible` - so reading it raised AttributeError while
+    setting it worked fine.
+    """
+    editor.create_element("plot_area", Rect(0.5, 0.5, 0.3, 0.3), tag="spectrum")
+    editor.app.toggle()
+    editor.app.root.update()
+
+    handle = editor.app.built.handles["spectrum"]
+    assert handle.visible is True
+    handle.visible = False
+    assert handle.visible is False
+
+
+def test_every_settable_style_property_is_also_readable(editor):
+    editor.create_element("plot_area", Rect(0.5, 0.5, 0.3, 0.3), tag="spectrum")
+    editor.app.toggle()
+    editor.app.root.update()
+
+    for tag in ("title", "go", "spectrum"):
+        handle = editor.app.built.handles[tag]
+        for prop in handle.STYLE_PROPERTIES:
+            getattr(handle, prop)  # raises if a setter has no matching getter

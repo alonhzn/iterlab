@@ -6,6 +6,22 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.11.0] — unreleased
+
+### Added
+
+- **`GUIDE.md`** — a user guide: install, first interface, the handler and `ev`
+  model, every element type with its code API, the full styling table, tagging,
+  deleting, and the known limits. It will grow as element types are added.
+
+### Fixed
+
+- A plot area's `visible` could be set but not read. `PlotHandle` delegates
+  unknown attributes to its matplotlib `Axes`, which knows nothing about
+  `visible`, so reading it raised `AttributeError` while writing it worked. Any
+  style property a handle can set is now also readable — found while checking
+  the guide's claims rather than by writing them down and hoping.
+
 ## [0.10.0] — unreleased
 
 ### Fixed

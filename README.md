@@ -60,6 +60,9 @@ API you already know.
 
 **On Linux**, tkinter is packaged separately: `apt install python3-tk` or `dnf install python3-tkinter`.
 
+**New here?** [GUIDE.md](GUIDE.md) walks through installing, drawing your first interface, and the
+code API for every element.
+
 ## Status
 
 Early, and honest about it. Feature 001 — the end-to-end loop — is implemented and tested, with two
