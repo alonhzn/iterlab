@@ -53,12 +53,28 @@ def _stamp(path: Path):
     return (st.st_mtime_ns, st.st_size)
 
 
+def module_name_for(code_path) -> str:
+    """The sys.modules key a loader for this file would use."""
+    return f"_iterlab_user_{Path(code_path).stem}"
+
+
+def forget(code_path) -> None:
+    """Drop the researcher's module from the import cache.
+
+    Loading already builds a fresh module object every time, so this changes
+    nothing for an ordinary reload. It exists for a cold restart, where the
+    claim being made is that nothing at all was carried over — and a stale
+    entry left in `sys.modules` would make that claim not quite true.
+    """
+    sys.modules.pop(module_name_for(code_path), None)
+
+
 class ModuleLoader:
     """Owns one researcher module and its freshness."""
 
     def __init__(self, code_path, module_name=None):
         self.path = Path(code_path)
-        self.module_name = module_name or f"_iterlab_user_{self.path.stem}"
+        self.module_name = module_name or module_name_for(self.path)
         self.module = None
         self.stamp = None
         self.state = UNLOADED

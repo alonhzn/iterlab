@@ -323,7 +323,7 @@ iterlab watches for this. Edit `on_startup` and a strip appears offering two way
 | | What it does | When you want it |
 |---|---|---|
 | **Re-run startup** | Runs the new `on_startup` over the session you already have. Your data stays | Almost always. This is the cheap one |
-| **Restart session** | Throws `ev` away and starts over | When re-running would not be safe — see below |
+| **Restart app** | Throws everything away and starts cold | When re-running would not be safe — see below |
 | **Dismiss** | Nothing. Hides the strip | When you know the edit does not matter yet |
 
 The notice also appears if you edit a **function that `on_startup` calls**, since that changes what
@@ -340,14 +340,25 @@ def on_startup(ev):
 ```
 
 The idiom this guide teaches — assign onto `ev` — is safe. If yours accumulates, use **Restart
-session** instead. iterlab offers both rather than choosing for you, because only your code knows
-which it is.
+app** instead. iterlab offers both rather than choosing for you, because only your code knows which
+it is.
 
 Dismissing does not mark the edit as accepted: change `on_startup` again and the notice comes back.
 
-That is also why **Restart session** sits next to the toggle as well: it throws the session away and
-runs startup again, and it is a button you press rather than something a toggle does behind your
-back.
+### Restart app
+
+**Restart app** sits next to the toggle, in both modes. It is the big hammer, and it does what
+re-launching `iterlab demo` would do without closing the window:
+
+- your layout is re-read **from the file**, so a hand edit to `demo.yaml` is picked up
+- your code is loaded fresh
+- `ev` is emptied and `on_startup` runs again
+
+You stay in whichever mode you pressed it in, and the window is not resized.
+
+Reach for it when a warm reload is not enough — most often after editing a **module you import**.
+iterlab assumes imported modules do not change during a session, so if you split your work across
+`demo.py` and `fitting.py`, edits to `fitting.py` are not picked up. Restart app is the answer.
 
 ---
 
@@ -374,9 +385,11 @@ Worth knowing before they surprise you.
   repaints. Splitting slow work across clicks is the workaround for now.
 - **Three element types so far.** Text fields, checkboxes, radio buttons, dropdowns, lists and
   sliders are not built yet.
+- **Modules you import are assumed not to change** while the session runs. Editing a helper module
+  of your own has no effect until you press **Restart app**.
 - **Editing `demo.yaml` by hand** is possible but not the intended path; the editor is.
 
 ---
 
-**Guide version 0.13.0.** Everything above is verified against that release. If a description here
+**Guide version 0.14.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

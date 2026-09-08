@@ -64,8 +64,10 @@ is *there*; only a person can see that the window still looks like the session t
 | 18 | **[!]** Draw a plot, let the 1.5-second load run, then toggle to the editor, move a button, and toggle back | The curve is still on screen and the load does **not** repeat. Rearranging a live interface costs nothing | Line counts are asserted; whether the plot *looks* untouched — same zoom, same axes, no flash of blank canvas — is not |
 | 19 | Pan and zoom a plot, then toggle out and back | Whatever a person judges reasonable here, recorded either way. The figure survives; the toolbar's view stack may not | Nobody has decided yet whether the zoom *should* survive. This item exists to find out by looking |
 | 20 | **[!]** After several toggles, click a plot once and watch the terminal | Exactly one line is printed | The duplicate-firing defect this feature nearly shipped. A test now catches it, but it is worth a human eye — it is invisible unless you are counting |
-| 21 | Click **Restart session** | The data reloads, plots clear, and it is obvious that this is what the button did | Whether the button reads as destructive *before* it is pressed is a human judgement |
-| 22 | Look at **Restart session** in editor mode | It is visibly disabled, and it is clear why | Disabled state is asserted; legibility of the reason is not |
+| 21 | Press **Restart app** | Everything reloads: data, plots, code, layout. It is obvious that is what happened | Whether the button reads as destructive *before* it is pressed is a human judgement |
+| 22 | Edit `on_startup`, then click any element | The strip appears, and its two actions read as clearly different from each other | Visibility is asserted; whether a researcher can tell "re-run" from "restart" at a glance is not |
+| 23 | Press **Re-run startup** with data already loaded | The edit applies and the data is still there | The object identity is asserted; whether the researcher *believes* nothing was lost is not |
+| 24 | Edit a helper module you import, then press **Restart app** | The change takes effect. Without the restart it does not | A documented assumption. Worth confirming a researcher can discover the workaround from the guide |
 
 ### Being told things
 

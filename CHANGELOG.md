@@ -6,6 +6,33 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.14.0] — unreleased
+
+### Added
+
+- **A "Restart app" button in the top bar**, beside the mode toggle. A cold
+  restart: the layout is re-read from disk, the researcher's module is dropped
+  from the import cache, and a new session begins. It is the answer to anything
+  a warm reload deliberately does not cover — an edited helper module, a
+  hand-edited layout file, or simply wanting a clean slate.
+
+  It stays in the mode it was pressed in. Restarting is not a request to be
+  moved to a different screen, and the window is not resized either: that would
+  rearrange the researcher's desktop, which is not what was asked for.
+
+  Replaces the narrower "Restart session" button in the top bar. That behaviour
+  still exists and is still offered by the startup notice, where re-running
+  startup over a live session is the point; as a top-bar control, one button
+  with one meaning beats two whose difference is invisible until it bites.
+
+### Fixed
+
+- A layout file edited by hand into something unparsable took the window down on
+  restart, which is precisely what Principle III forbids. The last good layout
+  is kept, the interface carries on, and the error is reported through the
+  banner rather than swallowed. Found by a test written to check something else,
+  which crashed instead of failing.
+
 ## [0.13.0] — unreleased
 
 ### Added
@@ -40,11 +67,14 @@ shape, and the command are all consumed directly by researcher-written code.
 - **New imports already worked** and needed no change: the loader executes the
   module fresh rather than calling `importlib.reload`, so an `import` line added
   to a live file runs on the next reload. Verified rather than assumed.
-- **Edits to the researcher's own helper modules do not take effect.** If
-  `demo.py` does `import fitting` and `fitting.py` is then edited, the change is
-  silently ignored, because `fitting` is already in `sys.modules` and the import
-  statement binds the cached module. Same silent-staleness family as the defect
-  fixed above; not addressed here.
+- **Imported modules are assumed not to change during a session.** If `demo.py`
+  does `import fitting` and `fitting.py` is then edited, the change is not
+  picked up: `fitting` is already in `sys.modules`, so the import statement
+  binds the cached module. This is a deliberate scope boundary, not an
+  oversight - cascading reloads through a module graph brings the stale-instance
+  problem with it (objects already built keep their old class), and the cost of
+  getting that subtly wrong is higher than the cost of restarting. **Restart
+  app** covers it when it matters.
 
 ## [0.12.0] — unreleased
 

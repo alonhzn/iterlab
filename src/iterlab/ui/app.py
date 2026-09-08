@@ -161,6 +161,46 @@ class App:
         self.build(GUI)
         self._mode_toggle.refresh()
 
+    def restart_app(self) -> None:
+        """Restart cold: everything from disk, as if freshly launched.
+
+        Stronger than `restart_session`, which keeps the layout that is already
+        in memory. This re-reads the layout file, forgets the researcher's
+        module, and begins a new session — so it also picks up a layout file
+        edited by hand, and leaves nothing at all carried over.
+
+        It stays in the mode it was pressed in. Restarting is not a request to
+        be moved to a different screen, and a researcher who presses this while
+        arranging a layout should still be arranging a layout afterwards.
+
+        The window is deliberately not resized back to the layout's size. That
+        size is advisory, and rearranging someone's desktop is not part of what
+        they asked for.
+        """
+        from ..runtime import loader as loader_mod
+
+        self.teardown()
+        loader_mod.forget(self.interface.code_path)
+        self.session.restart()
+
+        # A layout file edited by hand can be invalid, and a restart that died
+        # on one would take the window with it - the exact failure Principle III
+        # forbids. Keep the layout already in memory, carry on, and say so.
+        fault = None
+        try:
+            self.interface.load_layout()
+        except Exception as exc:  # noqa: BLE001 - reported, never swallowed
+            from ..runtime.faults import LOAD_FAILED, Fault
+
+            fault = Fault.from_exception(exc, LOAD_FAILED)
+
+        self.build(self.mode)
+        self._mode_toggle.refresh()
+        if fault is not None:
+            sink = getattr(self._built, "sink", None)
+            if sink is not None:
+                sink.report(fault)
+
     def toggle(self) -> str:
         """Switch modes. The whole of FR-015 is this method."""
         self.build(GUI if self.mode == EDITOR else EDITOR)
