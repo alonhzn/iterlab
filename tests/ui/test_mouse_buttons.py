@@ -21,7 +21,7 @@ def on_clicked_go(ev, event):
 
 
 @pytest.fixture
-def gui(make_app):
+def gui(mapped, make_app):
     """A real, mapped window.
 
     Tk delivers synthesised button events only to a viewable widget, so an
@@ -33,10 +33,8 @@ def gui(make_app):
     app.built.create_element("button", Rect(0.1, 0.1, 0.3, 0.15), name="go")
     app.interface.code_path.write_text(RECORD, encoding="utf-8")
     app.toggle()
-    app.root.deiconify()
     app.root.update()
-    yield app
-    app.root.withdraw()
+    return app
 
 
 def _widget(gui):

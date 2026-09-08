@@ -6,6 +6,38 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.5.0] — unreleased
+
+### Added
+
+- Generated starter files import numpy as np. No research happens without it.
+- A delete control in the properties panel, pinned to the bottom of the sidebar
+  so a destructive action is never the thing pushed off the screen. The
+  element's handler stays in the code file, as it always has.
+- The editor sidebar scrolls when its contents are taller than the window.
+
+### Changed
+
+- The editor has a modern look: the `clam` ttk theme restyled with a flat
+  palette, the element types shown as icon cards rather than radio buttons, and
+  the geometry fields laid out as a 2x2 grid instead of four stacked rows.
+  Icons are drawn as vectors rather than loaded from image files or set as text
+  glyphs — no assets to ship, and no bet on the platform font having a
+  character.
+- Property edits commit on Enter or when the field loses focus. The Apply
+  button is gone: a value typed and tabbed away from is a value you meant.
+- Removed the dashed "mode toggle" hint from the canvas. The toggle lives in
+  its own chrome bar above the layout, so nothing is ever underneath it and the
+  hint was misleading.
+
+### Fixed
+
+- The sidebar's contents disappeared at small window sizes. Tk stops *mapping*
+  children that no longer fit rather than clipping them, so the geometry fields
+  were absent rather than scrolled out of view — with no error, no scrollbar,
+  and the only symptom being that typing into them did nothing. At the 800x450
+  default this affected every position field.
+
 ## [0.4.0] — unreleased
 
 ### Fixed

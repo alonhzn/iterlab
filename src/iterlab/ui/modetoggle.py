@@ -7,13 +7,17 @@ deleted, and is not reachable from the researcher's code (FR-015c).
 from __future__ import annotations
 
 import tkinter as tk
+from tkinter import ttk
 
+from . import theme
 from .app import EDITOR, GUI
 
-LABEL = {EDITOR: "▶  Use it", GUI: "✎  Edit it"}
-TOOLTIP = {
-    EDITOR: "Switch to GUI mode and run this interface",
-    GUI: "Switch to editor mode and change the layout",
+#: Plain words rather than glyphs. An arrow or pencil character depends on the
+#: platform font having it, and a missing glyph draws as a hollow box.
+LABEL = {EDITOR: "Run it", GUI: "Edit layout"}
+CAPTION = {
+    EDITOR: "Editing the layout",
+    GUI: "Running your code",
 }
 
 
@@ -22,17 +26,18 @@ class ModeToggle:
 
     def __init__(self, app):
         self.app = app
-        self.button = tk.Button(
-            app.chrome,
-            text=LABEL[app.mode],
+
+        self.button = ttk.Button(
+            app.chrome, text=LABEL[app.mode], style="Accent.TButton",
             command=self._on_click,
-            padx=10,
         )
-        # Top-left, and packed into chrome rather than content so it survives
-        # every rebuild and can never be obscured by a drawn element (FR-015b).
-        self.button.pack(side="left", anchor="nw", padx=4, pady=4)
-        self._status = tk.Label(app.chrome, text="", anchor="w")
-        self._status.pack(side="left", padx=8)
+        self.button.pack(side="left", anchor="w", padx=10, pady=8)
+
+        self.caption = tk.Label(
+            app.chrome, text="", bg=theme.BG, fg=theme.TEXT_MUTED, font=theme.FONT_SMALL
+        )
+        self.caption.pack(side="left", padx=4)
+
         self.refresh()
 
     def _on_click(self):
@@ -41,7 +46,7 @@ class ModeToggle:
         self.app.toggle()
 
     def refresh(self):
-        self.button.configure(text=LABEL[self.app.mode])
-        self._status.configure(
-            text="editor mode" if self.app.mode == EDITOR else "GUI mode"
-        )
+        mode = self.app.mode
+        self.button.configure(text=LABEL[mode])
+        self.caption.configure(text=CAPTION[mode])
+

@@ -26,6 +26,9 @@ classifiers = [
 # from PyPI. Its absence is diagnosed at runtime by cli.py (research.md R12).
 dependencies = [
     "matplotlib>=3.5",
+    # Imported by every generated starter file, so declared directly rather
+    # than relied upon as a matplotlib transitive.
+    "numpy>=1.21",
     "pyyaml>=6.0",
 ]
 

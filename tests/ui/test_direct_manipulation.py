@@ -26,7 +26,11 @@ class _Event:
 def designer(make_app):
     app = make_app()
     d = app.built
+    # Pin the canvas size. These tests are about the drag arithmetic, not about
+    # how Tk happens to allocate space, and letting the real allocation vary
+    # makes every pixel expectation depend on unrelated layout changes.
     d.canvas.configure(width=CANVAS_W, height=CANVAS_H)
+    d._size = lambda: (CANVAS_W, CANVAS_H)
     app.root.update_idletasks()
     # left .25, bottom .25, w .25, h .25  ->  pixels x 100..200, y 200..300
     d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), name="go")

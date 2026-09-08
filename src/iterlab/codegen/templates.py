@@ -18,6 +18,8 @@ Open it:  iterlab {name}
 Switch between editing and using it with the toggle in the top-left corner.
 """
 
+import numpy as np
+
 
 def on_startup(ev):
     # Runs once when the interface opens, before anything else.

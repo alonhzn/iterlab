@@ -27,14 +27,16 @@ from ..codegen import rename as rename_mod
 from ..codegen import templates
 from ..errors import CodeFileUnparseable, IterlabError
 from ..layout.schema import DEFAULT_SIZE, Element, Rect, validate_name
+from . import theme
 from .palette import Palette
+from .scroll import ScrollableColumn
 from .properties import PropertiesPanel
 
-SIDEBAR_WIDTH = 200
-FILL = {"plot_area": "#cfe3f5", "button": "#e2d8f2"}
-OUTLINE = "#6b7785"
-SELECTED_OUTLINE = "#d1495b"
-HANDLE_FILL = "#ffffff"
+SIDEBAR_WIDTH = 210
+FILL = theme.ELEMENT_FILL
+OUTLINE = theme.ELEMENT_EDGE
+SELECTED_OUTLINE = theme.ACCENT
+HANDLE_FILL = theme.SURFACE
 
 #: Half-extent of a resize handle's grab area, in pixels. Generous on purpose:
 #: an 8 px reach means a 16 px target, which is grabbable without precision.
@@ -81,13 +83,17 @@ class Designer:
         container = tk.Frame(app.content)
         container.pack(fill="both", expand=True)
 
-        sidebar = tk.Frame(container, width=SIDEBAR_WIDTH)
-        sidebar.pack(side="left", fill="y")
-        sidebar.pack_propagate(False)
-        self.palette = Palette(sidebar, on_select=None)
-        self.properties = PropertiesPanel(sidebar, self)
+        # Scrollable: Tk stops *mapping* children that no longer fit rather
+        # than clipping them, so an overflowing sidebar loses widgets silently.
+        self.sidebar = ScrollableColumn(container, SIDEBAR_WIDTH)
+        self.sidebar.outer.pack(side="left", fill="y")
+        self.palette = Palette(self.sidebar.inner, on_select=None)
+        self.properties = PropertiesPanel(self.sidebar.inner, self)
+        self.sidebar.bind_wheel_to_children()
 
-        self.canvas = tk.Canvas(container, bg="white", highlightthickness=0)
+        tk.Frame(container, bg=theme.BORDER, width=1).pack(side="left", fill="y")
+
+        self.canvas = tk.Canvas(container, bg=theme.SURFACE, highlightthickness=0)
         self.canvas.pack(side="left", fill="both", expand=True)
         self.canvas.bind("<ButtonPress-1>", self._on_press)
         self.canvas.bind("<B1-Motion>", self._on_drag)
@@ -247,16 +253,16 @@ class Designer:
             rect_id = self.canvas.create_rectangle(
                 x0, y0, x1, y1,
                 fill=FILL.get(element.type, "#eeeeee"),
-                outline=SELECTED_OUTLINE if selected else OUTLINE,
-                width=3 if selected else 1,
+                outline=SELECTED_OUTLINE if selected else OUTLINE.get(element.type, theme.BORDER_STRONG),
+                width=2 if selected else 1,
             )
             self.canvas.create_text(
-                (x0 + x1) / 2, (y0 + y1) / 2, text=name, fill="#1d2733"
+                (x0 + x1) / 2, (y0 + y1) / 2, text=name,
+                fill=theme.TEXT, font=theme.FONT_BOLD,
             )
             self._items[rect_id] = name
             if selected:
                 self._draw_handles(x0, y0, x1, y1)
-        self._draw_toggle_footprint()
 
     def _draw_handles(self, x0, y0, x1, y1):
         for hx, hy in self._handle_points(x0, y0, x1, y1).values():
@@ -265,19 +271,6 @@ class Designer:
                 hx + HANDLE_DRAW, hy + HANDLE_DRAW,
                 fill=HANDLE_FILL, outline=SELECTED_OUTLINE, width=2,
             )
-
-    def _draw_toggle_footprint(self):
-        """Show where the mode toggle sits, so nothing important goes under it.
-
-        The toggle itself is chrome and always on top; this is only a hint so a
-        researcher can avoid the spot deliberately (FR-015b).
-        """
-        self.canvas.create_rectangle(
-            0, 0, 120, 28, dash=(3, 3), outline="#b0b8c1", fill=""
-        )
-        self.canvas.create_text(
-            60, 14, text="mode toggle", fill="#b0b8c1", font=("TkDefaultFont", 8)
-        )
 
     # -- pointer feedback ------------------------------------------------
 
@@ -411,6 +404,9 @@ class Designer:
     def select(self, name):
         self.selected = name
         self.properties.show(self.layout.elements.get(name) if name else None)
+        self.sidebar.inner.update_idletasks()
+        self.sidebar._on_inner_resize()
+        self.sidebar.bind_wheel_to_children()
         self.redraw()
 
     def create_element(self, element_type, rect, name=None):

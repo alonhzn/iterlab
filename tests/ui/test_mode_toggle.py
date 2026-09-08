@@ -53,8 +53,13 @@ def _toggle_button(app):
     test that would have caught the toggle being defined but never
     instantiated — every other test passed while the button did not exist.
     """
+    # tk.Button or ttk.Button - the test is about a clickable control existing,
+    # not about which widget class draws it.
+    from tkinter import ttk
+
     buttons = [
-        w for w in app.chrome.winfo_children() if isinstance(w, app.tk.Button)
+        w for w in app.chrome.winfo_children()
+        if isinstance(w, (app.tk.Button, ttk.Button))
     ]
     assert len(buttons) == 1, f"expected exactly one toggle button in chrome, found {len(buttons)}"
     return buttons[0]

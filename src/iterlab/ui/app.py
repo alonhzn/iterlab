@@ -55,14 +55,19 @@ class App:
         self._owns_root = root is None
 
         self.root = root if root is not None else self.tk.Tk()
+
+        from . import theme
+
+        theme.apply_theme(self.root)
         self.root.title(f"iterlab — {interface.name}")
         self.root.geometry(f"{interface.layout.window.width}x{interface.layout.window.height}")
 
         # Chrome lives outside the content frame so it survives every rebuild.
-        self._chrome = self.tk.Frame(self.root)
+        self._chrome = self.tk.Frame(self.root, bg=theme.BG)
         self._chrome.pack(side="top", fill="x")
+        self.tk.Frame(self.root, bg=theme.BORDER, height=1).pack(side="top", fill="x")
 
-        self._content = self.tk.Frame(self.root)
+        self._content = self.tk.Frame(self.root, bg=theme.BG)
         self._content.pack(side="top", fill="both", expand=True)
 
         # Deferred import: modetoggle needs EDITOR/GUI from this module, and
