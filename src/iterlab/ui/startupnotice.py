@@ -48,7 +48,7 @@ class StartupNotice:
 
         if on_restart is not None:
             self.restart_button = ttk.Button(
-                self.frame, text="Restart session", command=on_restart
+                self.frame, text="Restart app", command=on_restart
             )
             self.restart_button.pack(side="right", padx=2, pady=4)
         else:

@@ -11,7 +11,7 @@ import tkinter as tk
 
 from ..runtime.dispatch import Dispatcher
 from ..runtime.faults import ConsoleFaultSink, MultiSink
-from ..runtime.loader import ModuleLoader
+from ..runtime.loader import ModuleLoader, stamp as file_stamp
 from ..runtime.startupcheck import fingerprint as startup_fingerprint
 from . import elements as element_factory
 from .faultbanner import FaultBanner
@@ -31,14 +31,13 @@ class Runner:
 
         self.banner = FaultBanner(self.frame)
         self.notice = StartupNotice(
-            self.frame, on_rerun=self.rerun_startup, on_restart=app.restart_session
+            self.frame, on_rerun=self.rerun_startup, on_restart=app.restart_app
         )
-        #: The loader generation this runner has already inspected, so the file
-        #: is re-parsed once per edit rather than once per click. None rather
-        #: than 0 so the first check always happens: returning from the editor
-        #: builds a runner whose loader has not loaded anything yet, and the
-        #: file may well have been edited while the editor was open.
-        self._checked_generation = None
+        #: (mtime, size) of the code file the last time startup staleness was
+        #: judged, so the file is parsed once per edit rather than once per
+        #: check. None so the first check always happens.
+        self._checked_stamp = None
+        self._poll_id = None
         self.sink = MultiSink(ConsoleFaultSink(), self.banner, *extra_sinks)
 
         # Elements deleted while in the editor leave nothing behind.
@@ -58,6 +57,7 @@ class Runner:
         self.run_startup()
         # A file edited while the editor was open is an edit like any other.
         self.check_startup_staleness()
+        self._schedule_poll()
 
     def teardown(self):
         """Drop the widgets. The session — `ev`, figures, startup — survives.
@@ -69,6 +69,12 @@ class Runner:
             disconnect = getattr(handle, "disconnect", None)
             if disconnect is not None:
                 disconnect()
+        if self._poll_id is not None:
+            try:
+                self.frame.after_cancel(self._poll_id)
+            except Exception:
+                pass
+            self._poll_id = None
         self.ev._unbind_elements()
         self.handles.clear()
         self.dispatcher = None
@@ -109,33 +115,88 @@ class Runner:
             self.session.startup_fingerprint = startup_fingerprint(
                 self.interface.code_path
             )
-            self._checked_generation = self.loader.generation
+            self._checked_stamp = file_stamp(self.interface.code_path)
+            self._notify_stale(False)
         self._redraw_plots()
         return ok
 
     def ensure_startup(self) -> None:
-        """Called before each interaction, for the deferred-first-run case."""
+        """Called before *every* interaction, whatever it goes on to do.
+
+        The staleness check lives here rather than in the after-hook because the
+        after-hook only fires when a handler actually ran. An element with no
+        handler written for it is normal, not an error — so a researcher who
+        drew a button, wrote nothing for it, and edited `on_startup` would have
+        clicked and been told nothing at all.
+        """
         if not self.session.startup_done:
             self.run_startup()
+        self.check_startup_staleness()
 
     # -- staleness -------------------------------------------------------
 
     def check_startup_staleness(self) -> bool:
         """Raise the notice if `on_startup` has changed since it ran.
 
-        Only after a real reload: the generation check means an untouched file
-        costs nothing, however many times it is clicked.
-        """
-        if not self.session.startup_done or self.loader is None:
-            return False
-        if self.loader.generation == self._checked_generation:
-            return self.notice.visible
-        self._checked_generation = self.loader.generation
+        Judged from the **file**, not from the loaded module. That matters for
+        two reasons. The module is only reloaded when an interaction reaches a
+        handler that exists, so anything keyed to loading would miss an edit
+        made by a researcher whose element has no handler yet — which is the
+        normal state of a freshly drawn element. And reading the file costs
+        nothing a researcher can feel, where reloading the module would re-run
+        its top-level code on a timer, uninvited.
 
-        if startup_fingerprint(self.interface.code_path) == self.session.startup_fingerprint:
+        The stamp gate means an untouched file is a single `stat` per check.
+        """
+        if not self.session.startup_done:
             return False
-        self.notice.show()
-        return True
+        current = file_stamp(self.interface.code_path)
+        if current == self._checked_stamp:
+            return self.notice.visible
+        self._checked_stamp = current
+
+        current = startup_fingerprint(self.interface.code_path)
+        if current is None:
+            # The file will not parse, or has no startup at all. Half-typed code
+            # is not an edited startup, and saying so mid-keystroke would train
+            # the researcher to ignore the notice. The next parse settles it.
+            return self.notice.visible
+        stale = current != self.session.startup_fingerprint
+        if stale:
+            self.notice.show()
+        self._notify_stale(stale)
+        return stale
+
+    def _notify_stale(self, stale) -> None:
+        """Let the chrome show it too, since the strip is at the other end."""
+        notify = getattr(self.app, "mark_startup_stale", None)
+        if notify is not None:
+            notify(stale)
+
+    # -- watching the file -----------------------------------------------
+
+    #: How often the code file is checked for a startup edit. Frequent enough
+    #: that saving and looking up is enough to see the notice, cheap enough that
+    #: it is one `stat` in between.
+    POLL_MS = 700
+
+    def _schedule_poll(self):
+        self._poll_id = self.frame.after(self.POLL_MS, self._poll)
+
+    def _poll(self):
+        """Notice an edit without waiting for the researcher to click something.
+
+        Saving the file is the moment they expect something to happen; making
+        them click an unrelated element first is a puzzle, not a workflow.
+        """
+        self._poll_id = None
+        if self.dispatcher is None:  # torn down between scheduling and firing
+            return
+        try:
+            self.check_startup_staleness()
+        finally:
+            if self.dispatcher is not None:
+                self._schedule_poll()
 
     def rerun_startup(self) -> bool:
         """Run `on_startup` again over the session that is already there.
@@ -156,13 +217,14 @@ class Runner:
             self.session.startup_fingerprint = startup_fingerprint(
                 self.interface.code_path
             )
+            self._checked_stamp = file_stamp(self.interface.code_path)
             self.notice.dismiss()
+            self._notify_stale(False)
         self._redraw_plots()
         return ok
 
     def _after_invoke(self):
         self._redraw_plots()
-        self.check_startup_staleness()
 
     def redraw_plots(self):
         return self._redraw_plots()

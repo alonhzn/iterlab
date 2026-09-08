@@ -151,3 +151,115 @@ def test_a_broken_file_does_not_claim_startup_changed(gui):
     _edit(gui, "def on_startup(ev):\n    ev.marker = (")
     _click(gui)
     assert not gui.built.notice.visible
+
+
+# -- how the edit gets noticed at all ------------------------------------
+
+
+def _no_handler_app(make_app):
+    app = make_app()
+    # An element with no handler written for it: the normal state of one just
+    # drawn, and the case that used to go completely unreported.
+    app.built.create_element("button", Rect(0.6, 0.1, 0.3, 0.2), tag="quiet")
+    app.interface.code_path.write_text(STARTUP_V1, encoding="utf-8")
+    app.toggle()
+    return app
+
+
+def test_clicking_an_element_with_no_handler_still_notices(make_app):
+    """Reported as "nothing happens", and this was why.
+
+    The check used to hang off the after-invoke hook, which only fires when a
+    handler actually ran. Click an element you have not written code for - which
+    is normal, and silent by design - and nothing looked at the file at all.
+    """
+    app = _no_handler_app(make_app)
+    _edit(app, STARTUP_V2)
+    app.built.handles["quiet"].widget.invoke()
+    app.root.update()
+    assert app.built.notice.visible
+
+
+def test_saving_the_file_is_enough_on_its_own(gui):
+    """No interaction at all. Saving is the moment something should happen."""
+    import time
+
+    _edit(gui, STARTUP_V2)
+    deadline = time.time() + 5
+    while time.time() < deadline and not gui.built.notice.visible:
+        gui.root.update()
+        time.sleep(0.05)
+    assert gui.built.notice.visible, "the edit was never noticed without a click"
+
+
+def test_an_untouched_file_is_never_declared_stale(gui):
+    """The poll must not cry wolf while nobody is editing anything."""
+    import time
+
+    deadline = time.time() + 2
+    while time.time() < deadline:
+        gui.root.update()
+        time.sleep(0.05)
+    assert not gui.built.notice.visible
+
+
+def test_the_poll_stops_when_the_mode_is_torn_down(gui):
+    """A timer outliving its widgets fires into a destroyed frame."""
+    runner = gui.built
+    gui.toggle()
+    assert runner._poll_id is None
+
+
+# -- the top-bar button --------------------------------------------------
+
+
+def _rerun_button(app):
+    from tkinter import ttk
+
+    buttons = [
+        w for w in app.chrome.winfo_children()
+        if isinstance(w, (app.tk.Button, ttk.Button))
+        and "Re-run" in str(w.cget("text"))
+    ]
+    assert len(buttons) == 1, f"expected one re-run button, found {len(buttons)}"
+    return buttons[0]
+
+
+def test_the_top_bar_offers_re_running_startup(gui):
+    _rerun_button(gui)  # raises if missing
+
+
+def test_it_is_disabled_until_startup_is_actually_stale(gui):
+    """The button is its own indicator: it comes alive when it would do something."""
+    assert str(_rerun_button(gui).state()) != "()" or True
+    assert "disabled" in _rerun_button(gui).state()
+
+    _edit(gui, STARTUP_V2)
+    gui.built.check_startup_staleness()
+    gui.root.update()
+    assert "disabled" not in _rerun_button(gui).state()
+
+
+def test_pressing_the_top_bar_button_applies_the_edit(gui):
+    _edit(gui, STARTUP_V2)
+    gui.built.check_startup_staleness()
+    _rerun_button(gui).invoke()
+    gui.root.update()
+    assert gui.built.ev.marker == "second"
+
+
+def test_it_goes_quiet_again_once_startup_has_re_run(gui):
+    _edit(gui, STARTUP_V2)
+    gui.built.check_startup_staleness()
+    _rerun_button(gui).invoke()
+    gui.root.update()
+    assert "disabled" in _rerun_button(gui).state()
+    assert not gui.built.notice.visible
+
+
+def test_it_is_disabled_in_the_editor(gui):
+    """Nothing is running there, so there is nothing to re-run."""
+    _edit(gui, STARTUP_V2)
+    gui.built.check_startup_staleness()
+    gui.toggle()
+    assert "disabled" in _rerun_button(gui).state()

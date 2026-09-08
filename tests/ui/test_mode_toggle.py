@@ -10,6 +10,7 @@ import pytest
 from iterlab.app import open_interface
 from iterlab.layout.schema import Rect
 from iterlab.ui.app import EDITOR, GUI
+from iterlab.ui.modetoggle import LABEL
 
 pytestmark = pytest.mark.ui
 
@@ -60,7 +61,7 @@ def _toggle_button(app):
     buttons = [
         w for w in app.chrome.winfo_children()
         if isinstance(w, (app.tk.Button, ttk.Button))
-        and "Restart" not in str(w.cget("text"))
+        and str(w.cget("text")) in set(LABEL.values())
     ]
     assert len(buttons) == 1, f"expected exactly one toggle button in chrome, found {len(buttons)}"
     return buttons[0]

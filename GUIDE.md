@@ -330,7 +330,9 @@ Every other handler takes effect on your next click, because your next click is 
 `on_startup` is the exception — it already ran, when the session began. So editing it does nothing
 at all until something re-runs it, and nothing goes wrong to tell you so.
 
-iterlab watches for this. Edit `on_startup` and a strip appears offering two ways forward:
+iterlab watches the file for it. **Save `on_startup` and, within a second, the interface says so on
+its own** — the **Re-run startup** button in the top bar comes alive, and a strip appears at the
+bottom offering:
 
 | | What it does | When you want it |
 |---|---|---|
@@ -338,8 +340,12 @@ iterlab watches for this. Edit `on_startup` and a strip appears offering two way
 | **Restart app** | Throws everything away and starts cold | When re-running would not be safe — see below |
 | **Dismiss** | Nothing. Hides the strip | When you know the edit does not matter yet |
 
+You do not have to click anything for this to appear, and it does not matter whether the element you
+click has a handler. Saving is enough.
+
 The notice also appears if you edit a **function that `on_startup` calls**, since that changes what
-startup does just as surely. Editing an ordinary handler never raises it.
+startup does just as surely. Editing an ordinary handler never raises it, and neither does a file
+caught mid-keystroke that will not parse yet.
 
 **When re-running is not safe.** Re-running does not clear anything first, so startup code that
 *accumulates* will do it twice:
@@ -403,5 +409,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 0.15.0.** Everything above is verified against that release. If a description here
+**Guide version 0.16.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

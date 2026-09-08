@@ -43,11 +43,15 @@ class NotDefined:
 NOT_DEFINED = NotDefined()
 
 
-def _stamp(path: Path):
+def stamp(path):
     """(mtime_ns, size). Both, because mtime granularity is coarse on some
-    filesystems and a fast edit could otherwise be missed (R2)."""
+    filesystems and a fast edit could otherwise be missed (R2).
+
+    Public because noticing an edited file is not only the loader's business:
+    the startup check needs the same question answered without loading anything.
+    """
     try:
-        st = path.stat()
+        st = Path(path).stat()
     except OSError:
         return None
     return (st.st_mtime_ns, st.st_size)
@@ -79,15 +83,11 @@ class ModuleLoader:
         self.stamp = None
         self.state = UNLOADED
         self.load_error = None
-        #: Bumped every time the file is actually re-executed. Lets a caller ask
-        #: "has this been reloaded since I last looked?" without re-reading the
-        #: file, so per-click work stays proportional to edits, not to clicks.
-        self.generation = 0
 
     # -- freshness -------------------------------------------------------
 
     def has_changed(self) -> bool:
-        return _stamp(self.path) != self.stamp
+        return stamp(self.path) != self.stamp
 
     def refresh(self) -> bool:
         """Load or reload if the file changed. Returns True if it is usable now.
@@ -101,7 +101,7 @@ class ModuleLoader:
         return self._load()
 
     def _load(self) -> bool:
-        stamp = _stamp(self.path)
+        current = stamp(self.path)
         try:
             spec = importlib.util.spec_from_file_location(self.module_name, self.path)
             if spec is None or spec.loader is None:
@@ -120,14 +120,13 @@ class ModuleLoader:
             sys.modules.pop(self.module_name, None)
             self.state = BROKEN
             self.load_error = exc
-            self.stamp = stamp
+            self.stamp = current
             return False
 
         self.module = module
-        self.stamp = stamp
+        self.stamp = current
         self.state = CURRENT
         self.load_error = None
-        self.generation += 1
         return True
 
     # -- resolution ------------------------------------------------------

@@ -161,6 +161,19 @@ class App:
         self.build(GUI)
         self._mode_toggle.refresh()
 
+    def rerun_startup(self) -> bool:
+        """Run `on_startup` again over the live session, keeping the data.
+
+        Delegates to GUI mode, which owns the dispatcher. Meaningless in the
+        editor, where nothing is running.
+        """
+        rerun = getattr(self._built, "rerun_startup", None)
+        return False if rerun is None else bool(rerun())
+
+    def mark_startup_stale(self, stale) -> None:
+        """Let the chrome reflect that `on_startup` has been edited."""
+        self._mode_toggle.set_startup_stale(stale)
+
     def restart_app(self) -> None:
         """Restart cold: everything from disk, as if freshly launched.
 

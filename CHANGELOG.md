@@ -6,6 +6,46 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.16.0] — unreleased
+
+### Fixed
+
+- **An edited `on_startup` was often not noticed at all.** Reported as "nothing
+  happens", and there were two independent reasons, either of which was enough
+  on its own:
+
+  1. The check hung off the dispatcher's after-invoke hook, which fires only
+     when a handler actually ran. Clicking an element you have not written code
+     for — normal, and silent by design — never looked at the file. So the
+     notice appeared only if you happened to click something that already had a
+     handler.
+  2. Nothing checked without an interaction at all. Saving the file and looking
+     at the window did nothing, which is exactly when a researcher expects
+     something to happen.
+
+  The check now runs before *every* interaction whatever it goes on to do, and
+  a 700 ms poll notices a save on its own. It reads the file rather than the
+  loaded module — deliberately, since reloading on a timer would re-run
+  module-level code uninvited, and since the module is only reloaded when an
+  interaction reaches a handler that exists.
+
+### Added
+
+- **A "Re-run startup" button in the top bar**, as requested. Enabled only when
+  startup has actually been edited, so the button is its own indicator: save the
+  file, look up, and it has come alive. It runs the new startup over the session
+  already in memory, so the data survives.
+
+### Changed
+
+- The notice's second action is now **Restart app**, the same restart the top
+  bar offers, rather than a separate session-only restart. One restart concept
+  in the interface rather than two whose difference is invisible.
+- `ModuleLoader.generation`, added in 0.13.0, is gone. The staleness check is
+  keyed to the file's own (mtime, size) instead, which is what let it work
+  without loading anything — and an API with one caller that no longer needs it
+  is better deleted than kept.
+
 ## [0.15.0] — unreleased
 
 ### Changed

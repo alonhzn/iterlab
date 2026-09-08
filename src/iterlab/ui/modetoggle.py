@@ -39,6 +39,15 @@ class ModeToggle:
         # because re-reading a hand-edited layout file is worth having while
         # editing too, and because a control that vanishes is worse than one
         # that is occasionally not needed.
+        # The cheap one: re-runs on_startup over the session already in memory,
+        # so the data survives. Enabled only when startup has actually been
+        # edited, which makes the button its own indicator - a researcher who
+        # saves and looks up sees it come alive, without reading a banner.
+        self.rerun = ttk.Button(
+            app.chrome, text="Re-run startup", command=app.rerun_startup
+        )
+        self.rerun.pack(side="left", padx=(2, 0))
+
         self.restart = ttk.Button(
             app.chrome, text="Restart app", command=app.restart_app
         )
@@ -49,6 +58,11 @@ class ModeToggle:
         )
         self.caption.pack(side="left", padx=8)
 
+        self.startup_stale = False
+        self.refresh()
+
+    def set_startup_stale(self, stale) -> None:
+        self.startup_stale = bool(stale)
         self.refresh()
 
     def _on_click(self):
@@ -60,4 +74,10 @@ class ModeToggle:
         mode = self.app.mode
         self.button.configure(text=LABEL[mode])
         self.caption.configure(text=CAPTION[mode])
+        # Only offered when it would do something: in GUI mode, with an edit to
+        # apply. A button that is always available teaches nothing about when it
+        # matters, and this one matters at exactly one moment.
+        live = mode == GUI and self.startup_stale
+        self.rerun.state(["!disabled"] if live else ["disabled"])
+        self.rerun.configure(style="Accent.TButton" if live else "TButton")
 
