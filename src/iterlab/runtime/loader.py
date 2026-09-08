@@ -63,6 +63,10 @@ class ModuleLoader:
         self.stamp = None
         self.state = UNLOADED
         self.load_error = None
+        #: Bumped every time the file is actually re-executed. Lets a caller ask
+        #: "has this been reloaded since I last looked?" without re-reading the
+        #: file, so per-click work stays proportional to edits, not to clicks.
+        self.generation = 0
 
     # -- freshness -------------------------------------------------------
 
@@ -107,6 +111,7 @@ class ModuleLoader:
         self.stamp = stamp
         self.state = CURRENT
         self.load_error = None
+        self.generation += 1
         return True
 
     # -- resolution ------------------------------------------------------

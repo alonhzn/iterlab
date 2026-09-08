@@ -6,6 +6,46 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.13.0] — unreleased
+
+### Added
+
+- **An edited `on_startup` is now noticed and offered back.** Every other
+  handler takes effect on the next click because the next click runs it;
+  startup already ran, so editing it did nothing at all and nothing said so.
+  Nothing raises, so no fault appeared — the code simply never ran, which is
+  the most expensive silence this tool can produce.
+
+  A strip now appears offering **Re-run startup** (keeps `ev` and everything on
+  it) and **Restart session** (discards it). Both are offered rather than one
+  chosen, because whether re-running is safe depends on the researcher's code:
+  `ev.x = load(...)` rebinds and is safe, `ev.log.append(...)` is not. Dismissing
+  hides the strip without marking the edit accepted, so a further edit raises it
+  again — ignoring one edit must not make the next one silent.
+
+- `runtime/startupcheck.py`. What counts as "startup changed" is narrower than
+  "the file changed" — otherwise every handler edit would cry wolf — and wider
+  than "the text of `on_startup` changed", because startup's behaviour lives
+  partly in the module-level helpers it calls. The fingerprint covers
+  `on_startup` plus every module-level function transitively reachable from it,
+  compared as parsed structure so reformatting and comments cost nothing. A
+  file mid-edit that will not parse fingerprints as `None` and raises no alarm.
+
+- `ModuleLoader.generation`, so a caller can ask "has this reloaded since I last
+  looked?" without re-reading the file. The staleness check is therefore
+  proportional to edits, not to clicks.
+
+### Notes
+
+- **New imports already worked** and needed no change: the loader executes the
+  module fresh rather than calling `importlib.reload`, so an `import` line added
+  to a live file runs on the next reload. Verified rather than assumed.
+- **Edits to the researcher's own helper modules do not take effect.** If
+  `demo.py` does `import fitting` and `fitting.py` is then edited, the change is
+  silently ignored, because `fitting` is already in `sys.modules` and the import
+  statement binds the cached module. Same silent-staleness family as the defect
+  fixed above; not addressed here.
+
 ## [0.12.0] — unreleased
 
 ### Changed

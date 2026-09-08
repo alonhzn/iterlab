@@ -30,6 +30,9 @@ class Session:
     def __init__(self):
         self.ev = Ev()
         self.startup_done = False
+        #: Fingerprint of the startup code as it was when it last ran, so an
+        #: edit to it can be noticed and offered rather than silently ignored.
+        self.startup_fingerprint = None
         self._figures = {}
 
     # -- plot figures ----------------------------------------------------
@@ -86,4 +89,5 @@ class Session:
         """
         self.ev = Ev()
         self.startup_done = False
+        self.startup_fingerprint = None
         self._figures.clear()

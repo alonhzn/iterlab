@@ -306,15 +306,48 @@ Almost nothing. For completeness:
 | Adding a new handler | Next click |
 | Fixing a syntax error | Next click |
 | Moving, restyling, adding or deleting an element | Toggle back to GUI mode. Nothing is lost |
-| Editing `on_startup` | **Restart session** — the only thing here that costs you your data |
+| Editing `on_startup` | iterlab notices and offers to re-run it — see below |
 
 **Switching modes costs you nothing.** Your data stays on `ev`, your plots keep what you drew on
 them, and `on_startup` does not run again. Draw a new button, come back, and the session you were
 in the middle of is still there.
 
-That is also why editing `on_startup` needs the **Restart session** button next to the toggle: it
-throws the session away and runs startup again, which is the whole point of it and the reason it is
-a separate button rather than something a toggle does behind your back.
+### When you edit `on_startup`
+
+Every other handler takes effect on your next click, because your next click is what runs it.
+`on_startup` is the exception — it already ran, when the session began. So editing it does nothing
+at all until something re-runs it, and nothing goes wrong to tell you so.
+
+iterlab watches for this. Edit `on_startup` and a strip appears offering two ways forward:
+
+| | What it does | When you want it |
+|---|---|---|
+| **Re-run startup** | Runs the new `on_startup` over the session you already have. Your data stays | Almost always. This is the cheap one |
+| **Restart session** | Throws `ev` away and starts over | When re-running would not be safe — see below |
+| **Dismiss** | Nothing. Hides the strip | When you know the edit does not matter yet |
+
+The notice also appears if you edit a **function that `on_startup` calls**, since that changes what
+startup does just as surely. Editing an ordinary handler never raises it.
+
+**When re-running is not safe.** Re-running does not clear anything first, so startup code that
+*accumulates* will do it twice:
+
+```python
+def on_startup(ev):
+    ev.x = np.loadtxt("huge.csv")   # safe to re-run: assigning replaces
+    ev.log.append("started")        # NOT safe: appending adds a second entry
+    ev.conn = open_connection()     # NOT safe unless it closes the old one
+```
+
+The idiom this guide teaches — assign onto `ev` — is safe. If yours accumulates, use **Restart
+session** instead. iterlab offers both rather than choosing for you, because only your code knows
+which it is.
+
+Dismissing does not mark the edit as accepted: change `on_startup` again and the notice comes back.
+
+That is also why **Restart session** sits next to the toggle as well: it throws the session away and
+runs startup again, and it is a button you press rather than something a toggle does behind your
+back.
 
 ---
 
@@ -345,5 +378,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 0.12.0.** Everything above is verified against that release. If a description here
+**Guide version 0.13.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

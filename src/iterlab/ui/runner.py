@@ -12,8 +12,10 @@ import tkinter as tk
 from ..runtime.dispatch import Dispatcher
 from ..runtime.faults import ConsoleFaultSink, MultiSink
 from ..runtime.loader import ModuleLoader
+from ..runtime.startupcheck import fingerprint as startup_fingerprint
 from . import elements as element_factory
 from .faultbanner import FaultBanner
+from .startupnotice import StartupNotice
 
 
 class Runner:
@@ -28,6 +30,15 @@ class Runner:
         self.frame.pack(fill="both", expand=True)
 
         self.banner = FaultBanner(self.frame)
+        self.notice = StartupNotice(
+            self.frame, on_rerun=self.rerun_startup, on_restart=app.restart_session
+        )
+        #: The loader generation this runner has already inspected, so the file
+        #: is re-parsed once per edit rather than once per click. None rather
+        #: than 0 so the first check always happens: returning from the editor
+        #: builds a runner whose loader has not loaded anything yet, and the
+        #: file may well have been edited while the editor was open.
+        self._checked_generation = None
         self.sink = MultiSink(ConsoleFaultSink(), self.banner, *extra_sinks)
 
         # Elements deleted while in the editor leave nothing behind.
@@ -39,12 +50,14 @@ class Runner:
             self.ev,
             self.sink,
             before_invoke=self.ensure_startup,
-            after_invoke=self._redraw_plots,
+            after_invoke=self._after_invoke,
         )
 
         self.handles = {}
         self._build_elements()
         self.run_startup()
+        # A file edited while the editor was open is an edit like any other.
+        self.check_startup_staleness()
 
     def teardown(self):
         """Drop the widgets. The session — `ev`, figures, startup — survives.
@@ -91,6 +104,12 @@ class Runner:
         ok = self.dispatcher.invoke("on_startup", args=(self.ev,))
         if ok:
             self.session.startup_done = True
+            # Recorded from the file rather than from what ran, so that an edit
+            # made *while* startup was running is still noticed afterwards.
+            self.session.startup_fingerprint = startup_fingerprint(
+                self.interface.code_path
+            )
+            self._checked_generation = self.loader.generation
         self._redraw_plots()
         return ok
 
@@ -98,6 +117,52 @@ class Runner:
         """Called before each interaction, for the deferred-first-run case."""
         if not self.session.startup_done:
             self.run_startup()
+
+    # -- staleness -------------------------------------------------------
+
+    def check_startup_staleness(self) -> bool:
+        """Raise the notice if `on_startup` has changed since it ran.
+
+        Only after a real reload: the generation check means an untouched file
+        costs nothing, however many times it is clicked.
+        """
+        if not self.session.startup_done or self.loader is None:
+            return False
+        if self.loader.generation == self._checked_generation:
+            return self.notice.visible
+        self._checked_generation = self.loader.generation
+
+        if startup_fingerprint(self.interface.code_path) == self.session.startup_fingerprint:
+            return False
+        self.notice.show()
+        return True
+
+    def rerun_startup(self) -> bool:
+        """Run `on_startup` again over the session that is already there.
+
+        Deliberately *not* a restart. The researcher keeps everything on `ev`,
+        which is the point — re-running is worth offering precisely because it
+        does not cost the data load that a restart costs.
+
+        The trade is theirs to make, and it is a real one: startup code that
+        appends rather than assigns, or opens a connection rather than replacing
+        one, will do it twice. `ev.x = load(...)` rebinds and is safe, which is
+        the idiom the guide teaches; `ev.log.append(...)` is not. That is why
+        this is offered next to a restart rather than done automatically.
+        """
+        ok = self.dispatcher.invoke("on_startup", args=(self.ev,))
+        if ok:
+            self.session.startup_done = True
+            self.session.startup_fingerprint = startup_fingerprint(
+                self.interface.code_path
+            )
+            self.notice.dismiss()
+        self._redraw_plots()
+        return ok
+
+    def _after_invoke(self):
+        self._redraw_plots()
+        self.check_startup_staleness()
 
     def redraw_plots(self):
         return self._redraw_plots()
