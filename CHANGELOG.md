@@ -6,6 +6,23 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.4.0] — unreleased
+
+### Fixed
+
+- A button responded only to the left mouse button. Middle and right clicks did
+  not reach the handler at all — Tk's `command` option fires for button 1 only,
+  and nothing else was bound. The event also reported `"left"` unconditionally,
+  since the value was hardcoded rather than read from the click. All three
+  buttons now fire the handler and `event.button` says which one.
+- Removed `_bind_tk_events`, which was written but never called.
+
+### Changed
+
+- The generated stub for a plot area now prints which mouse button was used
+  alongside the coordinates, and its comment lists the possible values. The
+  button was always available on the event; nothing advertised it.
+
 ## [0.3.0] — unreleased
 
 ### Changed

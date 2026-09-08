@@ -71,3 +71,23 @@ def test_atomic_write_leaves_no_temp_files(tmp_path):
     templates.atomic_write(target, "x = 1\n")
     assert [p.name for p in tmp_path.iterdir()] == ["demo.py"]
     assert target.read_text(encoding="utf-8") == "x = 1\n"
+
+
+def test_plot_stub_reports_which_mouse_button_was_clicked():
+    """A click on a plot carries a button as well as coordinates, and the
+    generated stub should show the researcher that it is there."""
+    text = templates.default_stub(_element("spectrum", "plot_area"))
+    printed = next(line for line in text.splitlines() if "print(" in line)
+    assert "event.button" in printed
+    assert "event.x" in printed and "event.y" in printed
+
+
+def test_plot_stub_documents_the_button_values():
+    text = templates.default_stub(_element("spectrum", "plot_area"))
+    assert '"left", "middle" or "right"' in text
+
+
+def test_both_stubs_expose_the_button():
+    for type_ in ("button", "plot_area"):
+        text = templates.default_stub(_element("thing", type_))
+        assert "event.button" in text, f"{type_} stub hides the mouse button"

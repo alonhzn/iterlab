@@ -38,10 +38,11 @@ def on_clicked_{name}(ev, event):
 _PLOT_STUB = '''
 
 def on_clicked_{name}(ev, event):
-    # Runs when you click inside {name}.
+    # Runs when you click inside {name}, with any mouse button.
     # event.x and event.y are in the plot's own data coordinates, not pixels.
+    # event.button is "left", "middle" or "right".
     # Delete this function if you don't need it — nothing will break.
-    print(f"{name} clicked at ({{event.x}}, {{event.y}})")
+    print(f"{name} clicked with the {{event.button}} button at ({{event.x}}, {{event.y}})")
 '''
 
 _STUBS = {"button": _BUTTON_STUB, "plot_area": _PLOT_STUB}

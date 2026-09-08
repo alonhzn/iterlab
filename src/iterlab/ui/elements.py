@@ -24,7 +24,6 @@ from ..runtime.dispatch import Event
 BASE_FONT_SIZE = 10
 
 _MPL_BUTTON = {1: "left", 2: "middle", 3: "right"}
-_TK_BUTTON = {1: "left", 2: "middle", 3: "right"}
 
 
 def base_font():
@@ -67,44 +66,35 @@ class ButtonHandle(ElementHandle):
         self.widget.configure(text=text)
 
 
-def _bind_tk_events(widget, element, dispatcher):
-    """Universal interaction set on a Tk control (FR-017a)."""
+def build_button(parent, element, dispatcher):
+    """A Tk button that responds to all three mouse buttons.
+
+    Tk's own `command` option fires only for button 1, so middle and right
+    clicks need their own bindings. `command` is kept for the left button
+    rather than replaced with a <ButtonRelease-1> binding, because it is what
+    `Button.invoke()` drives — the canonical way to activate a button, and the
+    one tests use. Binding release-1 as well would fire the handler twice.
+
+    All three use release rather than press, so every mouse button behaves the
+    same way: the click counts when it completes on the widget.
+    """
+    widget = tk.Button(parent, text=element.label or element.name, font=base_font())
     name = element.name
 
-    def fire(kind, **kwargs):
-        dispatcher.invoke(f"on_{kind}_{name}", Event(kind=kind, element=name, **kwargs))
+    def fire(kind, **fields):
+        dispatcher.invoke(
+            f"on_{kind}_{name}", Event(kind=kind, element=name, **fields)
+        )
 
-    widget.bind("<Button-1>", lambda e: fire("clicked", button=_TK_BUTTON.get(e.num, "left")))
-    widget.bind("<Button-2>", lambda e: fire("clicked", button="middle"))
-    widget.bind("<Button-3>", lambda e: fire("clicked", button="right"))
-    widget.bind("<Double-Button-1>", lambda e: fire("clicked", button="left", double=True))
-    widget.bind("<Enter>", lambda e: fire("hover"))
-    widget.bind("<Motion>", lambda e: fire("motion"))
+    widget.configure(command=lambda: fire("clicked", button="left"))
+    widget.bind("<ButtonRelease-2>", lambda _e: fire("clicked", button="middle"))
+    widget.bind("<ButtonRelease-3>", lambda _e: fire("clicked", button="right"))
+    widget.bind("<Double-Button-1>", lambda _e: fire("clicked", button="left", double=True))
+
+    widget.bind("<Enter>", lambda _e: fire("hover"))
+    widget.bind("<Motion>", lambda _e: fire("motion"))
     widget.bind("<Key>", lambda e: fire("key", key=e.keysym))
 
-
-def build_button(parent, element, dispatcher):
-    widget = tk.Button(parent, text=element.label or element.name, font=base_font())
-    # The click handler goes through `command` so that Button.invoke() in tests
-    # exercises the same path a real click does.
-    widget.configure(
-        command=lambda: dispatcher.invoke(
-            f"on_clicked_{element.name}",
-            Event(kind="clicked", element=element.name, button="left"),
-        )
-    )
-    for sequence, kind in (("<Enter>", "hover"), ("<Motion>", "motion"), ("<Key>", "key")):
-        widget.bind(
-            sequence,
-            lambda e, k=kind: dispatcher.invoke(
-                f"on_{k}_{element.name}",
-                Event(
-                    kind=k,
-                    element=element.name,
-                    key=getattr(e, "keysym", None) if k == "key" else None,
-                ),
-            ),
-        )
     place(widget, element.position)
     return ButtonHandle(element, widget)
 
