@@ -84,6 +84,22 @@ class PropertiesPanel:
 
     # -- applying --------------------------------------------------------
 
+    def focus_name(self):
+        """Put the cursor in the name field with the default selected.
+
+        This is how a newly drawn element offers its name (FR-005a): the
+        default is already there, so accepting it needs no typing, and typing
+        replaces it. A modal dialog would also satisfy the requirement, but it
+        stops the researcher on every single placement - and it stops an
+        automated test suite dead.
+        """
+        entry = self._entries.get("name")
+        if entry is None:
+            return
+        entry.focus_set()
+        entry.selection_range(0, "end")
+        entry.icursor("end")
+
     def values(self):
         return {k: e.get() for k, e in self._entries.items()}
 

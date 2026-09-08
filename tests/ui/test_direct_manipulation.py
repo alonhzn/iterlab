@@ -230,15 +230,38 @@ def test_hover_does_not_fight_an_in_flight_drag(designer):
 
 
 def test_dragging_empty_canvas_still_creates(designer):
+    designer.palette.selected.set("button")
     designer.select(None)
-    designer._on_press(_Event(300, 60))
-    designer._on_drag(_Event(380, 140))
-    designer.create_element("button", designer._to_fractions(300, 60, 380, 140), name="made")
-    designer._on_release(_Event(380, 140))
-    assert "made" in designer.layout.names()
+    _drag(designer, (250, 40), (390, 160))
+    assert "button_0" in designer.layout.names()
 
 
-def test_a_tiny_drag_counts_as_a_click(designer, no_name_dialog):
+def test_creating_needs_no_dialog_and_focuses_the_name_field(designer):
+    """Placing an element must never stop to ask a question.
+
+    A modal here would satisfy FR-005a but would also make the test suite
+    unrunnable without a human, which disqualifies it as a release gate.
+    """
+    designer.palette.selected.set("button")
+    designer.select(None)
+    _drag(designer, (300, 100), (300, 100))
+
+    entry = designer.properties._entries["name"]
+    assert entry.get() == "button_0", "the default is pre-filled"
+    assert entry.selection_present(), "and selected, so typing replaces it"
+
+    # Focus can only be queried on a mapped window; an unmapped one reports None.
+    designer.app.root.deiconify()
+    try:
+        designer.app.root.update()
+        designer.properties.focus_name()
+        designer.app.root.update()
+        assert entry.focus_get() is entry, "the cursor is already in the name field"
+    finally:
+        designer.app.root.withdraw()
+
+
+def test_a_tiny_drag_counts_as_a_click(designer):
     """A wobble while clicking should not produce a sliver of an element."""
     from iterlab.layout.schema import DEFAULT_SIZE
 
@@ -252,17 +275,7 @@ def test_a_tiny_drag_counts_as_a_click(designer, no_name_dialog):
 # -- click to place at a default size ---------------------------------------
 
 
-@pytest.fixture
-def no_name_dialog(monkeypatch):
-    """Accept the pre-filled name instead of blocking on the modal."""
-    import iterlab.ui.designer as designer_module
-
-    monkeypatch.setattr(
-        designer_module.simpledialog, "askstring", lambda *a, **k: k.get("initialvalue")
-    )
-
-
-def test_clicking_empty_canvas_places_a_default_sized_element(designer, no_name_dialog):
+def test_clicking_empty_canvas_places_a_default_sized_element(designer):
     from iterlab.layout.schema import DEFAULT_SIZE
 
     designer.palette.selected.set("button")
@@ -274,7 +287,7 @@ def test_clicking_empty_canvas_places_a_default_sized_element(designer, no_name_
     assert (placed.width, placed.height) == pytest.approx(DEFAULT_SIZE["button"])
 
 
-def test_a_clicked_element_is_centred_on_the_click(designer, no_name_dialog):
+def test_a_clicked_element_is_centred_on_the_click(designer):
     designer.palette.selected.set("button")
     designer.select(None)
     # Clearly off the "go" fixture element, which occupies x 100-200, y 200-300.
@@ -287,7 +300,7 @@ def test_a_clicked_element_is_centred_on_the_click(designer, no_name_dialog):
     assert centre_y == pytest.approx(1.0 - 120 / CANVAS_H, abs=1e-3)
 
 
-def test_the_palette_decides_what_a_click_places(designer, no_name_dialog):
+def test_the_palette_decides_what_a_click_places(designer):
     from iterlab.layout.schema import DEFAULT_SIZE
 
     designer.palette.selected.set("plot_area")
@@ -301,7 +314,7 @@ def test_the_palette_decides_what_a_click_places(designer, no_name_dialog):
     )
 
 
-def test_a_click_near_the_edge_stays_fully_on_the_canvas(designer, no_name_dialog):
+def test_a_click_near_the_edge_stays_fully_on_the_canvas(designer):
     designer.palette.selected.set("plot_area")
     designer.select(None)
     _drag(designer, (5, 395), (5, 395))  # bottom-left corner
@@ -313,7 +326,7 @@ def test_a_click_near_the_edge_stays_fully_on_the_canvas(designer, no_name_dialo
     assert placed.bottom + placed.height <= 1.0 + 1e-9
 
 
-def test_a_real_drag_still_wins_over_the_default_size(designer, no_name_dialog):
+def test_a_real_drag_still_wins_over_the_default_size(designer):
     designer.palette.selected.set("button")
     designer.select(None)
     _drag(designer, (250, 60), (390, 180))

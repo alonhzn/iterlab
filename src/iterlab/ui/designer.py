@@ -21,7 +21,6 @@ points up.
 from __future__ import annotations
 
 import tkinter as tk
-from tkinter import simpledialog
 
 from ..codegen import inject
 from ..codegen import rename as rename_mod
@@ -415,18 +414,12 @@ class Designer:
         self.redraw()
 
     def create_element(self, element_type, rect, name=None):
-        """Draw one element: layout, then stub, then redraw."""
+        """Draw one element: layout, then stub, then redraw.
+
+        Named automatically and selected with the name field focused, so the
+        default can be accepted by doing nothing or replaced by typing.
+        """
         suggested = name or self.layout.next_name(element_type)
-        if name is None:
-            typed = simpledialog.askstring(
-                "Name this element",
-                f"Name for the new {element_type}:",
-                initialvalue=suggested,
-                parent=self.app.root,
-            )
-            if typed is None:
-                return None
-            suggested = typed.strip() or suggested
         try:
             validate_name(suggested, existing=self.layout.elements)
         except IterlabError as exc:
@@ -450,6 +443,9 @@ class Designer:
             # rather than appending blindly and risking a duplicate definition.
             self.properties._show_message(f"{exc} The element was added anyway.")
         self.select(element.name)
+        # The name is offered in the properties panel rather than a modal:
+        # placing an element should not stop to ask a question (FR-005a).
+        self.properties.focus_name()
         return element
 
     def delete_selected(self):

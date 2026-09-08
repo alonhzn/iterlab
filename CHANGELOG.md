@@ -6,6 +6,25 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.3.0] — unreleased
+
+### Changed
+
+- Placing an element no longer opens a modal asking for its name. The element
+  is created with its default name, selected, and the properties panel's name
+  field is focused with the text selected — so accepting the default needs no
+  typing and replacing it needs no extra click. This still satisfies FR-005a,
+  and it removes a dialog that stopped the researcher on every placement.
+
+### Fixed
+
+- The test suite could stop and wait for a human. One code path opened a modal
+  that no test stubbed, which made the suite unrunnable unattended and so
+  disqualified it as a release gate (Principle VII, Gate 1). The dialog is
+  gone, and `tests/conftest.py` now makes any modal — dialog, message box or
+  file chooser — raise instead of block, so a future one fails loudly rather
+  than appearing to hang.
+
 ## [0.2.0] — unreleased
 
 Everything found by the first hands-on session with the application. Each of the
