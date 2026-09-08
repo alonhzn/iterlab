@@ -6,6 +6,26 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.7.0] — unreleased
+
+### Fixed
+
+- Resize cursors did nothing on Linux. `size_nw_se` and `size_ne_sw` are Tk's
+  Windows-only names; X11 has no such cursors, so every diagonal handle showed
+  no pointer change at all. The guard in `_set_cursor` caught the error and
+  said nothing. Replaced with X11 corner names, which all three platforms
+  accept — and which give each corner its own cursor rather than sharing one
+  across a diagonal. Found by CI on Linux.
+
+### Added
+
+- `tools/verify.py` builds a throwaway interface for the manual verification
+  pass: a plot, a label and two buttons, with research code that loads slowly,
+  plots, and fails on demand. It removes the setup from Gate 2, which was the
+  real reason the pass had never been done.
+- A test asserting every cursor name is valid on the running platform. Tk
+  silently ignores an unknown one, so nothing else would report it.
+
 ## [0.6.0] — unreleased
 
 ### Added

@@ -212,13 +212,56 @@ def test_moving_and_resizing_never_touch_the_code_file(designer):
 # -- pointer feedback -------------------------------------------------------
 
 
+def test_every_cursor_name_is_valid_on_this_platform(designer):
+    """Tk rejects an unknown cursor name, and _set_cursor swallows that.
+
+    Windows accepts `size_nw_se`; X11 does not, so on Linux every diagonal
+    resize handle silently showed no cursor at all and nothing said so. CI
+    found it. This asserts the names are real wherever the suite runs.
+    """
+    import tkinter
+
+    from iterlab.ui.designer import CREATE_CURSOR, CURSORS, MOVE_CURSOR
+
+    rejected = []
+    for name in set(CURSORS.values()) | {MOVE_CURSOR, CREATE_CURSOR}:
+        try:
+            designer.canvas.configure(cursor=name)
+        except tkinter.TclError:
+            rejected.append(name)
+    assert not rejected, f"not valid cursor names on this platform: {rejected}"
+
+
 def test_hovering_reports_what_a_press_would_do(designer):
+    from iterlab.ui.designer import CREATE_CURSOR, CURSORS, MOVE_CURSOR
+
     designer._on_hover(_Event(100, 200))
-    assert designer._cursor == "size_nw_se", "over a corner handle"
+    assert designer._cursor == CURSORS["nw"], "over a corner handle"
     designer._on_hover(_Event(150, 250))
-    assert designer._cursor == "fleur", "inside the element"
+    assert designer._cursor == MOVE_CURSOR, "inside the element"
     designer._on_hover(_Event(370, 60))
-    assert designer._cursor == "crosshair", "empty canvas"
+    assert designer._cursor == CREATE_CURSOR, "empty canvas"
+
+
+def test_each_corner_gets_its_own_cursor(designer):
+    """Corner-shaped cursors, one per corner.
+
+    The Windows-only `size_nw_se` shared a cursor across a diagonal; the X11
+    corner names do not, so each corner points at itself. More informative, and
+    it works on every platform.
+    """
+    from iterlab.ui.designer import CURSORS
+
+    corners = {CURSORS[c] for c in ("nw", "ne", "sw", "se")}
+    assert len(corners) == 4, f"corners should be distinguishable, got {corners}"
+
+
+def test_opposite_edges_share_an_axis_cursor(designer):
+    from iterlab.ui.designer import CURSORS
+
+    assert CURSORS["n"] == CURSORS["s"]
+    assert CURSORS["w"] == CURSORS["e"]
+    assert CURSORS["n"] != CURSORS["w"]
 
 
 def test_hover_does_not_fight_an_in_flight_drag(designer):

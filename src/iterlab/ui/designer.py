@@ -52,14 +52,19 @@ MIN_SIZE_PIXELS = 16
 #: for its type, centred where you clicked.
 MIN_DRAG_PIXELS = 12
 
-#: Which pointer to show over each handle. These are X11 cursor names, which Tk
-#: maps on every platform — though not every platform honours every one, hence
-#: the guarded _set_cursor below.
+#: Which pointer to show over each handle.
+#:
+#: X11 cursor-font names throughout. Tk on Windows also accepts its own
+#: `size_nw_se` / `size_ne_sw`, and those were used here first — but X11 does
+#: not have them, so on Linux every diagonal handle silently showed no cursor
+#: at all. The guard in _set_cursor caught the error; nothing reported it.
+#: These names work on all three platforms, and
+#: test_every_cursor_name_is_valid_on_this_platform keeps it that way.
 CURSORS = {
-    "nw": "size_nw_se",
-    "se": "size_nw_se",
-    "ne": "size_ne_sw",
-    "sw": "size_ne_sw",
+    "nw": "top_left_corner",
+    "ne": "top_right_corner",
+    "sw": "bottom_left_corner",
+    "se": "bottom_right_corner",
     "n": "sb_v_double_arrow",
     "s": "sb_v_double_arrow",
     "w": "sb_h_double_arrow",

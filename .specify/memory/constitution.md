@@ -408,16 +408,28 @@ internal structure, private helpers, or the wording of generated comments is not
 
 ### Version rules
 
+**While the package is below 1.0.0**, every change to the code MUST bump the MINOR version, no
+matter how small. Not every release, and not every meaningful change — **every change**.
+
+This deliberately abandons the usual MINOR/PATCH distinction for the pre-1.0 period, and the
+reason is that the distinction buys nothing yet while the version number buys a great deal. The
+project is being tested by hand, by one person, against builds that change several times an hour.
+The question that actually gets asked is *"is the thing in front of me the thing I just changed?"*,
+and a version that moves on every change answers it. A version that moves only on
+release-worthy changes does not, and the cost of guessing wrong is a bug hunt in the wrong build.
+
+Breaking changes MAY also occur in a MINOR bump while below 1.0.0, as semantic versioning permits
+for 0.x. They MUST still be announced in the changelog with migration instructions — "it's 0.x" is
+licence to break compatibility, not licence to break it silently.
+
+**On reaching 1.0.0** the ordinary rules take over, and items 1 through 5 above become frozen
+under MAJOR-only:
+
 - **MAJOR**: any break to the surface above. Reserved for cases where the alternative is worse
   than the migration cost, and never taken for tidiness.
 - **MINOR**: new element types, new properties, new capabilities, and any addition that leaves
   every existing interface working untouched.
 - **PATCH**: fixes and internal improvements with no surface change.
-
-**While the package is below 1.0.0**, breaking changes MAY occur in a MINOR bump, as semantic
-versioning permits. They MUST still be announced in the changelog with migration instructions —
-"it's 0.x" is licence to break compatibility, not licence to break it silently. On reaching
-1.0.0, items 1 through 5 above become frozen under MAJOR-only.
 
 ### Compatibility obligations
 

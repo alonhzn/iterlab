@@ -16,16 +16,31 @@ exemption, no override of either gate.
 
 ---
 
+## How to do a pass
+
+```console
+python tools/verify.py
+```
+
+That builds a throwaway interface — a plot, a label and two buttons — with research code that
+loads slowly, plots, and fails on demand, then opens it. Everything is in a temporary directory and
+is deleted when you close the window, so none of your own work is touched. Keep this file open
+beside it.
+
+Budget about ten minutes. When you are done, add a row to *Recorded results* and say what you
+found. **A pass that was not recorded did not happen** — that is the rule that stops this decaying
+into "we looked at it once".
+
 ## Checklist
 
-Work through these in a real session on a real display. Every item is here because a machine can
-confirm the mechanism but not the *experience*.
+Every item is here because a machine can confirm the mechanism but not the *experience*. Items
+marked **[!]** are the ones most likely to be wrong and least likely to be caught by Gate 1.
 
 ### Look and layout
 
 | # | What to do | Pass means | Why a machine cannot say |
 |---|---|---|---|
-| 1 | Draw a plot and two buttons; toggle to GUI mode | The arrangement matches what you drew, with nothing overlapping or clipped | Tests assert coordinates; they cannot judge whether it *looks* like the sketch |
+| 1 | Toggle to GUI mode | The arrangement matches what you drew, with nothing overlapping or clipped | Tests assert coordinates; they cannot judge whether it *looks* like the sketch |
 | 2 | Resize the window from small to full screen and back | Elements stay proportional; button labels and axis text stay readable at both extremes | `relwidth` is asserted automatically; legibility is a human judgement |
 | 3 | Look at the top-left toggle in both modes | It is obvious, reads as a mode switch, and is never hidden behind an element | Presence is tested; whether it reads as a control is not |
 | 4 | Open the editor with nothing drawn | The palette makes it obvious what can be added and how | Discoverability cannot be asserted |
@@ -35,16 +50,16 @@ confirm the mechanism but not the *experience*.
 | # | What to do | Pass means | Why a machine cannot say |
 |---|---|---|---|
 | 5 | Click the toggle repeatedly | Switching feels instant, with no visible flicker or relayout | A timing budget is testable; "feels instant" is not |
-| 6 | Load ~100 MB in `on_startup`, then click a button ten times | Clicks respond immediately; the data clearly loaded only once | Reload counts are tested; perceived latency is not |
-| 7 | Build up to ~20 elements and interact | No perceptible slowdown as elements accumulate | This is the regression that killed the 2024 spike; the automated test uses a threshold, the human check is whether it *feels* slow |
+| 6 | **[!]** Click **Redraw** ten times, then edit the `2` in `on_clicked_redraw` to `5`, save, and click again | The curve changes; the 1.5-second load does **not** repeat. This is the paradigm's whole claim | Reload counts are tested; whether the loop *feels* immediate is not |
+| 7 | **[!]** Add elements until there are ~20, and interact | No perceptible slowdown as they accumulate | This is the regression that killed the 2024 spike; the automated test uses a threshold, the human check is whether it *feels* slow |
 | 8 | Drag an element around the canvas | Dragging tracks the pointer without lag or jumping | Smoothness is not assertable |
 
 ### Being told things
 
 | # | What to do | Pass means | Why a machine cannot say |
 |---|---|---|---|
-| 9 | Introduce a syntax error, then click | The banner is genuinely noticeable while you are looking at the plot, not merely present | Tests assert `banner.visible`; whether it catches the eye is the whole point |
-| 10 | Click an element with no handler written | Nothing happens, nothing is reported, and this feels normal rather than broken | Silence is tested; whether it reads as *intended* silence is not |
+| 9 | **[!]** Click **Break it**, while looking at the plot rather than the terminal | The banner catches your eye without you hunting for it | Tests assert `banner.visible`; whether it is *noticeable* is the whole point |
+| 10 | **[!]** Draw one more button, write nothing for it, click it | Nothing happens, nothing is reported, and this reads as *intended* rather than broken | Silence is tested; whether it reads as intentional is not |
 | 11 | Fix the error and click again | The banner clears and the recovery feels immediate | State is tested; the felt experience is not |
 | 12 | Read a fault message without looking at the terminal | It tells you which element failed and roughly what went wrong | Message content is tested; usefulness is not |
 
@@ -52,7 +67,7 @@ confirm the mechanism but not the *experience*.
 
 | # | What to do | Pass means | Why a machine cannot say |
 |---|---|---|---|
-| 13 | Hand the tool to someone who has never seen it, with only the command | They produce a window with a working button inside two minutes, unaided | SC-001 is a human-factors claim by construction |
+| 13 | **[!]** Hand the tool to someone who has never seen it, with only the command | They produce a window with a working button inside two minutes, unaided | SC-001 is a human-factors claim by construction. The only item here needing a second person; skip it on a routine pass and do it before any release that goes near other people |
 | 14 | Read the generated starter file as a newcomer | The comment about loading data in `on_startup` is clear enough to actually follow | Presence of the text is tested; persuasiveness is not |
 
 ### Platform
@@ -61,6 +76,7 @@ confirm the mechanism but not the *experience*.
 |---|---|---|---|
 | 15 | Run on Windows, macOS and Linux | Fonts, spacing and the toolbar look right on each | CI asserts it runs; nobody sees the result |
 | 16 | On a Linux box without `python3-tk` | Exit code 3, with a message naming tkinter and the install command | The message is tested; whether a stuck researcher can act on it is not |
+| 17 | Hover each resize handle in editor mode, on each platform you ship to | The pointer changes, and the corner cursors differ from the edge ones | Tk silently ignores a cursor name it does not know. CI now checks the names are *valid*; only a person can see whether the right one appears |
 
 ---
 
