@@ -31,10 +31,19 @@ def test_panel_shows_an_empty_state_when_nothing_is_selected(editor):
 
 
 def test_panel_exposes_the_contracted_properties(editor):
+    from iterlab.layout.schema import style_fields_for
+
     d = editor.built
-    assert set(d.properties._entries) == {"tag", "left", "bottom", "width", "height", "label"}
+    core = {"tag", "left", "bottom", "width", "height"}
+
+    assert set(d.properties._entries) == (
+        core | {"label"} | set(style_fields_for("button"))
+    )
+
     d.select("spectrum")
-    assert set(d.properties._entries) == {"tag", "left", "bottom", "width", "height"}
+    assert set(d.properties._entries) == core | set(style_fields_for("plot_area")), (
+        "a plot area has no text and no colours; matplotlib owns how it looks"
+    )
 
 
 def test_typed_coordinates_move_the_element(editor):

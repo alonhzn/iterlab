@@ -6,6 +6,38 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.9.0] — unreleased
+
+### Added
+
+- **Style properties on buttons and labels**: fill colour, text colour, border
+  colour and width, font family, font size, bold, italic, alignment, enabled
+  and visible. A plot area takes only `visible` — matplotlib owns the rest of
+  how it looks, and offering a fill colour that did nothing would be a lie.
+- **Every style property is settable from code**, and doing so changes the live
+  widget without ever writing back to the layout file. The layout holds the
+  *starting* appearance; research code overrides it for the session:
+
+      ev.title.background = "#ffe0e0"
+      ev.title.font_size = 20
+      ev.run_fit.enabled = False
+
+- Editors for all of it in the properties panel: hex fields with a swatch that
+  opens the system colour picker, a font dropdown listing only families
+  actually installed, and checkboxes and radio buttons for the rest.
+- The editor canvas now previews an element's real colours, font and weight, so
+  a styling choice can be judged without toggling to GUI mode.
+
+### Changed
+
+- **Layout schema version 2.** The `style` block is new, and an older build
+  would reject it as an unrecognized key, so the version had to move — and with
+  it comes the first real migration (FR-036c said to write one when it was
+  actually needed rather than in advance). A version 1 layout opens unchanged,
+  is migrated in memory, and is only rewritten when something is saved.
+- Only non-default style values are written, so an unstyled element is still a
+  three-line entry.
+
 ## [0.8.0] — unreleased
 
 ### Changed

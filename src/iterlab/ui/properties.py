@@ -15,11 +15,29 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 
+from dataclasses import replace
+
 from ..errors import IterlabError
-from ..layout.schema import Rect
+from ..layout.schema import ALIGNMENTS, Rect, style_fields_for
 from . import theme
 
 GEOMETRY_FIELDS = ("left", "bottom", "width", "height")
+STYLE_LABELS = {
+    "background": "Fill",
+    "text_color": "Text",
+    "edge": "Border",
+    "edge_width": "Width",
+    "font": "Font",
+    "font_size": "Size",
+    "bold": "Bold",
+    "italic": "Italic",
+    "align": "Align",
+    "enabled": "Enabled",
+    "visible": "Visible",
+}
+
+COLOUR_FIELDS = ("background", "text_color", "edge")
+
 LABELS = {
     "tag": "Tag",
     "left": "Left",
@@ -49,6 +67,7 @@ class PropertiesPanel:
         )
         self._body = tk.Frame(self.frame, bg=theme.BG)
         self._entries = {}
+        self._swatches = {}
 
         self._message = tk.Label(
             self.frame, text="", bg=theme.BG, fg=theme.DANGER,
@@ -81,6 +100,7 @@ class PropertiesPanel:
             for child in self._body.winfo_children():
                 child.destroy()
             self._entries.clear()
+            self._swatches.clear()
 
             if element is None:
                 self.element_tag = None
@@ -100,6 +120,7 @@ class PropertiesPanel:
             if element.displays_text:
                 self._section("TEXT")
                 self._row("label", element.label)
+            self._style_section(element)
             self._fill_delete_control()
         finally:
             self._busy = previous
@@ -126,6 +147,133 @@ class PropertiesPanel:
         entry.bind("<KP_Enter>", self._commit)
         entry.bind("<FocusOut>", self._commit)
         entry.bind("<Escape>", lambda _e: self.show(self._current_element()))
+
+    def _style_section(self, element):
+        """Editors for whatever style properties this element type has.
+
+        A plot area only gets `visible`; matplotlib owns the rest of how it
+        looks, and offering a fill colour that does nothing would be a lie.
+        """
+        available = style_fields_for(element.type)
+        style = element.style
+
+        if any(f in available for f in COLOUR_FIELDS):
+            self._section("COLOUR")
+            for field in COLOUR_FIELDS:
+                if field in available:
+                    self._colour_row(field, getattr(style, field))
+            if "edge_width" in available:
+                self._style_entry("edge_width", style.edge_width)
+
+        if "font" in available:
+            self._section("FONT")
+            self._font_row(style.font)
+            self._style_entry("font_size", style.font_size)
+            self._toggle_row(("bold", style.bold), ("italic", style.italic))
+            self._align_row(style.align)
+
+        self._section("STATE")
+        toggles = [("visible", style.visible)]
+        if "enabled" in available:
+            toggles.append(("enabled", style.enabled))
+        self._toggle_row(*toggles)
+
+    def _colour_row(self, field, value):
+        """A hex entry with a swatch that opens the colour picker."""
+        row = tk.Frame(self._body, bg=theme.BG)
+        row.pack(fill="x", pady=2)
+        tk.Label(
+            row, text=STYLE_LABELS[field], width=7, anchor="w",
+            bg=theme.BG, fg=theme.TEXT_MUTED, font=theme.FONT_SMALL,
+        ).pack(side="left")
+
+        entry = ttk.Entry(row, font=theme.FONT)
+        entry.insert(0, value or "")
+        self._bind_commit(entry)
+        entry.pack(side="left", fill="x", expand=True)
+        self._entries[field] = entry
+
+        swatch = tk.Frame(
+            row, width=20, height=20, bg=value or theme.SURFACE,
+            relief="solid", borderwidth=1, cursor="hand2",
+        )
+        swatch.pack_propagate(False)
+        swatch.pack(side="left", padx=(5, 0))
+        swatch.bind("<Button-1>", lambda _e, f=field: self._pick_colour(f))
+        self._swatches[field] = swatch
+
+    def _pick_colour(self, field):
+        """Open the system colour picker and write the result into the entry."""
+        from tkinter import colorchooser
+
+        current = self._entries[field].get() or None
+        chosen = colorchooser.askcolor(color=current, parent=self.frame)[1]
+        if not chosen:
+            return
+        entry = self._entries[field]
+        entry.delete(0, "end")
+        entry.insert(0, chosen)
+        self.apply()
+
+    def _font_row(self, value):
+        row = tk.Frame(self._body, bg=theme.BG)
+        row.pack(fill="x", pady=2)
+        tk.Label(
+            row, text=STYLE_LABELS["font"], width=7, anchor="w",
+            bg=theme.BG, fg=theme.TEXT_MUTED, font=theme.FONT_SMALL,
+        ).pack(side="left")
+        box = ttk.Combobox(
+            row, values=theme.available_fonts(self.frame), state="readonly",
+            font=theme.FONT,
+        )
+        box.set(value or "(default)")
+        box.bind("<<ComboboxSelected>>", self._commit)
+        box.pack(side="left", fill="x", expand=True)
+        self._entries["font"] = box
+
+    def _style_entry(self, field, value):
+        row = tk.Frame(self._body, bg=theme.BG)
+        row.pack(fill="x", pady=2)
+        tk.Label(
+            row, text=STYLE_LABELS[field], width=7, anchor="w",
+            bg=theme.BG, fg=theme.TEXT_MUTED, font=theme.FONT_SMALL,
+        ).pack(side="left")
+        entry = ttk.Entry(row, font=theme.FONT, width=6)
+        entry.insert(0, "" if value is None else str(value))
+        self._bind_commit(entry)
+        entry.pack(side="left")
+        self._entries[field] = entry
+
+    def _toggle_row(self, *fields):
+        row = tk.Frame(self._body, bg=theme.BG)
+        row.pack(fill="x", pady=2)
+        for field, value in fields:
+            var = tk.BooleanVar(value=bool(value))
+            tk.Checkbutton(
+                row, text=STYLE_LABELS[field], variable=var,
+                bg=theme.BG, fg=theme.TEXT, font=theme.FONT_SMALL,
+                activebackground=theme.BG, selectcolor=theme.SURFACE,
+                highlightthickness=0, anchor="w", command=self._commit,
+            ).pack(side="left", padx=(0, 10))
+            self._entries[field] = var
+
+    def _align_row(self, value):
+        row = tk.Frame(self._body, bg=theme.BG)
+        row.pack(fill="x", pady=2)
+        tk.Label(
+            row, text=STYLE_LABELS["align"], width=7, anchor="w",
+            bg=theme.BG, fg=theme.TEXT_MUTED, font=theme.FONT_SMALL,
+        ).pack(side="left")
+        var = tk.StringVar(value=value)
+        for option in ALIGNMENTS:
+            tk.Radiobutton(
+                row, text=option[0].upper(), value=option, variable=var,
+                bg=theme.BG, fg=theme.TEXT, font=theme.FONT_SMALL,
+                activebackground=theme.BG, selectcolor=theme.SURFACE,
+                highlightthickness=0, indicatoron=False, width=2,
+                command=self._commit,
+            ).pack(side="left", padx=1)
+        self._entries["align"] = var
 
     def _section(self, title):
         tk.Label(
@@ -184,7 +332,44 @@ class PropertiesPanel:
         return self.designer.layout.elements.get(self.element_tag)
 
     def values(self):
-        return {k: e.get() for k, e in self._entries.items()}
+        """Current editor values. Entries, comboboxes and Vars all read alike."""
+        return {key: widget.get() for key, widget in self._entries.items()}
+
+    def _style_changes(self, element):
+        """Typed style values, parsed. Raises ValueError on a bad one."""
+        available = set(style_fields_for(element.type))
+        raw = self.values()
+        changes = {}
+
+        for field in COLOUR_FIELDS:
+            if field in available and field in raw:
+                text = str(raw[field]).strip()
+                changes[field] = text or None
+
+        if "edge_width" in available and "edge_width" in raw:
+            text = str(raw["edge_width"]).strip()
+            changes["edge_width"] = int(text) if text else 0
+
+        if "font" in available and "font" in raw:
+            chosen = str(raw["font"])
+            changes["font"] = None if chosen in ("", "(default)") else chosen
+
+        if "font_size" in available and "font_size" in raw:
+            text = str(raw["font_size"]).strip()
+            changes["font_size"] = int(text) if text else None
+
+        for field in ("bold", "italic", "enabled", "visible"):
+            if field in available and field in raw:
+                changes[field] = bool(raw[field])
+
+        if "align" in available and "align" in raw:
+            changes["align"] = str(raw["align"])
+
+        # Build the replacement here so its validation runs *before* anything is
+        # applied. Otherwise a bad colour would raise only after the position
+        # had already been written, leaving the element half-updated.
+        replace(element.style, **changes)
+        return changes
 
     def focus_tag(self):
         """Put the cursor in the tag field with the default selected.
@@ -209,14 +394,18 @@ class PropertiesPanel:
         just been written and re-rendered always compares equal. That is what
         stops commit-on-focus-loss from re-entering itself.
         """
-        if raw.get("tag", element.tag).strip() != element.tag:
+        if str(raw.get("tag", element.tag)).strip() != element.tag:
             return False
         for field in GEOMETRY_FIELDS:
             if raw.get(field, "") != f"{getattr(element.position, field):g}":
                 return False
         if element.displays_text and raw.get("label", element.label) != element.label:
             return False
-        return True
+        try:
+            changes = self._style_changes(element)
+        except (TypeError, ValueError):
+            return False  # invalid input is a change, so apply() can report it
+        return all(getattr(element.style, k) == v for k, v in changes.items())
 
     def _commit(self, _event=None):
         """Enter, or focus leaving a field. Both mean 'I meant that'."""
@@ -250,15 +439,22 @@ class PropertiesPanel:
             self._show_message(f"Position: {exc}")
             return False
 
+        try:
+            style_changes = self._style_changes(element)
+        except (TypeError, ValueError) as exc:
+            self._show_message(f"Style: {exc}")
+            return False
+
         self._busy = True
         try:
             self.designer.apply_properties(
                 self.element_tag,
-                tag=raw.get("tag", self.element_tag).strip(),
+                tag=str(raw.get("tag", self.element_tag)).strip(),
                 position=rect,
                 label=raw.get("label"),
+                style=style_changes,
             )
-        except IterlabError as exc:
+        except (IterlabError, ValueError) as exc:
             self._show_message(str(exc))
             return False
         finally:

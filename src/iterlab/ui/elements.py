@@ -45,26 +45,118 @@ def place(widget, rect) -> None:
     )
 
 
+ANCHORS = {"left": "w", "center": "center", "right": "e"}
+
+#: Every style property a text-bearing handle exposes to researcher code.
+STYLE_PROPERTY_NAMES = (
+    "background", "text_color", "edge", "edge_width",
+    "font", "font_size", "bold", "italic", "align", "enabled", "visible",
+)
+
+
+def resolve_font(style):
+    """Build a Tk font from a Style, falling back to the theme's defaults."""
+    # BASE_FONT_SIZE, not the theme's chrome size: the editor's own furniture
+    # is deliberately smaller than the elements a researcher draws.
+    return tkfont.Font(
+        family=style.font or theme.FONT[0],
+        size=style.font_size or BASE_FONT_SIZE,
+        weight="bold" if style.bold else "normal",
+        slant="italic" if style.italic else "roman",
+    )
+
+
+def apply_style(widget, style, *, default_bg=None, default_fg=None):
+    """Push a Style onto a Tk widget. Unset properties keep the theme value."""
+    options = {
+        "bg": style.background or default_bg or theme.SURFACE,
+        "fg": style.text_color or default_fg or theme.TEXT,
+        "font": resolve_font(style),
+        "highlightthickness": style.edge_width,
+        "highlightbackground": style.edge or theme.BORDER_STRONG,
+        "highlightcolor": style.edge or theme.BORDER_STRONG,
+        "anchor": ANCHORS.get(style.align, "center"),
+        "state": "normal" if style.enabled else "disabled",
+    }
+    for option, value in options.items():
+        try:
+            widget.configure(**{option: value})
+        except tk.TclError:
+            # Not every widget takes every option. Skipping one is correct, not
+            # a failure — a Frame has no `state`, a Label no `activebackground`.
+            continue
+
+
 class ElementHandle:
-    """What the researcher reaches through `ev.<name>`."""
+    """What the researcher reaches through `ev.<tag>`.
+
+    Style properties are settable from code. Setting one changes the **live
+    widget** and never writes back to the layout file: the layout holds the
+    starting appearance, and research code overrides it for the session
+    (Principle II — code never alters the layout).
+    """
+
+    #: Which style properties this handle exposes. Set per subclass.
+    STYLE_PROPERTIES = ()
 
     def __init__(self, element, widget):
-        self.element = element
-        self.widget = widget
+        self.__dict__["element"] = element
+        self.__dict__["widget"] = widget
+        self.__dict__["_style"] = element.style
 
     @property
     def tag(self):
         return self.element.tag
 
-
-class ButtonHandle(ElementHandle):
     @property
-    def label(self):
+    def style(self):
+        return self.__dict__["_style"]
+
+    def _restyle(self, **changes):
+        from dataclasses import replace
+
+        self.__dict__["_style"] = replace(self.__dict__["_style"], **changes)
+        self._apply()
+
+    def _apply(self):
+        apply_style(self.widget, self.__dict__["_style"])
+        self._apply_visibility()
+
+    def _apply_visibility(self):
+        if self.__dict__["_style"].visible:
+            place(self.widget, self.element.position)
+        else:
+            self.widget.place_forget()
+
+    def __setattr__(self, name, value):
+        if name in self.STYLE_PROPERTIES:
+            self._restyle(**{name: value})
+            return
+        object.__setattr__(self, name, value)
+
+
+class _TextHandle(ElementHandle):
+    """Shared by the element types that render text."""
+
+    STYLE_PROPERTIES = STYLE_PROPERTY_NAMES
+
+    def __getattr__(self, name):
+        if name in STYLE_PROPERTY_NAMES:
+            return getattr(self.__dict__["_style"], name)
+        raise AttributeError(name)
+
+
+class ButtonHandle(_TextHandle):
+    @property
+    def text(self):
         return self.widget.cget("text")
 
-    @label.setter
-    def label(self, text):
-        self.widget.configure(text=text)
+    @text.setter
+    def text(self, value):
+        self.widget.configure(text=str(value))
+
+    #: The layout calls it `label`; both names work.
+    label = text
 
 
 def build_button(parent, element, dispatcher):
@@ -96,11 +188,14 @@ def build_button(parent, element, dispatcher):
     widget.bind("<Motion>", lambda _e: fire("motion"))
     widget.bind("<Key>", lambda e: fire("key", key=e.keysym))
 
-    place(widget, element.position)
-    return ButtonHandle(element, widget)
+    handle = ButtonHandle(element, widget)
+    handle._apply()
+    return handle
 
 
 class PlotHandle(ElementHandle):
+    STYLE_PROPERTIES = ("visible",)
+
     """Exposes the matplotlib Axes directly.
 
     Anything else would mean researchers learning an iterlab plotting API, which
@@ -109,9 +204,13 @@ class PlotHandle(ElementHandle):
 
     def __init__(self, element, widget, figure, axes, canvas):
         super().__init__(element, widget)
-        self.figure = figure
-        self.axes = axes
-        self.canvas = canvas
+        self.__dict__["figure"] = figure
+        self.__dict__["axes"] = axes
+        self.__dict__["canvas"] = canvas
+
+    def _apply(self):
+        # matplotlib owns how a plot looks; only visibility is ours.
+        self._apply_visibility()
 
     def __getattr__(self, item):
         # Delegate to the Axes so `ev.spectrum.plot(...)` works.
@@ -170,12 +269,13 @@ def build_plot_area(parent, element, dispatcher):
         lambda e: fire("hover", e) if e.inaxes is axes else None,
     )
 
-    place(frame, element.position)
+    handle = PlotHandle(element, frame, figure, axes, canvas)
+    handle._apply_visibility()
     canvas.draw()
-    return PlotHandle(element, frame, figure, axes, canvas)
+    return handle
 
 
-class LabelHandle(ElementHandle):
+class LabelHandle(_TextHandle):
     """Text on screen. Set it from code: `ev.title.text = "..."`."""
 
     @property
@@ -186,7 +286,7 @@ class LabelHandle(ElementHandle):
     def text(self, value):
         self.widget.configure(text=str(value))
 
-    # The layout calls the field `label`, so accept that name too.
+    #: The layout calls it `label`; both names work.
     label = text
 
 
@@ -214,8 +314,9 @@ def build_label(parent, element, dispatcher):
     widget.bind("<Motion>", lambda _e: fire("motion"))
     widget.bind("<Key>", lambda e: fire("key", key=e.keysym))
 
-    place(widget, element.position)
-    return LabelHandle(element, widget)
+    handle = LabelHandle(element, widget)
+    handle._apply()
+    return handle
 
 
 BUILDERS = {

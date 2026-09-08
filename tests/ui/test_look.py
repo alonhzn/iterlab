@@ -60,13 +60,14 @@ def test_the_canvas_uses_the_theme_surface(make_app):
     assert app.built.canvas.cget("bg") == theme.SURFACE
 
 
-def test_every_property_field_is_visible_at_the_default_window_size(mapped, make_app):
+def test_every_property_field_is_reachable_at_the_default_window_size(mapped, make_app):
     """Tk unmaps children that no longer fit instead of clipping them.
 
-    An overflowing sidebar therefore loses widgets silently: no error, no
-    scrollbar, the field simply is not there. At the 800x450 default the
-    geometry fields were past that line, and the only symptom was that typing
-    into them did nothing.
+    Before the sidebar scrolled, an overflowing panel lost widgets silently: no
+    error, no scrollbar, the field simply was not there. Now the panel is taller
+    than the window by design, so the invariant is *reachability* - the scroll
+    region must cover the whole panel - rather than everything being mapped at
+    once.
     """
     from iterlab.layout.schema import Rect
 
@@ -79,11 +80,16 @@ def test_every_property_field_is_visible_at_the_default_window_size(mapped, make
     d.select("go")
     app.root.update()
 
-    missing = [
-        name for name, entry in d.properties._entries.items()
-        if not entry.winfo_ismapped()
-    ]
-    assert not missing, f"these property fields are not on screen: {missing}"
+    sidebar = d.sidebar
+    content_height = sidebar.inner.winfo_reqheight()
+    region = sidebar.canvas.cget("scrollregion")
+    assert region, "no scroll region, so anything past the fold is unreachable"
+
+    reachable = int(float(region.split()[3]))
+    assert reachable >= content_height - 2, (
+        f"scroll region {reachable}px does not cover {content_height}px of panel"
+    )
+    assert sidebar._scrollbar_shown, "content overflows but no scrollbar appeared"
 
 
 def test_the_sidebar_scrolls_when_it_overflows(mapped, make_app):

@@ -7,13 +7,13 @@ and the runtime (constitution Principle II), which is why it lives outside `ui`.
 from __future__ import annotations
 
 import keyword
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field, fields, replace
 
 from ..errors import NameInUse, NameInvalid
 
 #: Written into every layout file. Bumped only when the format changes in a way
 #: an older build could not read (contracts/layout-schema.md).
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 #: Element types this build knows. A closed set: an unknown type in a file of a
 #: recognized schema version is a defect, not something to skip over.
@@ -51,6 +51,18 @@ DEFAULT_SIZE = {
     "button": (0.07, 0.035),
     "label": (0.08, 0.03),
 }
+
+#: Style properties, and which element types carry them.
+#:
+#: A plot area draws its own appearance through matplotlib, so it takes only
+#: `visible`. Everything else applies to the types that render text.
+UNIVERSAL_STYLE = ("visible",)
+TEXT_STYLE = (
+    "background", "text_color", "edge", "edge_width",
+    "font", "font_size", "bold", "italic", "align", "enabled",
+)
+
+ALIGNMENTS = ("left", "center", "right")
 
 _ROUND = 4
 
@@ -123,6 +135,73 @@ class Rect:
 
 
 @dataclass(frozen=True)
+class Style:
+    """How an element looks.
+
+    Every field defaults to `None` or a neutral value meaning "use the theme",
+    and only non-defaults are written to the layout file, so a plain element
+    stays a two-line entry (Principle II: defaults keep a minimal element terse).
+
+    These are the *starting* values. Researcher code may change any of them at
+    run time, and doing so never writes back to the layout file — the layout is
+    the initial state, not a live mirror.
+    """
+
+    background: str | None = None
+    text_color: str | None = None
+    edge: str | None = None
+    edge_width: int = 0
+    font: str | None = None
+    font_size: int | None = None
+    bold: bool = False
+    italic: bool = False
+    align: str = "center"
+    enabled: bool = True
+    visible: bool = True
+
+    def __post_init__(self):
+        if self.align not in ALIGNMENTS:
+            raise ValueError(f"align must be one of {ALIGNMENTS}, got {self.align!r}")
+        if not isinstance(self.edge_width, int) or self.edge_width < 0:
+            raise ValueError(f"edge_width must be a non-negative whole number")
+        if self.font_size is not None and not (1 <= self.font_size <= 200):
+            raise ValueError("font_size must be between 1 and 200")
+        for name in ("background", "text_color", "edge"):
+            value = getattr(self, name)
+            if value is not None and not _is_colour(value):
+                raise ValueError(f"{name} must be a colour like '#3366ff', got {value!r}")
+
+    def non_defaults(self) -> dict:
+        """Only what differs from the defaults, for a terse layout file."""
+        blank = Style()
+        return {
+            f.name: getattr(self, f.name)
+            for f in fields(self)
+            if getattr(self, f.name) != getattr(blank, f.name)
+        }
+
+
+def _is_colour(value) -> bool:
+    """Accept `#rgb`, `#rrggbb`, or a Tk colour name.
+
+    Deliberately permissive about names: Tk knows hundreds, and rejecting one
+    it would have accepted is worse than passing it through.
+    """
+    if not isinstance(value, str) or not value:
+        return False
+    if value.startswith("#"):
+        return len(value) in (4, 7) and all(c in "0123456789abcdefABCDEF" for c in value[1:])
+    return value.replace(" ", "").isalpha()
+
+
+def style_fields_for(element_type: str):
+    """Which style properties an element of this type actually has."""
+    if element_type in TEXT_TYPES:
+        return UNIVERSAL_STYLE + TEXT_STYLE
+    return UNIVERSAL_STYLE
+
+
+@dataclass(frozen=True)
 class Element:
     #: The unique identifier within an interface. It is what the researcher's
     #: code sees: `ev.<tag>`, and `on_clicked_<tag>`.
@@ -130,6 +209,7 @@ class Element:
     type: str
     position: Rect
     label: str = ""
+    style: Style = field(default_factory=Style)
 
     def __post_init__(self):
         if self.type not in ELEMENT_TYPES:
@@ -196,6 +276,17 @@ class Layout:
 
     def relabel(self, tag: str, label: str) -> None:
         self.elements[tag] = replace(self.elements[tag], label=label)
+
+    def restyle(self, tag: str, **changes) -> None:
+        """Change style properties of one element in the layout."""
+        element = self.elements[tag]
+        allowed = set(style_fields_for(element.type))
+        unknown = set(changes) - allowed
+        if unknown:
+            raise ValueError(
+                f"{element.type} elements have no style {sorted(unknown)!r}"
+            )
+        self.elements[tag] = replace(element, style=replace(element.style, **changes))
 
     def retag(self, old: str, new: str) -> None:
         """Change a tag in the layout only.

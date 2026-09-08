@@ -80,8 +80,23 @@ however many times the code is edited.
 
 | Type | Handle |
 |---|---|
-| `plot_area` | A matplotlib `Axes`. Use the matplotlib API you already know. |
-| `button` | A handle exposing its label. Deliberately minimal this feature. |
+| `plot_area` | A matplotlib `Axes`. Use the matplotlib API you already know. Plus `visible`. |
+| `button`, `label` | `text`, and every style property below. |
+
+**Style from code.** A button or label exposes `background`, `text_color`,
+`edge`, `edge_width`, `font`, `font_size`, `bold`, `italic`, `align`, `enabled`
+and `visible`, all readable and writable:
+
+```python
+def on_clicked_run_fit(ev, event):
+    ev.status.text = "fitting"
+    ev.status.background = "#fff4d6"
+    ev.run_fit.enabled = False
+```
+
+The layout file holds the **starting** appearance, set in the editor. Assigning
+to one of these changes the live widget for the rest of the session and never
+writes back to the layout — code never alters the layout (Principle II).
 
 ---
 

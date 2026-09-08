@@ -179,3 +179,29 @@ def trash_icon(parent, size=16, colour=DANGER, background=DANGER_SOFT):
     canvas.create_line(size * 0.74, lid, size * 0.67, body, fill=colour, width=2)
     canvas.create_line(size * 0.33, body, size * 0.67, body, fill=colour, width=2)
     return canvas
+
+
+# -- font choices ----------------------------------------------------------
+
+#: Offered in the font dropdown. A curated shortlist rather than every family
+#: Tk can see: `tkfont.families()` returns hundreds, most of them symbol or
+#: language-specific faces that are noise in a picker. Filtered at run time to
+#: those actually installed, so the list never offers something that will not
+#: render.
+PREFERRED_FONTS = (
+    "Segoe UI", "Arial", "Helvetica", "Verdana", "Tahoma", "Calibri",
+    "Georgia", "Times New Roman", "Consolas", "Courier New", "Menlo",
+    "DejaVu Sans", "DejaVu Sans Mono", "Liberation Sans",
+)
+
+
+def available_fonts(root=None):
+    """The preferred families that are actually installed, plus a default."""
+    import tkinter.font as tkfont
+
+    try:
+        installed = {name.lower() for name in tkfont.families(root)}
+    except Exception:  # pragma: no cover - needs a live Tk
+        installed = set()
+    found = [f for f in PREFERRED_FONTS if f.lower() in installed]
+    return ["(default)"] + (found or list(PREFERRED_FONTS))

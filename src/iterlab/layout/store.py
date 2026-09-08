@@ -13,9 +13,18 @@ from pathlib import Path
 import yaml
 
 from ..errors import LayoutInvalid, LayoutVersionTooNew
-from .schema import SCHEMA_VERSION, Element, Layout, Rect, Window, validate_tag
+from .schema import (
+    SCHEMA_VERSION,
+    Element,
+    Layout,
+    Rect,
+    Style,
+    Window,
+    style_fields_for,
+    validate_tag,
+)
 
-_ELEMENT_KEYS = {"type", "position", "label"}
+_ELEMENT_KEYS = {"type", "position", "label", "style"}
 _TOP_KEYS = {"schema_version", "window", "elements"}
 _WINDOW_KEYS = {"width", "height"}
 
@@ -34,7 +43,41 @@ def _reject_unknown(mapping, allowed, where):
         )
 
 
+#: Migrations from an older schema, keyed by the version they upgrade *from*.
+#: Each returns the raw mapping as the next version would have written it.
+#:
+#: Written when the change actually happened rather than in advance (FR-036c).
+def _migrate_1_to_2(raw):
+    """v2 added the per-element `style` block.
+
+    Absent style means every default, which is exactly what a v1 element had,
+    so there is nothing to move — only the version to raise. The function
+    exists so the path is real and tested rather than assumed.
+    """
+    raw["schema_version"] = 2
+    return raw
+
+
+MIGRATIONS = {1: _migrate_1_to_2}
+
+
+def _migrate(raw, version, path):
+    """Bring `raw` forward to the current schema, one version at a time."""
+    started_at = version
+    while version < SCHEMA_VERSION:
+        migrate = MIGRATIONS.get(version)
+        if migrate is None:  # pragma: no cover - guarded by the table above
+            raise LayoutInvalid(
+                f"{path} uses layout schema {version}, and this build has no way "
+                f"to bring it forward to {SCHEMA_VERSION}."
+            )
+        raw = migrate(raw)
+        version = raw["schema_version"]
+    return raw, started_at
+
+
 def load(path) -> Layout:
+    """Read a layout, migrating it forward if it was written by an older build."""
     path = Path(path)
     try:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -55,12 +98,9 @@ def load(path) -> Layout:
         # Refuse rather than partially understand. Opening it and saving it back
         # would discard whatever the newer version recorded (FR-036b).
         raise LayoutVersionTooNew(found=version, supported=SCHEMA_VERSION, path=path)
+    migrated_from = None
     if version < SCHEMA_VERSION:
-        # Unreachable at schema 1: there is no older version. Migration is
-        # deliberately unbuilt until there is a real change to migrate (FR-036c).
-        raise AssertionError(
-            f"no migration exists from layout schema {version} to {SCHEMA_VERSION}"
-        )
+        raw, migrated_from = _migrate(raw, version, path)
 
     _reject_unknown(raw, _TOP_KEYS, "top-level key")
 
@@ -84,16 +124,33 @@ def load(path) -> Layout:
         _reject_unknown(body, _ELEMENT_KEYS, f"key on element {tag!r}")
         try:
             validate_tag(str(tag), existing=layout.elements)
+            element_type = body.get("type")
             element = Element(
                 tag=str(tag),
-                type=body.get("type"),
+                type=element_type,
                 position=Rect.from_list(body.get("position")),
                 label=body.get("label", "") or "",
+                style=_read_style(body.get("style"), element_type),
             )
         except Exception as exc:
             raise LayoutInvalid(f"element {tag!r} is invalid: {exc}") from exc
         layout.elements[element.tag] = element
     return layout
+
+
+def _read_style(raw, element_type) -> Style:
+    if raw is None:
+        return Style()
+    if not isinstance(raw, dict):
+        raise LayoutInvalid("style should be a mapping")
+    allowed = set(style_fields_for(element_type))
+    unknown = set(raw) - allowed
+    if unknown:
+        raise LayoutInvalid(
+            f"{element_type} elements have no style {sorted(unknown)!r}; "
+            f"expected some of {sorted(allowed)!r}"
+        )
+    return Style(**raw)
 
 
 def _serialize(layout: Layout) -> str:
@@ -106,6 +163,10 @@ def _serialize(layout: Layout) -> str:
         entry = {"type": element.type, "position": element.position.as_list()}
         if element.displays_text:
             entry["label"] = element.label
+        # Only what differs from the defaults, so a plain element stays terse.
+        style = element.style.non_defaults()
+        if style:
+            entry["style"] = style
         body["elements"][tag] = entry
     # sort_keys=False preserves insertion order, so a round trip with no edits
     # produces a byte-identical file and diffs stay minimal.

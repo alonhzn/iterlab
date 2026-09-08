@@ -3,7 +3,7 @@
 **Public surface item 1.** Under the constitution's *Release And Versioning*, a breaking change here
 requires a MAJOR release. A layout written by any version MUST open in every later version.
 
-**Schema version**: `1` | **Format**: YAML | **Filename**: `<interface-name>.yaml`
+**Schema version**: `2` | **Format**: YAML | **Filename**: `<interface-name>.yaml`
 
 ---
 
@@ -49,7 +49,33 @@ elements: {}
 | `elements` | map | **yes** | `{}` | Keys are element tags |
 | `elements.<tag>.type` | str | **yes** | — | `plot_area` \| `button` |
 | `elements.<tag>.position` | list[float] × 4 | **yes** | — | `[left, bottom, width, height]`, each in `[0,1]`; `left+width ≤ 1`; `bottom+height ≤ 1` |
-| `elements.<tag>.label` | str | no | `""` | `button` only |
+| `elements.<tag>.label` | str | no | `""` | text-bearing types only (`button`, `label`) |
+| `elements.<tag>.style` | map | no | `{}` | appearance; only non-defaults are written |
+
+### `style`
+
+Which properties an element has depends on its type. A `plot_area` takes only
+`visible`; matplotlib owns the rest of how a plot looks.
+
+| Key | Type | Default | Applies to |
+|---|---|---|---|
+| `background` | colour | theme | button, label |
+| `text_color` | colour | theme | button, label |
+| `edge` | colour | theme | button, label |
+| `edge_width` | int ≥ 0 | `0` | button, label |
+| `font` | family name | theme | button, label |
+| `font_size` | 1–200 | theme | button, label |
+| `bold` | bool | `false` | button, label |
+| `italic` | bool | `false` | button, label |
+| `align` | `left`/`center`/`right` | `center` | button, label |
+| `enabled` | bool | `true` | button, label |
+| `visible` | bool | `true` | every type |
+
+A colour is `#rgb`, `#rrggbb`, or a Tk colour name. A style key a type does not
+have is a validation error, not something ignored.
+
+**These are starting values.** Researcher code may change any of them at run
+time; doing so alters the live widget and never writes back to this file.
 
 **Element tag** (the map key) MUST satisfy all of: `str.isidentifier()`; not a Python keyword; does
 not begin with `_`; unique within the file. The name becomes part of a function name and an attribute,

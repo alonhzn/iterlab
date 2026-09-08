@@ -252,20 +252,32 @@ class Designer:
     def redraw(self):
         self.canvas.delete("all")
         self._items.clear()
-        for name, element in self.layout.elements.items():
-            x0, y0, x1, y1 = self._live_box(name)
-            selected = name == self.selected
+        for tag, element in self.layout.elements.items():
+            x0, y0, x1, y1 = self._live_box(tag)
+            selected = tag == self.selected
+            # Preview the element's own styling, so choosing a colour can be
+            # judged here rather than only after toggling to GUI mode. The
+            # type's default tint stands in when nothing has been set.
+            style = element.style
+            fill = style.background or FILL.get(element.type, "#eeeeee")
+            edge = SELECTED_OUTLINE if selected else (
+                style.edge or OUTLINE.get(element.type, theme.BORDER_STRONG)
+            )
             rect_id = self.canvas.create_rectangle(
                 x0, y0, x1, y1,
-                fill=FILL.get(element.type, "#eeeeee"),
-                outline=SELECTED_OUTLINE if selected else OUTLINE.get(element.type, theme.BORDER_STRONG),
-                width=2 if selected else 1,
+                fill=fill, outline=edge,
+                width=2 if selected else max(style.edge_width, 1),
+                stipple="" if style.visible else "gray50",
             )
             self.canvas.create_text(
-                (x0 + x1) / 2, (y0 + y1) / 2, text=name,
-                fill=theme.TEXT, font=theme.FONT_BOLD,
+                (x0 + x1) / 2, (y0 + y1) / 2,
+                text=element.label or tag if element.displays_text else tag,
+                fill=style.text_color or theme.TEXT,
+                font=(style.font or theme.FONT[0],
+                      max(7, min(style.font_size or 9, 18)),
+                      "bold" if style.bold else "normal"),
             )
-            self._items[rect_id] = name
+            self._items[rect_id] = tag
             if selected:
                 self._draw_handles(x0, y0, x1, y1)
 
@@ -461,7 +473,8 @@ class Designer:
 
     # -- property edits --------------------------------------------------
 
-    def apply_properties(self, current_tag, tag=None, position=None, label=None):
+    def apply_properties(self, current_tag, tag=None, position=None, label=None,
+                         style=None):
         """Apply typed values. A rename rewrites the code file first (R14)."""
         self.layout.elements[current_tag]  # KeyError if it vanished
 
@@ -479,6 +492,8 @@ class Designer:
             self.layout.move(current_tag, position)
         if label is not None and self.layout.elements[current_tag].displays_text:
             self.layout.relabel(current_tag, label)
+        if style:
+            self.layout.restyle(current_tag, **style)
 
         self.interface.save_layout()
         self.select(current_tag)
