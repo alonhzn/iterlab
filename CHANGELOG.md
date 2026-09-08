@@ -6,6 +6,54 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.20.0] — unreleased
+
+### Added
+
+- **Two new element types: `text_box` and `number_box`.** A text box holds a
+  line someone types; a number box refuses anything that is not a number.
+
+  The number box validates the *proposed* contents on each keystroke rather than
+  correcting afterwards, so a rejected character never appears at all — no
+  flicker, and the box is never momentarily holding something that is not a
+  number. It deliberately accepts the half-written states a person passes
+  through: `""`, `"-"`, `"."` and `"-."` are all on the way to a number, and
+  refusing them would make a negative or a decimal impossible to type.
+
+  `.value` gives the number — `int` when it is a whole one, so
+  `range(ev.val_0.value)` works without casting — and an empty box reads as `0`
+  rather than raising, since someone who cleared it to retype is mid-edit, not
+  mistaken. `.text` gives the same thing as a string.
+
+  Neither gets a generated stub, for the reason a label does not: a box is
+  normally read when something *else* happens rather than reacted to keystroke
+  by keystroke. Every interaction remains available to a hand-written handler.
+
+- **`.text` on every element that shows text**, whatever kind it is. A button
+  and a label keep their string in Tk's `-text` option and a box keeps it in a
+  variable; `.text` hides that, so `ev.<tag>.text` works without first
+  remembering what `<tag>` is.
+
+### Changed
+
+- **Default tags are now short and typed**: `cmd_0` for a button, `lbl_0` for a
+  label, `edt_0` for a text box, `val_0` for a number box (`ax_0` unchanged).
+  These are the shorthands a person would use themselves, so `ev.cmd_0` reads
+  the way the code around it already does.
+
+- **New elements come with working text**: a button says "Click here!" and a
+  label says "Information:", rather than repeating their own tag. A button
+  reading `cmd_0` is a placeholder the researcher has to fix before showing
+  anyone; one reading "Click here!" is a control. The default button is slightly
+  wider to fit its caption — a default that clips its own text is worse than one
+  that is a little roomy.
+
+- **Layout schema 3 → 4.** Nothing in an existing file changes and the migration
+  is a no-op, but the version has to move: a file written now may contain a type
+  a version-3 build has never heard of, and the version gate is what makes that
+  build refuse the file cleanly rather than report an unknown element type as a
+  defect in the researcher's layout.
+
 ## [0.19.1] — unreleased
 
 ### Fixed

@@ -77,5 +77,7 @@ def test_every_type_has_a_default_size_and_a_name_prefix():
 def test_a_maximised_button_is_not_absurdly_large():
     """The whole point of shrinking it: 1920x1080 is the common case."""
     width, height = DEFAULT_SIZE["button"]
-    assert 100 <= width * 1920 <= 170, "button too wide on a maximised window"
+    # Widened when the default caption became "Click here!" - a default that
+    # clips its own text is worse than one that is a little roomy.
+    assert 100 <= width * 1920 <= 200, "button too wide on a maximised window"
     assert 28 <= height * 1080 <= 48, "button too tall on a maximised window"

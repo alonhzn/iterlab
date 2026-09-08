@@ -13,15 +13,20 @@ from ..errors import NameInUse, NameInvalid
 
 #: Written into every layout file. Bumped only when the format changes in a way
 #: an older build could not read (contracts/layout-schema.md).
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 #: Element types this build knows. A closed set: an unknown type in a file of a
 #: recognized schema version is a defect, not something to skip over.
-ELEMENT_TYPES = ("axes", "button", "label")
+ELEMENT_TYPES = ("axes", "button", "label", "text_box", "number_box")
 
-#: Types that display text. `label` holds a button's caption and a label's
-#: text — the same idea, so it stays one field rather than two.
-TEXT_TYPES = ("button", "label")
+#: Types that display text. One field, `label`, holds it for all of them: a
+#: button's caption, a label's text, and the contents of a box. They are the
+#: same idea — the string the element shows — and in code they are all reached
+#: as `.text`.
+TEXT_TYPES = ("button", "label", "text_box", "number_box")
+
+#: Types that take typed input rather than only displaying text.
+INPUT_TYPES = ("text_box", "number_box")
 
 #: Interactions available on every element type. Universal, not per-type
 #: (FR-017a); what varies per type is which single stub is generated.
@@ -33,12 +38,49 @@ INTERACTIONS = ("clicked", "hover", "motion", "key")
 #: click handler for every one would leave a researcher with a pile of dead
 #: functions. Every interaction is still available on a label if they write the
 #: handler themselves (FR-017a) — only the automatic stub is withheld.
-DEFAULT_INTERACTION = {"axes": "clicked", "button": "clicked", "label": None}
+#: A box gets no generated stub, for the same reason a label does not: its value
+#: is normally *read* inside another element's handler
+#: (`ev.cmd_0` clicked, then `ev.edt_0.text`) rather than reacted to keystroke by
+#: keystroke. Every interaction is still available if the researcher writes one.
+DEFAULT_INTERACTION = {
+    "axes": "clicked",
+    "button": "clicked",
+    "label": None,
+    "text_box": None,
+    "number_box": None,
+}
 
 #: Prefix used when auto-suggesting a tag in the designer.
 #: `axes` is deliberately abbreviated: `ax` is what a matplotlib user calls the
 #: variable, so `ev.ax_0` reads the way their own code already does.
-TAG_PREFIX = {"axes": "ax", "button": "button", "label": "label"}
+#: Short, and the shorthand a person would use themselves: `ax` for an axes,
+#: `cmd` for a command button, `lbl` for a label, `edt` for an edit box, `val`
+#: for a numeric one. `ev.cmd_0` reads the way the code around it already does.
+TAG_PREFIX = {
+    "axes": "ax",
+    "button": "cmd",
+    "label": "lbl",
+    "text_box": "edt",
+    "number_box": "val",
+}
+
+#: What an element says before anyone has typed anything into it.
+#:
+#: A new button that says "Click here!" is a working control; one that says
+#: `cmd_0` is a placeholder the researcher has to fix before showing anyone.
+#: A text box starts empty because anything else would have to be deleted, and
+#: a number box starts at zero because a number box with no number in it is not
+#: in a valid state.
+DEFAULT_TEXT = {
+    "button": "Click here!",
+    "label": "Information:",
+    "text_box": "",
+    "number_box": "0",
+}
+
+
+def default_text(element_type) -> str:
+    return DEFAULT_TEXT.get(element_type, "")
 
 #: Size given to an element placed by a single click rather than a drag, as
 #: (width, height) fractions of the window.
@@ -50,8 +92,10 @@ TAG_PREFIX = {"axes": "ax", "button": "button", "label": "label"}
 #: 360x180.
 DEFAULT_SIZE = {
     "axes": (0.45, 0.40),
-    "button": (0.07, 0.04),
-    "label": (0.08, 0.03),
+    "button": (0.09, 0.04),
+    "label": (0.10, 0.03),
+    "text_box": (0.14, 0.04),
+    "number_box": (0.07, 0.04),
 }
 
 #: Style properties, and which element types carry them.
@@ -81,6 +125,8 @@ BASIC_PROPERTIES = {
     "axes": (),
     "button": ("label",),
     "label": ("label",),
+    "text_box": ("label",),
+    "number_box": ("label",),
 }
 
 

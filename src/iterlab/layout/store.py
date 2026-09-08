@@ -74,7 +74,21 @@ def _migrate_2_to_3(raw):
     return raw
 
 
-MIGRATIONS = {1: _migrate_1_to_2, 2: _migrate_2_to_3}
+def _migrate_3_to_4(raw):
+    """v4 added the `text_box` and `number_box` element types.
+
+    Nothing in an existing file changes: every v3 element is still valid, and
+    the elements this version adds simply did not appear in one. The version
+    still has to move, because the guarantee runs the other way — a file written
+    now may contain a type a v3 build has never heard of, and the version gate
+    is what makes that build refuse the file cleanly instead of reporting an
+    unknown element type as a defect in the researcher's layout.
+    """
+    raw["schema_version"] = 4
+    return raw
+
+
+MIGRATIONS = {1: _migrate_1_to_2, 2: _migrate_2_to_3, 3: _migrate_3_to_4}
 
 
 def _migrate(raw, version, path):

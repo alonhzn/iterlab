@@ -101,9 +101,9 @@ def test_layout_add_rejects_duplicates():
 
 def test_next_name_skips_taken():
     layout = Layout()
-    layout.add(Element("button_0", "button", Rect(0, 0, 0.1, 0.1)))
+    layout.add(Element("cmd_0", "button", Rect(0, 0, 0.1, 0.1)))
     layout.add(Element("button_1", "button", Rect(0.2, 0, 0.1, 0.1)))
-    assert layout.next_tag("button") == "button_2"
+    assert layout.next_tag("button") == "cmd_1"
     assert layout.next_tag("axes") == "ax_0"
 
 

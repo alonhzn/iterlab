@@ -293,7 +293,7 @@ def test_dragging_empty_canvas_still_creates(designer):
     designer.palette.selected.set("button")
     designer.select(None)
     _drag(designer, (250, 40), (390, 160))
-    assert "button_0" in designer.layout.tags()
+    assert "cmd_0" in designer.layout.tags()
 
 
 def test_creating_needs_no_dialog_and_focuses_the_name_field(designer):
@@ -307,7 +307,7 @@ def test_creating_needs_no_dialog_and_focuses_the_name_field(designer):
     _drag(designer, (300, 100), (300, 100))
 
     entry = designer.properties._entries["tag"]
-    assert entry.get() == "button_0", "the default is pre-filled"
+    assert entry.get() == "cmd_0", "the default is pre-filled"
     assert entry.selection_present(), "and selected, so typing replaces it"
 
     # Tk ignores focus_set on a withdrawn window entirely, so the root has to be
@@ -336,7 +336,7 @@ def test_a_tiny_drag_counts_as_a_click(designer):
     designer.palette.selected.set("button")
     designer.select(None)
     _drag(designer, (300, 60), (303, 63))
-    placed = designer.layout.elements["button_0"].position
+    placed = designer.layout.elements["cmd_0"].position
     assert (placed.width, placed.height) == pytest.approx(DEFAULT_SIZE["button"])
 
 
@@ -350,8 +350,8 @@ def test_clicking_empty_canvas_places_a_default_sized_element(designer):
     designer.select(None)
     _drag(designer, (300, 100), (300, 100))  # a click: press and release, no movement
 
-    assert designer.layout.tags() == ["go", "button_0"]
-    placed = designer.layout.elements["button_0"].position
+    assert designer.layout.tags() == ["go", "cmd_0"]
+    placed = designer.layout.elements["cmd_0"].position
     assert (placed.width, placed.height) == pytest.approx(DEFAULT_SIZE["button"])
 
 
@@ -361,7 +361,7 @@ def test_a_clicked_element_is_centred_on_the_click(designer):
     # Clearly off the "go" fixture element, which occupies x 100-200, y 200-300.
     _drag(designer, (300, 120), (300, 120))
 
-    placed = designer.layout.elements["button_0"].position
+    placed = designer.layout.elements["cmd_0"].position
     centre_x = placed.left + placed.width / 2
     centre_y = placed.bottom + placed.height / 2
     # A centred element can sit up to half a grid step off centre.
@@ -400,7 +400,7 @@ def test_a_real_drag_still_wins_over_the_default_size(designer):
     designer.select(None)
     _drag(designer, (250, 60), (390, 180))
 
-    placed = designer.layout.elements["button_0"].position
+    placed = designer.layout.elements["cmd_0"].position
     assert placed.width == pytest.approx(140 / CANVAS_W, abs=1e-2)
     assert placed.height == pytest.approx(120 / CANVAS_H, abs=1e-2)
 

@@ -54,7 +54,7 @@ demo.py      your code - you own this, iterlab only ever appends to it
 2. **Drag** on the canvas to size it, or **click** to drop one at a sensible default size.
 3. The **PROPERTIES** panel opens with the tag pre-filled. Type over it if you want a better one.
 
-Draw an **Axes** and a **Button** tagged `run_fit`. The axes will be tagged `ax_0`.
+Draw an **Axes** and a **Button**. They will be tagged `ax_0` and `cmd_0`.
 
 `demo.py` now ends with one handler for each. iterlab appends; it never edits or removes anything
 you wrote.
@@ -145,7 +145,19 @@ none. Add the others by hand when you want them.
 
 ## Elements
 
-Three types so far. Each is drawn in the editor and reached in code as `ev.<tag>`.
+Five types so far. Each is drawn in the editor and reached in code as `ev.<tag>`.
+
+New elements are tagged by type — `ax_0`, `cmd_0`, `lbl_0`, `edt_0`, `val_0` — and numbered upward.
+Rename any of them in the editor.
+
+**Every element that shows text has `.text`**, whatever kind it is. You never have to remember
+whether `ev.status` is a label or a box to read what it says:
+
+```python
+ev.lbl_0.text = "Fitting..."      # a label
+ev.cmd_0.text = "Stop"            # a button caption
+path = ev.edt_0.text               # what someone typed
+```
 
 ### Axes
 
@@ -198,6 +210,47 @@ def on_clicked_run_fit(ev, event):
 |---|---|
 | `ev.run_fit.text` | the caption (`.label` also works) |
 | every style property below | |
+
+### Text box
+
+A line of text someone types. Read it in a handler for something else — usually a button:
+
+```python
+def on_clicked_cmd_0(ev, event):
+    ev.data = np.loadtxt(ev.edt_0.text)      # whatever they typed
+    ev.lbl_0.text = f"loaded {len(ev.data)} rows"
+```
+
+| In code | |
+|---|---|
+| `ev.edt_0.text` | the contents; assign to it to prefill or clear the box |
+| every style property below | |
+
+It starts empty, because any other default would be text you have to delete first.
+
+### Number box
+
+The same, but it will not accept anything that is not a number. Typing letters into it does nothing —
+the character never appears — while a minus sign and a decimal point are allowed anywhere they could
+still lead to a number.
+
+```python
+def on_clicked_cmd_0(ev, event):
+    ev.result = fit(ev.data, threshold=ev.val_0.value)
+```
+
+| In code | |
+|---|---|
+| `ev.val_0.value` | the **number**: `8` from `"8"`, `12.5` from `"12.5"`, `0` from an empty box |
+| `ev.val_0.text` | the same thing as a string, so it behaves like every other element |
+| every style property below | |
+
+`.value` gives a whole number back as an `int`, so `range(ev.val_0.value)` works without casting. An
+empty box reads as `0` rather than raising: someone who cleared it to retype is mid-edit, not
+mistaken.
+
+Neither box gets a generated handler, because a box is normally *read* when something else happens
+rather than reacted to keystroke by keystroke. Write `on_key_<tag>` yourself if you do want that.
 
 ### Label
 
@@ -426,13 +479,13 @@ Worth knowing before they surprise you.
 
 - **A long computation freezes the window.** Handlers run to completion before the interface
   repaints. Splitting slow work across clicks is the workaround for now.
-- **Three element types so far.** Text fields, checkboxes, radio buttons, dropdowns, lists and
-  sliders are not built yet.
+- **Five element types so far.** Checkboxes, radio buttons, dropdowns, lists and sliders are not
+  built yet.
 - **Modules you import are assumed not to change** while the session runs. Editing a helper module
   of your own has no effect until you press **Restart app**.
 - **Editing `demo.yaml` by hand** is possible but not the intended path; the editor is.
 
 ---
 
-**Guide version 0.17.0.** Everything above is verified against that release. If a description here
+**Guide version 0.20.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

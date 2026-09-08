@@ -69,8 +69,15 @@ def test_axes_has_the_navigation_toolbar(gui):
     assert any("Toolbar" in k for k in kinds), kinds
 
 
-def test_button_label_comes_from_the_layout(gui):
-    assert gui.built.handles["run_fit"].label == "run_fit"
+def test_button_caption_comes_from_the_layout(gui):
+    """Whatever the layout says is what the widget shows - default or edited."""
+    assert gui.built.handles["run_fit"].text == "Click here!", "the default caption"
+
+    gui.toggle()
+    element = gui.built.layout.elements["run_fit"]
+    gui.built.apply_properties("run_fit", position=element.position, label="Run fit")
+    gui.toggle()
+    assert gui.built.handles["run_fit"].text == "Run fit"
 
 
 def test_missing_handler_click_is_silent(gui):

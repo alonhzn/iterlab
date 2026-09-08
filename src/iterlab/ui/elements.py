@@ -138,7 +138,14 @@ class ElementHandle:
 
 
 class _TextHandle(ElementHandle):
-    """Shared by the element types that render text."""
+    """Shared by the element types that render text.
+
+    Every one of them exposes the same `.text`, whatever Tk calls the underlying
+    option: a Button and a Label keep their string in `-text`, an Entry keeps it
+    in a variable, and a researcher should not have to know or care which. One
+    name means `ev.<tag>.text` works without first remembering what kind of
+    element `<tag>` is.
+    """
 
     STYLE_PROPERTIES = STYLE_PROPERTY_NAMES
 
@@ -148,7 +155,9 @@ class _TextHandle(ElementHandle):
         raise AttributeError(name)
 
 
-class ButtonHandle(_TextHandle):
+class _CaptionHandle(_TextHandle):
+    """Text held in the widget's own `-text` option: buttons and labels."""
+
     @property
     def text(self):
         return self.widget.cget("text")
@@ -159,6 +168,10 @@ class ButtonHandle(_TextHandle):
 
     #: The layout calls it `label`; both names work.
     label = text
+
+
+class ButtonHandle(_CaptionHandle):
+    pass
 
 
 def build_button(parent, element, dispatcher):
@@ -378,19 +391,8 @@ def build_axes(parent, element, dispatcher, figure=None):
     return axes
 
 
-class LabelHandle(_TextHandle):
-    """Text on screen. Set it from code: `ev.title.text = "..."`."""
-
-    @property
-    def text(self):
-        return self.widget.cget("text")
-
-    @text.setter
-    def text(self, value):
-        self.widget.configure(text=str(value))
-
-    #: The layout calls it `label`; both names work.
-    label = text
+class LabelHandle(_CaptionHandle):
+    """Text on screen. Set it from code: `ev.lbl_0.text = "..."`."""
 
 
 def build_label(parent, element, dispatcher):
@@ -422,10 +424,137 @@ def build_label(parent, element, dispatcher):
     return handle
 
 
+class _BoxHandle(_TextHandle):
+    """A box the researcher types into.
+
+    Its text lives in a Tk variable rather than in a `-text` option, because
+    that is where an Entry keeps what the person typed. `.text` hides the
+    difference, so `ev.<tag>.text` reads the same whether `<tag>` is a button,
+    a label or a box.
+    """
+
+    def __init__(self, element, widget, variable):
+        super().__init__(element, widget)
+        self.__dict__["variable"] = variable
+
+    @property
+    def text(self):
+        return self.variable.get()
+
+    @text.setter
+    def text(self, value):
+        self.variable.set("" if value is None else str(value))
+
+    #: The layout calls it `label`; both names work.
+    label = text
+
+
+class TextBoxHandle(_BoxHandle):
+    """A line of text the researcher types. Read it as `ev.edt_0.text`."""
+
+
+class NumberBoxHandle(_BoxHandle):
+    """A box that will only accept a number.
+
+    `.text` is the string, as on every other element. `.value` is the number,
+    which is what a researcher actually wants from it:
+
+        ev.threshold = ev.val_0.value
+    """
+
+    @property
+    def value(self):
+        """The contents as a number, or 0 when the box is empty.
+
+        Empty rather than an error: a researcher clearing the box to retype it
+        is mid-edit, not mistaken, and a handler that reads it at that moment
+        should get a number rather than an exception.
+        """
+        raw = self.variable.get().strip()
+        if raw in ("", "-", ".", "-."):
+            return 0
+        number = float(raw)
+        # An integer typed as an integer comes back as one: `range(ev.val_0.value)`
+        # should work without the researcher casting it.
+        return int(number) if number.is_integer() and "." not in raw else number
+
+    @value.setter
+    def value(self, number):
+        self.variable.set(str(number))
+
+
+def _accepts_number(candidate) -> bool:
+    """Whether a proposed entry contents is on its way to being a number.
+
+    Judged on what the box *would* contain after the keystroke, so this has to
+    accept the half-written states a person passes through while typing: "",
+    "-", "." and "-." are all on the way to a number, and refusing them would
+    make the box impossible to type a negative or a decimal into.
+    """
+    if candidate in ("", "-", ".", "-."):
+        return True
+    if candidate.count(".") > 1 or candidate.count("-") > 1:
+        return False
+    if "-" in candidate and not candidate.startswith("-"):
+        return False
+    try:
+        float(candidate)
+    except ValueError:
+        return False
+    return True
+
+
+def _build_box(parent, element, dispatcher, *, handle_class, numeric):
+    widget_frame = tk.Entry(parent, font=base_font(), relief="solid", borderwidth=1)
+    variable = tk.StringVar(master=parent, value=element.label or "")
+    widget_frame.configure(textvariable=variable)
+
+    if numeric:
+        # Validated on the *proposed* contents rather than after the fact, so a
+        # rejected keystroke never appears at all - no flicker, and the box is
+        # never momentarily holding something that is not a number.
+        check = parent.register(lambda proposed: _accepts_number(proposed))
+        widget_frame.configure(validate="key", validatecommand=(check, "%P"))
+
+    tag = element.tag
+
+    def fire(kind, **fields):
+        dispatcher.invoke(f"on_{kind}_{tag}", Event(kind=kind, tag=tag, **fields))
+
+    widget_frame.bind("<ButtonRelease-1>", lambda _e: fire("clicked", button="left"))
+    widget_frame.bind("<ButtonRelease-2>", lambda _e: fire("clicked", button="middle"))
+    widget_frame.bind("<ButtonRelease-3>", lambda _e: fire("clicked", button="right"))
+    widget_frame.bind("<Enter>", lambda _e: fire("hover"))
+    widget_frame.bind("<Motion>", lambda _e: fire("motion"))
+    # Bound to release, so `ev.<tag>.text` already holds the character typed by
+    # the time the handler reads it. On press it would still be the old value.
+    widget_frame.bind("<KeyRelease>", lambda e: fire("key", key=e.keysym))
+
+    handle = handle_class(element, widget_frame, variable)
+    handle._apply()
+    return handle
+
+
+def build_text_box(parent, element, dispatcher):
+    """A box for a line of text (FR-017a: every interaction still available)."""
+    return _build_box(
+        parent, element, dispatcher, handle_class=TextBoxHandle, numeric=False
+    )
+
+
+def build_number_box(parent, element, dispatcher):
+    """A box that refuses anything that is not on its way to being a number."""
+    return _build_box(
+        parent, element, dispatcher, handle_class=NumberBoxHandle, numeric=True
+    )
+
+
 BUILDERS = {
     "button": build_button,
     "axes": build_axes,
     "label": build_label,
+    "text_box": build_text_box,
+    "number_box": build_number_box,
 }
 
 

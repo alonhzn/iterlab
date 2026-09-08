@@ -17,8 +17,9 @@ file written by the older build:
 |---|---|
 | 2 | Added the per-element `style` block. An absent block means every default, which is what a v1 element had. |
 | 3 | Renamed the element type `plot_area` to `axes`, and the suggested tag prefix from `plot` to `ax`. Tags, positions and styles are untouched, so names chosen before the rename survive it. |
+| 4 | Added the `text_box` and `number_box` element types. Nothing in an existing file changes; the version moves so that an older build refuses a file containing a type it has never heard of, rather than reporting it as a defect in the researcher's layout. |
 
-The current `SCHEMA_VERSION` is **3**. Everything else below still holds; the
+The current `SCHEMA_VERSION` is **4**. Everything else below still holds; the
 element type names in the examples are shown as they are written today.
 
 ## Shape

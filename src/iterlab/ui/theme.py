@@ -33,8 +33,14 @@ DANGER = "#c2334d"
 DANGER_SOFT = "#fdecef"
 
 # Element fills on the canvas, kept distinct but quiet.
-ELEMENT_FILL = {"axes": "#dbeafe", "button": "#e9e3fb", "label": "#e7f2e9"}
-ELEMENT_EDGE = {"axes": "#7ba7f0", "button": "#a48fe0", "label": "#84b795"}
+ELEMENT_FILL = {
+    "axes": "#dbeafe", "button": "#e9e3fb", "label": "#e7f2e9",
+    "text_box": "#fdf0e3", "number_box": "#fce9ee",
+}
+ELEMENT_EDGE = {
+    "axes": "#7ba7f0", "button": "#a48fe0", "label": "#84b795",
+    "text_box": "#e0a86a", "number_box": "#d98aa3",
+}
 
 FONT = ("Segoe UI", 9)
 FONT_BOLD = ("Segoe UI", 9, "bold")
@@ -154,7 +160,43 @@ def _label_icon(canvas, size, colour):
         )
 
 
-ICONS = {"axes": _axes_icon, "button": _button_icon, "label": _label_icon}
+def _text_box_icon(canvas, size, colour):
+    """A framed field with a caret in it: somewhere to type."""
+    canvas.create_rectangle(
+        size * 0.14, size * 0.32, size * 0.86, size * 0.68,
+        outline=colour, width=2,
+    )
+    canvas.create_line(
+        size * 0.26, size * 0.40, size * 0.26, size * 0.60, fill=colour, width=2
+    )
+
+
+def _number_box_icon(canvas, size, colour):
+    """The same field, with digits rather than a caret."""
+    canvas.create_rectangle(
+        size * 0.14, size * 0.32, size * 0.86, size * 0.68,
+        outline=colour, width=2,
+    )
+    # Drawn as strokes rather than text: a glyph depends on the platform font
+    # having it, and the rest of this palette is vector for the same reason.
+    canvas.create_line(
+        size * 0.30, size * 0.38, size * 0.30, size * 0.62, fill=colour, width=2
+    )
+    canvas.create_line(
+        size * 0.24, size * 0.44, size * 0.30, size * 0.38, fill=colour, width=2
+    )
+    canvas.create_oval(
+        size * 0.48, size * 0.38, size * 0.62, size * 0.62, outline=colour, width=2
+    )
+
+
+ICONS = {
+    "axes": _axes_icon,
+    "button": _button_icon,
+    "label": _label_icon,
+    "text_box": _text_box_icon,
+    "number_box": _number_box_icon,
+}
 
 
 def element_icon(parent, element_type, size=24, colour=TEXT, background=BG):

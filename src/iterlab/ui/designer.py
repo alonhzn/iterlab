@@ -26,7 +26,14 @@ from ..codegen import inject
 from ..codegen import rename as rename_mod
 from ..codegen import templates
 from ..errors import CodeFileUnparseable, IterlabError
-from ..layout.schema import DEFAULT_SIZE, TEXT_TYPES, Element, Rect, validate_tag
+from ..layout.schema import (
+    DEFAULT_SIZE,
+    TEXT_TYPES,
+    Element,
+    Rect,
+    default_text,
+    validate_tag,
+)
 from . import theme
 from .palette import Palette
 from .scroll import ScrollableColumn
@@ -443,7 +450,10 @@ class Designer:
             tag=suggested,
             type=element_type,
             position=rect,
-            label=suggested if element_type in TEXT_TYPES else "",
+            # A working default rather than the tag: a new button that says
+            # "Click here!" is a control, where one saying `cmd_0` is a
+            # placeholder the researcher has to fix before showing anyone.
+            label=default_text(element_type) if element_type in TEXT_TYPES else "",
         )
         self.layout.add(element)
         self.interface.save_layout()
