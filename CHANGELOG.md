@@ -6,6 +6,29 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.19.1] — unreleased
+
+### Fixed
+
+- **The window icon did not appear.** Tk offers two mechanisms — `iconbitmap`
+  with an `.ico` and `iconphoto` with a `PhotoImage` — and 0.18.0 applied both
+  "for coverage". They do not layer: applied together to one window the title
+  bar shows a blank grey square, which is worse than either alone and worse than
+  doing nothing. Each works perfectly on its own.
+
+  Exactly one is applied now, chosen by platform: `iconbitmap` on Windows, so
+  each size gets the frame drawn for it and the title bar shows the 16 px
+  artwork rather than Tk squeezing down the 256; `iconphoto` elsewhere, which is
+  what X11 and macOS honour. The other is tried only when the first *fails*, as
+  a fallback rather than a supplement.
+
+  The test that existed asserted `apply()` returned True — which it happily did
+  while producing an empty box. It is the same shape of defect as every wiring
+  bug in this project: the mechanism was tested and the outcome was not. The
+  test now counts which Tk calls are actually made and fails if both are, and
+  Gate 2 gained an item to look at the title bar, since only a person can tell a
+  drawn icon from a blank one.
+
 ## [0.19.0] — unreleased
 
 ### Changed
