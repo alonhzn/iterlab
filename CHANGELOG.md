@@ -6,6 +6,31 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.19.0] — unreleased
+
+### Changed
+
+- **The icon is redrawn from a supplied logo**: a waveform ringed by two arcs
+  chasing each other. The wave is the researcher's data, the ring is the loop
+  they work inside, which is a better statement of the tool than the previous
+  drawing managed.
+
+  Two things carry it. The ring takes an **angular** gradient whose colour run
+  is mapped onto each arc's own sweep, so a tail is fully dark and an arrow head
+  fully bright — spread over a half-turn instead, both ends land mid-blue and
+  the heads lose their punch. The wave takes a **linear** gradient, because it
+  travels where the ring turns.
+
+  The detail thresholds moved after looking at the frames magnified rather than
+  guessing: at 64 px the dotted arcs had already collapsed into a grey fuzz that
+  made the whole mark look dirty, so the full drawing now starts at 128.
+
+  **The 16 and 24 px frames invert** — a white wave on solid brand blue. A dark
+  line on a near-white tile has almost no ink left to work with at that size and
+  goes faint in a taskbar, where the light tile's own edge is lost too. It
+  trades a little consistency between sizes for a mark that can be seen, and
+  nobody views the 16 and the 256 side by side.
+
 ## [0.18.0] — unreleased
 
 ### Added

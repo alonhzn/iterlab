@@ -61,3 +61,22 @@ def test_the_photo_reference_is_held(make_app):
     app = make_app()
     icon.apply(app.root)
     assert icon._keep, "nothing is holding the PhotoImage alive"
+
+
+def test_the_smallest_frames_invert_for_contrast():
+    """A dark line on a near-white tile has too little ink left at 16 px.
+
+    The tiny frames are a white wave on solid blue instead. Checked by the
+    brightness of the tile's own centre-left, which is background in every
+    frame - bright in the large ones, dark in the small.
+    """
+    from PIL import Image
+
+    def corner_brightness(size):
+        with Image.open(icon.ICO) as image:
+            image.size = (size, size)
+            pixel = image.convert("RGB").getpixel((size // 2, size // 8))
+        return sum(pixel) / 3
+
+    assert corner_brightness(256) > 200, "the large frame should sit on a light tile"
+    assert corner_brightness(16) < 160, "the small frame should be inverted"
