@@ -6,9 +6,37 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [0.21.0] — 2026-09-08
+## [0.21.1] — 2026-09-08
 
 **First release published to PyPI.** `pip install iterlab`.
+
+Everything in the entries below shipped in this one release; they were written as
+the work happened and are kept as the development record. Nothing before this had
+ever been published.
+
+### Fixed
+
+- **The README logo was a broken image.** The repository is private, and
+  `raw.githubusercontent.com` returns 404 for a private repository without a
+  token — so the image failed for every viewer, including on GitHub. The file
+  was present and pushed the whole time; the URL simply could not be fetched.
+
+  This is invisible to whoever owns the repository if they only ever check while
+  signed in, and it is the same failure the README's `GUIDE.md`, `LICENSE` and
+  `NOTICE` links have. All four resolve once the repository is public, which is
+  also what the PyPI page needs, since PyPI renders the README anonymously.
+
+### Added
+
+- `tools/check_readme_links.py`, which fetches every external README link with
+  no credentials at all — the way a stranger's browser does. It reports 4 of 4
+  dead against a private repository and should report all clear before
+  publishing. A broken logo on the page people arrive at first is not worth
+  discovering after an upload that cannot be undone.
+
+## [0.21.0] — not published
+
+Superseded by 0.21.1 before it ever reached PyPI.
 
 Everything in the entries below shipped in this one release; they were written
 as the work happened and are kept as the development record. Their "unreleased"
