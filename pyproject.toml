@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "iterlab"
+# Read from src/iterlab/__init__.py so there is one place to bump.
+dynamic = ["version"]
+description = "The GUI as a development environment for algorithms - draw the interface, iterate on the code without restarting"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "alonhzn" }]
+keywords = ["gui", "research", "matplotlib", "tkinter", "algorithm-development"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+
+# tkinter is deliberately absent: it ships with CPython and is not installable
+# from PyPI. Its absence is diagnosed at runtime by cli.py (research.md R12).
+dependencies = [
+    "matplotlib>=3.5",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+iterlab = "iterlab.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/alonhzn/iterlab"
+
+[tool.hatch.version]
+path = "src/iterlab/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/iterlab"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "ui: requires a display (Gate 1's display-dependent tier)",
+]
+# Display-dependent tests are excluded by default so the everyday loop needs no
+# display. Override on the command line with -m ui to run them.
+addopts = "--strict-markers -m 'not ui'"

@@ -1,0 +1,50 @@
+name: CI
+
+# Gate 1 of the two release gates in the project constitution (Principle VII).
+# The headless tier runs everywhere; the display-dependent tier runs under a
+# virtual display on Linux. Gate 2 is the recorded manual pass in VERIFICATION.md
+# and cannot be automated by definition.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  headless:
+    name: headless (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Run the headless suite
+        # No display of any kind. If this ever needs one, the layering has
+        # broken and tests/unit/test_import_boundary.py should have caught it.
+        run: pytest tests/unit tests/integration tests/contract
+
+  display:
+    name: display-dependent (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tkinter and Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk xvfb
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Run the display-dependent suite
+        run: xvfb-run -a pytest tests/ui -m ui
