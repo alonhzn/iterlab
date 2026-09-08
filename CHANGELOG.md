@@ -6,6 +6,25 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.8.0] — unreleased
+
+### Changed
+
+- An element's unique identifier is now called its **tag**, everywhere. It was
+  "name", which collided with the interface's own name and with the handler
+  *function* names it appears in. The legacy 2024 spike called it a tag too.
+
+  Researcher-facing: `event.element` becomes `event.tag`; the properties panel
+  field is "Tag". Unchanged: `ev.<tag>`, `on_clicked_<tag>` and the layout file
+  format — the tag has always been the mapping key there, so **no existing
+  layout or research code needs editing**.
+
+  Internally `Element.name` becomes `Element.tag`, `Layout.names()` becomes
+  `Layout.tags()`, `Layout.rename()` becomes `Layout.retag()`, and
+  `validate_name` becomes `validate_tag`. Deliberately *not* renamed:
+  `Interface.name`, which is the interface's own name, and `handler_name`,
+  which really is a function's name.
+
 ## [0.7.0] — unreleased
 
 ### Fixed

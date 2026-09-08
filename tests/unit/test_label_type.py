@@ -66,11 +66,11 @@ def test_appending_a_stub_for_a_label_writes_nothing(tmp_path):
 
 
 def test_every_type_has_a_default_size_and_a_name_prefix():
-    from iterlab.layout.schema import NAME_PREFIX
+    from iterlab.layout.schema import TAG_PREFIX
 
     for element_type in ELEMENT_TYPES:
         assert element_type in DEFAULT_SIZE
-        assert element_type in NAME_PREFIX
+        assert element_type in TAG_PREFIX
         assert element_type in DEFAULT_INTERACTION
 
 

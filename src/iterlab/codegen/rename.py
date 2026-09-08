@@ -29,9 +29,9 @@ from ..layout.schema import INTERACTIONS
 from .templates import CRLF, LF, atomic_write, read_source
 
 
-def handler_names_for(element_name: str) -> set:
+def handler_names_for(tag: str) -> set:
     """Every handler name that element could have, written or not."""
-    return {f"on_{interaction}_{element_name}" for interaction in INTERACTIONS}
+    return {f"on_{interaction}_{tag}" for interaction in INTERACTIONS}
 
 
 def _renamed(old_handler: str, old_name: str, new_name: str) -> str:

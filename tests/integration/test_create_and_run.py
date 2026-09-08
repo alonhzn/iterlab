@@ -84,7 +84,7 @@ def test_clicking_runs_the_researchers_handler(tmp_path):
 
     assert dispatcher.invoke("on_startup") is True
     assert dispatcher.invoke(
-        "on_clicked_run_fit", Event(kind="clicked", element="run_fit", button="left")
+        "on_clicked_run_fit", Event(kind="clicked", tag="run_fit", button="left")
     ) is True
 
     assert ev.log == ["left"]
@@ -100,7 +100,7 @@ def test_handler_receives_ev_first_and_event_second(tmp_path):
     )
     ev = Ev()
     dispatcher = Dispatcher(ModuleLoader(interface.code_path), ev, RecordingFaultSink())
-    dispatcher.invoke("on_clicked_a", Event(kind="clicked", element="a", x=1.5, y=2.5))
+    dispatcher.invoke("on_clicked_a", Event(kind="clicked", tag="a", x=1.5, y=2.5))
     assert ev.seen == ("Ev", "clicked", 1.5, 2.5)
 
 
@@ -113,7 +113,7 @@ def test_element_is_reachable_from_ev_by_its_designer_name(tmp_path):
     handle = object()
     ev._bind_element("spectrum", handle)
     Dispatcher(ModuleLoader(interface.code_path), ev, RecordingFaultSink()).invoke(
-        "on_clicked_a", Event(kind="clicked", element="a")
+        "on_clicked_a", Event(kind="clicked", tag="a")
     )
     assert ev.result is handle
 
@@ -150,7 +150,7 @@ def _hooked(tmp_path, source):
 
 def test_after_invoke_fires_when_a_handler_runs(tmp_path):
     d, calls, _ = _hooked(tmp_path, "def on_clicked_go(ev, event):\n    ev.n = 1\n")
-    d.invoke("on_clicked_go", Event(kind="clicked", element="go"))
+    d.invoke("on_clicked_go", Event(kind="clicked", tag="go"))
     assert calls == [1], "the UI must get a chance to repaint what the handler drew"
 
 
@@ -164,7 +164,7 @@ def test_after_invoke_fires_even_when_the_handler_raises(tmp_path):
         tmp_path,
         "def on_clicked_go(ev, event):\n    ev.drew = True\n    raise ValueError('x')\n",
     )
-    d.invoke("on_clicked_go", Event(kind="clicked", element="go"))
+    d.invoke("on_clicked_go", Event(kind="clicked", tag="go"))
     assert sink.kinds == ["handler_raised"]
     assert calls == [1]
 
@@ -173,12 +173,12 @@ def test_after_invoke_does_not_fire_when_no_handler_is_written(tmp_path):
     """Nothing ran, so nothing can have changed. Motion handlers fire
     constantly; repainting on every one of them would be wasteful."""
     d, calls, _ = _hooked(tmp_path, "def on_startup(ev):\n    pass\n")
-    d.invoke("on_clicked_go", Event(kind="clicked", element="go"))
+    d.invoke("on_clicked_go", Event(kind="clicked", tag="go"))
     assert calls == []
 
 
 def test_after_invoke_does_not_fire_when_the_module_is_broken(tmp_path):
     d, calls, sink = _hooked(tmp_path, "def on_clicked_go(ev, event)\n    pass\n")
-    d.invoke("on_clicked_go", Event(kind="clicked", element="go"))
+    d.invoke("on_clicked_go", Event(kind="clicked", tag="go"))
     assert sink.kinds == ["load_failed"]
     assert calls == []

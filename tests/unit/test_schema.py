@@ -8,13 +8,13 @@ from iterlab.layout.schema import (
     Element,
     Layout,
     Rect,
-    validate_name,
+    validate_tag,
 )
 
 
 @pytest.mark.parametrize("name", ["spectrum", "run_fit", "a", "x2", "plot_0"])
 def test_valid_names_accepted(name):
-    assert validate_name(name) == name
+    assert validate_tag(name) == name
 
 
 @pytest.mark.parametrize(
@@ -31,12 +31,12 @@ def test_valid_names_accepted(name):
 )
 def test_unusable_names_rejected(name, reason):
     with pytest.raises(NameInvalid):
-        validate_name(name)
+        validate_tag(name)
 
 
 def test_duplicate_name_rejected():
     with pytest.raises(NameInUse):
-        validate_name("plot_0", existing={"plot_0": object()})
+        validate_tag("plot_0", existing={"plot_0": object()})
 
 
 def test_rect_rejects_out_of_bounds():
@@ -83,17 +83,17 @@ def test_next_name_skips_taken():
     layout = Layout()
     layout.add(Element("button_0", "button", Rect(0, 0, 0.1, 0.1)))
     layout.add(Element("button_1", "button", Rect(0.2, 0, 0.1, 0.1)))
-    assert layout.next_name("button") == "button_2"
-    assert layout.next_name("plot_area") == "plot_0"
+    assert layout.next_tag("button") == "button_2"
+    assert layout.next_tag("plot_area") == "plot_0"
 
 
-def test_rename_preserves_order():
+def test_retag_preserves_order():
     layout = Layout()
     for n in ("a", "b", "c"):
         layout.add(Element(n, "button", Rect(0, 0, 0.1, 0.1)))
-    layout.rename("b", "middle")
-    assert layout.names() == ["a", "middle", "c"]
-    assert layout.elements["middle"].name == "middle"
+    layout.retag("b", "middle")
+    assert layout.tags() == ["a", "middle", "c"]
+    assert layout.elements["middle"].tag == "middle"
 
 
 def test_empty_layout_reports_empty():

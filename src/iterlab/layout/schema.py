@@ -35,8 +35,8 @@ INTERACTIONS = ("clicked", "hover", "motion", "key")
 #: handler themselves (FR-017a) — only the automatic stub is withheld.
 DEFAULT_INTERACTION = {"plot_area": "clicked", "button": "clicked", "label": None}
 
-#: Prefix used when auto-suggesting a name in the designer.
-NAME_PREFIX = {"plot_area": "plot", "button": "button", "label": "label"}
+#: Prefix used when auto-suggesting a tag in the designer.
+TAG_PREFIX = {"plot_area": "plot", "button": "button", "label": "label"}
 
 #: Size given to an element placed by a single click rather than a drag, as
 #: (width, height) fractions of the window.
@@ -55,29 +55,29 @@ DEFAULT_SIZE = {
 _ROUND = 4
 
 
-def validate_name(name: str, existing=()) -> str:
-    """Return `name` if it is usable, else raise.
+def validate_tag(tag: str, existing=()) -> str:
+    """Return `tag` if it is usable, else raise.
 
-    A name becomes part of a function name (`on_clicked_<name>`) and an attribute
+    A tag becomes part of a handler's name (`on_clicked_<tag>`) and an attribute
     on `ev`, so an unusable one would produce uncompilable generated code or an
     unreachable element. Checked at entry, never at generation time (FR-005b).
     """
-    if not isinstance(name, str) or not name:
-        raise NameInvalid("A name is required.")
-    if not name.isidentifier():
+    if not isinstance(tag, str) or not tag:
+        raise NameInvalid("A tag is required.")
+    if not tag.isidentifier():
         raise NameInvalid(
-            f"{name!r} cannot be used in Python code. Use letters, digits and "
+            f"{tag!r} cannot be used in Python code. Use letters, digits and "
             f"underscores, and do not start with a digit."
         )
-    if keyword.iskeyword(name):
-        raise NameInvalid(f"{name!r} is a Python keyword, so it cannot name an element.")
-    if name.startswith("_"):
+    if keyword.iskeyword(tag):
+        raise NameInvalid(f"{tag!r} is a Python keyword, so it cannot tag an element.")
+    if tag.startswith("_"):
         # Reserved so iterlab can keep its own attributes on `ev` without ever
         # colliding with an element (data-model.md, R10).
-        raise NameInvalid(f"{name!r} starts with an underscore, which iterlab reserves.")
-    if name in existing:
-        raise NameInUse(f"Another element is already called {name!r}.")
-    return name
+        raise NameInvalid(f"{tag!r} starts with an underscore, which iterlab reserves.")
+    if tag in existing:
+        raise NameInUse(f"Another element is already tagged {tag!r}.")
+    return tag
 
 
 @dataclass(frozen=True)
@@ -124,7 +124,9 @@ class Rect:
 
 @dataclass(frozen=True)
 class Element:
-    name: str
+    #: The unique identifier within an interface. It is what the researcher's
+    #: code sees: `ev.<tag>`, and `on_clicked_<tag>`.
+    tag: str
     type: str
     position: Rect
     label: str = ""
@@ -149,7 +151,7 @@ class Element:
     def handler_name(self, interaction: str) -> str:
         if interaction not in INTERACTIONS:
             raise ValueError(f"unknown interaction {interaction!r}")
-        return f"on_{interaction}_{self.name}"
+        return f"on_{interaction}_{self.tag}"
 
     def all_handler_names(self):
         """Every handler name this element could have, written or not."""
@@ -179,39 +181,39 @@ class Layout:
         """True when there is nothing to use yet — the editor-mode case (FR-001a)."""
         return not self.elements
 
-    def names(self):
+    def tags(self):
         return list(self.elements)
 
     def add(self, element: Element) -> None:
-        validate_name(element.name, existing=self.elements)
-        self.elements[element.name] = element
+        validate_tag(element.tag, existing=self.elements)
+        self.elements[element.tag] = element
 
-    def remove(self, name: str) -> Element:
-        return self.elements.pop(name)
+    def remove(self, tag: str) -> Element:
+        return self.elements.pop(tag)
 
-    def move(self, name: str, position: Rect) -> None:
-        self.elements[name] = replace(self.elements[name], position=position)
+    def move(self, tag: str, position: Rect) -> None:
+        self.elements[tag] = replace(self.elements[tag], position=position)
 
-    def relabel(self, name: str, label: str) -> None:
-        self.elements[name] = replace(self.elements[name], label=label)
+    def relabel(self, tag: str, label: str) -> None:
+        self.elements[tag] = replace(self.elements[tag], label=label)
 
-    def rename(self, old: str, new: str) -> None:
-        """Rename in the layout only.
+    def retag(self, old: str, new: str) -> None:
+        """Change a tag in the layout only.
 
         The caller is responsible for the code file, and must rewrite it *first*
         so that a failure leaves the two consistent (R14).
         """
-        validate_name(new, existing=[n for n in self.elements if n != old])
+        validate_tag(new, existing=[n for n in self.elements if n != old])
         # Rebuild to preserve insertion order rather than moving the entry to
         # the end, so version-control diffs stay minimal.
         self.elements = {
-            (new if n == old else n): (replace(e, name=new) if n == old else e)
-            for n, e in self.elements.items()
+            (new if t == old else t): (replace(e, tag=new) if t == old else e)
+            for t, e in self.elements.items()
         }
 
-    def next_name(self, element_type: str) -> str:
-        """The default offered in the creation dialog (FR-005a)."""
-        prefix = NAME_PREFIX[element_type]
+    def next_tag(self, element_type: str) -> str:
+        """The tag offered when an element is created (FR-005a)."""
+        prefix = TAG_PREFIX[element_type]
         index = 0
         while f"{prefix}_{index}" in self.elements:
             index += 1

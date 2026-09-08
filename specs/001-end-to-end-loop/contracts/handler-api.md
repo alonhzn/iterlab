@@ -9,15 +9,15 @@ existing analyses rather than an integration. MAJOR-only.
 ## Naming convention
 
 ```text
-on_<interaction>_<element_name>
+on_<interaction>_<tag>
 ```
 
 | Interaction | Function name | Fires when |
 |---|---|---|
-| `clicked` | `on_clicked_<name>` | A mouse button is pressed on the element |
-| `hover` | `on_hover_<name>` | The pointer enters the element |
-| `motion` | `on_motion_<name>` | The pointer moves within the element |
-| `key` | `on_key_<name>` | A key is pressed while the element has focus |
+| `clicked` | `on_clicked_<tag>` | A mouse button is pressed on the element |
+| `hover` | `on_hover_<tag>` | The pointer enters the element |
+| `motion` | `on_motion_<tag>` | The pointer moves within the element |
+| `key` | `on_key_<tag>` | A key is pressed while the element has focus |
 
 **Universal**: every interaction is available on every element type (FR-017a). A hover handler on a
 button is as legitimate as one on a plot area.
@@ -68,9 +68,9 @@ def on_clicked_run_fit(ev, event):
 
 | Access | Meaning |
 |---|---|
-| `ev.<element_name>` | The live handle for that element, named exactly as in the designer |
+| `ev.<tag>` | The live handle for that element, named exactly as in the designer |
 | `ev.<anything_else>` | Yours. Assign freely; iterlab never reads or modifies it |
-| `ev._<anything>` | **Reserved for iterlab.** This is why element names may not begin with `_` |
+| `ev._<anything>` | **Reserved for iterlab.** This is why element tags may not begin with `_` |
 
 **The guarantee that matters**: `ev` is created by iterlab, not by the researcher's module, and
 therefore survives every reload of that module. Data loaded in `on_startup` is loaded once per session
@@ -92,7 +92,7 @@ Normalized across element types, so a handler signature never depends on how an 
 | Attribute | Type | Present when |
 |---|---|---|
 | `kind` | str | Always — `"click"`, `"hover"`, `"motion"`, `"key"` |
-| `element` | str | Always — the element's name |
+| `tag` | str | Always — the element's tag |
 | `button` | str or `None` | Click — `"left"`, `"middle"`, `"right"` |
 | `x`, `y` | float or `None` | **Data coordinates** on plot areas; `None` on controls |
 | `key` | str or `None` | Key events |
@@ -110,8 +110,8 @@ Stubs for other interactions are never generated; the researcher writes those wh
 
 | Element type | Default interaction | Generated |
 |---|---|---|
-| `plot_area` | click | `on_clicked_<name>` |
-| `button` | click | `on_clicked_<name>` |
+| `plot_area` | click | `on_clicked_<tag>` |
+| `button` | click | `on_clicked_<tag>` |
 
 ```python
 def on_clicked_run_fit(ev, event):
@@ -167,7 +167,7 @@ Renaming an element in the properties panel rewrites **that element's handlers**
 nothing else (FR-005c, FR-005d).
 
 ```python
-# before — element named axes_0
+# before — element tagd axes_0
 def on_clicked_axes_0(ev, event): ...
 def on_motion_axes_0(ev, event): ...
 
@@ -197,7 +197,7 @@ This is the **only** operation in iterlab permitted to modify a line the researc
 Additive and therefore **MINOR**: a new interaction kind; a new attribute on `event`; a new element
 type; a new element handle capability.
 
-Breaking and therefore **MAJOR**: changing the `on_<interaction>_<name>` pattern; changing parameter
+Breaking and therefore **MAJOR**: changing the `on_<interaction>_<tag>` pattern; changing parameter
 order or count; renaming an `event` attribute; changing `x`/`y` away from data coordinates; changing
-what `ev.<element_name>` returns; making `ev` not survive a reload; generating more than one stub per
+what `ev.<tag>` returns; making `ev` not survive a reload; generating more than one stub per
 element.

@@ -12,8 +12,8 @@ pytestmark = pytest.mark.ui
 def editor(make_app):
     app = make_app()
     d = app.built
-    d.create_element("button", Rect(0.05, 0.10, 0.25, 0.12), name="run_fit")
-    d.create_element("plot_area", Rect(0.05, 0.40, 0.90, 0.50), name="spectrum")
+    d.create_element("button", Rect(0.05, 0.10, 0.25, 0.12), tag="run_fit")
+    d.create_element("plot_area", Rect(0.05, 0.40, 0.90, 0.50), tag="spectrum")
     d.select("run_fit")
     yield app
 
@@ -27,14 +27,14 @@ def _set(panel, **values):
 
 def test_panel_shows_an_empty_state_when_nothing_is_selected(editor):
     editor.built.select(None)
-    assert editor.built.properties.element_name is None
+    assert editor.built.properties.element_tag is None
 
 
 def test_panel_exposes_the_contracted_properties(editor):
     d = editor.built
-    assert set(d.properties._entries) == {"name", "left", "bottom", "width", "height", "label"}
+    assert set(d.properties._entries) == {"tag", "left", "bottom", "width", "height", "label"}
     d.select("spectrum")
-    assert set(d.properties._entries) == {"name", "left", "bottom", "width", "height"}
+    assert set(d.properties._entries) == {"tag", "left", "bottom", "width", "height"}
 
 
 def test_typed_coordinates_move_the_element(editor):
@@ -72,7 +72,7 @@ def test_editing_the_label_changes_nothing_else(editor):
     code_before = editor.interface.code_path.read_bytes()
     assert _set(d.properties, label="Run the fit") is True
     assert editor.interface.layout.elements["run_fit"].label == "Run the fit"
-    assert editor.interface.layout.elements["run_fit"].name == "run_fit"
+    assert editor.interface.layout.elements["run_fit"].tag == "run_fit"
     assert editor.interface.code_path.read_bytes() == code_before
 
 
@@ -88,27 +88,27 @@ def test_rename_rewrites_the_handler_and_nothing_else(editor):
     )
     editor.interface.code_path.write_text(code, encoding="utf-8")
 
-    assert _set(editor.built.properties, name="fit_button") is True
+    assert _set(editor.built.properties, tag="fit_button") is True
 
     after = editor.interface.code_path.read_text(encoding="utf-8")
     assert "def on_clicked_fit_button(ev, event):" in after
     assert "# a comment mentioning run_fit" in after
     assert "ev.note = 'run_fit'" in after
     assert "    run_fit = 1" in after
-    assert "fit_button" in editor.interface.layout.names()
+    assert "fit_button" in editor.interface.layout.tags()
 
 
 def test_rename_to_a_taken_name_is_refused(editor):
     d = editor.built
     code_before = editor.interface.code_path.read_bytes()
-    assert _set(d.properties, name="spectrum") is False
-    assert "run_fit" in editor.interface.layout.names()
+    assert _set(d.properties, tag="spectrum") is False
+    assert "run_fit" in editor.interface.layout.tags()
     assert editor.interface.code_path.read_bytes() == code_before
 
 
 def test_rename_to_a_keyword_is_refused(editor):
-    assert _set(editor.built.properties, name="class") is False
-    assert "run_fit" in editor.interface.layout.names()
+    assert _set(editor.built.properties, tag="class") is False
+    assert "run_fit" in editor.interface.layout.tags()
 
 
 def test_rename_refused_while_the_code_file_is_broken(editor):
@@ -117,11 +117,11 @@ def test_rename_refused_while_the_code_file_is_broken(editor):
     editor.interface.code_path.write_text(broken, encoding="utf-8")
     layout_before = editor.interface.layout_path.read_bytes()
 
-    assert _set(editor.built.properties, name="fit_button") is False
+    assert _set(editor.built.properties, tag="fit_button") is False
 
     assert editor.interface.code_path.read_text(encoding="utf-8") == broken
     assert editor.interface.layout_path.read_bytes() == layout_before
-    assert "run_fit" in editor.interface.layout.names()
+    assert "run_fit" in editor.interface.layout.tags()
 
 
 def test_deleting_an_element_leaves_its_handler(editor):
@@ -129,5 +129,5 @@ def test_deleting_an_element_leaves_its_handler(editor):
     code_before = editor.interface.code_path.read_bytes()
     d.select("run_fit")
     d.delete_selected()
-    assert "run_fit" not in editor.interface.layout.names()
+    assert "run_fit" not in editor.interface.layout.tags()
     assert editor.interface.code_path.read_bytes() == code_before

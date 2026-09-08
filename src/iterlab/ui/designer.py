@@ -26,7 +26,7 @@ from ..codegen import inject
 from ..codegen import rename as rename_mod
 from ..codegen import templates
 from ..errors import CodeFileUnparseable, IterlabError
-from ..layout.schema import DEFAULT_SIZE, TEXT_TYPES, Element, Rect, validate_name
+from ..layout.schema import DEFAULT_SIZE, TEXT_TYPES, Element, Rect, validate_tag
 from . import theme
 from .palette import Palette
 from .scroll import ScrollableColumn
@@ -406,29 +406,29 @@ class Designer:
         # Re-select so the properties panel shows the new numbers.
         self.select(name)
 
-    def select(self, name):
-        self.selected = name
-        self.properties.show(self.layout.elements.get(name) if name else None)
+    def select(self, tag):
+        self.selected = tag
+        self.properties.show(self.layout.elements.get(tag) if tag else None)
         self.sidebar.inner.update_idletasks()
         self.sidebar._on_inner_resize()
         self.sidebar.bind_wheel_to_children()
         self.redraw()
 
-    def create_element(self, element_type, rect, name=None):
+    def create_element(self, element_type, rect, tag=None):
         """Draw one element: layout, then stub, then redraw.
 
         Named automatically and selected with the name field focused, so the
         default can be accepted by doing nothing or replaced by typing.
         """
-        suggested = name or self.layout.next_name(element_type)
+        suggested = tag or self.layout.next_tag(element_type)
         try:
-            validate_name(suggested, existing=self.layout.elements)
+            validate_tag(suggested, existing=self.layout.elements)
         except IterlabError as exc:
             self.properties._show_message(str(exc))
             return None
 
         element = Element(
-            name=suggested,
+            tag=suggested,
             type=element_type,
             position=rect,
             label=suggested if element_type in TEXT_TYPES else "",
@@ -445,10 +445,10 @@ class Designer:
             # The element still exists; only the stub could not be added. Say so
             # rather than appending blindly and risking a duplicate definition.
             self.properties._show_message(f"{exc} The element was added anyway.")
-        self.select(element.name)
-        # The name is offered in the properties panel rather than a modal:
+        self.select(element.tag)
+        # The tag is offered in the properties panel rather than a modal:
         # placing an element should not stop to ask a question (FR-005a).
-        self.properties.focus_name()
+        self.properties.focus_tag()
         return element
 
     def delete_selected(self):
@@ -461,25 +461,25 @@ class Designer:
 
     # -- property edits --------------------------------------------------
 
-    def apply_properties(self, current_name, name=None, position=None, label=None):
+    def apply_properties(self, current_tag, tag=None, position=None, label=None):
         """Apply typed values. A rename rewrites the code file first (R14)."""
-        self.layout.elements[current_name]  # KeyError if it vanished
+        self.layout.elements[current_tag]  # KeyError if it vanished
 
-        if name and name != current_name:
-            validate_name(
-                name, existing=[n for n in self.layout.elements if n != current_name]
+        if tag and tag != current_tag:
+            validate_tag(
+                tag, existing=[t for t in self.layout.elements if t != current_tag]
             )
             # Code file first: if it fails, the layout is untouched and the two
             # files stay consistent.
-            rename_mod.rename_handlers(self.interface.code_path, current_name, name)
-            self.layout.rename(current_name, name)
-            current_name = name
+            rename_mod.rename_handlers(self.interface.code_path, current_tag, tag)
+            self.layout.retag(current_tag, tag)
+            current_tag = tag
 
         if position is not None:
-            self.layout.move(current_name, position)
-        if label is not None and self.layout.elements[current_name].displays_text:
-            self.layout.relabel(current_name, label)
+            self.layout.move(current_tag, position)
+        if label is not None and self.layout.elements[current_tag].displays_text:
+            self.layout.relabel(current_tag, label)
 
         self.interface.save_layout()
-        self.select(current_name)
-        return current_name
+        self.select(current_tag)
+        return current_tag

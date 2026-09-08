@@ -101,7 +101,7 @@ def test_delete_leaves_handler(tmp_path):
     interface.layout.remove("run_fit")
     interface.save_layout()
 
-    assert "run_fit" not in interface.layout.names()
+    assert "run_fit" not in interface.layout.tags()
     assert interface.code_path.read_bytes() == before
     assert "def on_clicked_run_fit" in interface.code_path.read_text(encoding="utf-8")
 

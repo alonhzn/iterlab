@@ -21,8 +21,8 @@ def app(make_app):
 
 def _draw_two(app):
     designer = app.built
-    designer.create_element("plot_area", Rect(0.05, 0.35, 0.9, 0.6), name="spectrum")
-    designer.create_element("button", Rect(0.05, 0.1, 0.25, 0.12), name="run_fit")
+    designer.create_element("plot_area", Rect(0.05, 0.35, 0.9, 0.6), tag="spectrum")
+    designer.create_element("button", Rect(0.05, 0.1, 0.25, 0.12), tag="run_fit")
 
 
 def test_new_interface_opens_in_editor_mode(app):
@@ -151,7 +151,7 @@ def test_switching_back_starts_a_fresh_session(app):
 def test_toggle_is_chrome_and_never_in_the_layout(app):
     """FR-015c: it is not an element and cannot be reached from researcher code."""
     _draw_two(app)
-    assert "toggle" not in app.interface.layout.names()
+    assert "toggle" not in app.interface.layout.tags()
     layout_text = app.interface.layout_path.read_text(encoding="utf-8")
     assert "toggle" not in layout_text
 

@@ -53,8 +53,8 @@ class ElementHandle:
         self.widget = widget
 
     @property
-    def name(self):
-        return self.element.name
+    def tag(self):
+        return self.element.tag
 
 
 class ButtonHandle(ElementHandle):
@@ -79,12 +79,12 @@ def build_button(parent, element, dispatcher):
     All three use release rather than press, so every mouse button behaves the
     same way: the click counts when it completes on the widget.
     """
-    widget = tk.Button(parent, text=element.label or element.name, font=base_font())
-    name = element.name
+    widget = tk.Button(parent, text=element.label or element.tag, font=base_font())
+    tag = element.tag
 
     def fire(kind, **fields):
         dispatcher.invoke(
-            f"on_{kind}_{name}", Event(kind=kind, element=name, **fields)
+            f"on_{kind}_{tag}", Event(kind=kind, tag=tag, **fields)
         )
 
     widget.configure(command=lambda: fire("clicked", button="left"))
@@ -130,7 +130,7 @@ def build_plot_area(parent, element, dispatcher):
     toolbar.update()
     toolbar.pack(side="bottom", fill="x")
 
-    name = element.name
+    tag = element.tag
 
     def fire(kind, mpl_event, **extra):
         dispatcher.invoke(
@@ -195,17 +195,17 @@ def build_label(parent, element, dispatcher):
     interaction is still available if the researcher writes one (FR-017a)."""
     widget = tk.Label(
         parent,
-        text=element.label or element.name,
+        text=element.label or element.tag,
         font=base_font(),
         anchor="w",
         justify="left",
         bg=theme.SURFACE,
         fg=theme.TEXT,
     )
-    name = element.name
+    tag = element.tag
 
     def fire(kind, **fields):
-        dispatcher.invoke(f"on_{kind}_{name}", Event(kind=kind, element=name, **fields))
+        dispatcher.invoke(f"on_{kind}_{tag}", Event(kind=kind, tag=tag, **fields))
 
     widget.bind("<ButtonRelease-1>", lambda _e: fire("clicked", button="left"))
     widget.bind("<ButtonRelease-2>", lambda _e: fire("clicked", button="middle"))

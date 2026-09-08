@@ -13,7 +13,7 @@ from pathlib import Path
 import yaml
 
 from ..errors import LayoutInvalid, LayoutVersionTooNew
-from .schema import SCHEMA_VERSION, Element, Layout, Rect, Window, validate_name
+from .schema import SCHEMA_VERSION, Element, Layout, Rect, Window, validate_tag
 
 _ELEMENT_KEYS = {"type", "position", "label"}
 _TOP_KEYS = {"schema_version", "window", "elements"}
@@ -75,24 +75,24 @@ def load(path) -> Layout:
 
     elements_raw = raw.get("elements") or {}
     if not isinstance(elements_raw, dict):
-        raise LayoutInvalid("elements should be a mapping of name to element")
+        raise LayoutInvalid("elements should be a mapping of tag to element")
 
     layout = Layout(window=window, elements={}, schema_version=SCHEMA_VERSION)
-    for name, body in elements_raw.items():
+    for tag, body in elements_raw.items():
         if not isinstance(body, dict):
-            raise LayoutInvalid(f"element {name!r} should be a mapping")
-        _reject_unknown(body, _ELEMENT_KEYS, f"key on element {name!r}")
+            raise LayoutInvalid(f"element {tag!r} should be a mapping")
+        _reject_unknown(body, _ELEMENT_KEYS, f"key on element {tag!r}")
         try:
-            validate_name(str(name), existing=layout.elements)
+            validate_tag(str(tag), existing=layout.elements)
             element = Element(
-                name=str(name),
+                tag=str(tag),
                 type=body.get("type"),
                 position=Rect.from_list(body.get("position")),
                 label=body.get("label", "") or "",
             )
         except Exception as exc:
-            raise LayoutInvalid(f"element {name!r} is invalid: {exc}") from exc
-        layout.elements[element.name] = element
+            raise LayoutInvalid(f"element {tag!r} is invalid: {exc}") from exc
+        layout.elements[element.tag] = element
     return layout
 
 
@@ -102,11 +102,11 @@ def _serialize(layout: Layout) -> str:
         "window": {"width": layout.window.width, "height": layout.window.height},
         "elements": {},
     }
-    for name, element in layout.elements.items():
+    for tag, element in layout.elements.items():
         entry = {"type": element.type, "position": element.position.as_list()}
-        if element.type == "button":
+        if element.displays_text:
             entry["label"] = element.label
-        body["elements"][name] = entry
+        body["elements"][tag] = entry
     # sort_keys=False preserves insertion order, so a round trip with no edits
     # produces a byte-identical file and diffs stay minimal.
     return yaml.safe_dump(body, sort_keys=False, allow_unicode=True, default_flow_style=None)

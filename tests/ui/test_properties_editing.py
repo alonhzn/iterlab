@@ -17,7 +17,7 @@ def editor(mapped, make_app):
     d = app.built
     d.canvas.configure(width=400, height=400)
     app.root.update_idletasks()
-    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), name="go")
+    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), tag="go")
     d.select("go")
     app.root.update()
     return d
@@ -100,9 +100,9 @@ def test_an_invalid_value_is_rejected_and_reported(editor):
 
 
 def test_enter_commits_a_rename(editor):
-    entry = _type(editor.properties, "name", "fit_button")
+    entry = _type(editor.properties, "tag", "fit_button")
     entry.event_generate("<Return>")
-    assert "fit_button" in editor.layout.names()
+    assert "fit_button" in editor.layout.tags()
 
 
 # -- the delete control -----------------------------------------------------
@@ -134,7 +134,7 @@ def test_no_delete_control_when_nothing_is_selected(editor):
 
 def test_the_delete_control_removes_the_element(editor):
     _delete_button(editor.properties)[0].invoke()
-    assert "go" not in editor.layout.names()
+    assert "go" not in editor.layout.tags()
     assert editor.selected is None
 
 

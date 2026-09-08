@@ -14,8 +14,8 @@ pytestmark = pytest.mark.ui
 def gui(make_app):
     app = make_app()
     d = app.built
-    d.create_element("button", Rect(0.05, 0.1, 0.25, 0.12), name="run_fit")
-    d.create_element("button", Rect(0.4, 0.1, 0.25, 0.12), name="other")
+    d.create_element("button", Rect(0.05, 0.1, 0.25, 0.12), tag="run_fit")
+    d.create_element("button", Rect(0.4, 0.1, 0.25, 0.12), tag="other")
     yield app
 
 

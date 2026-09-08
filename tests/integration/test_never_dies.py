@@ -21,7 +21,7 @@ def _session(tmp_path, source):
 
 
 def _click(d, name="go"):
-    return d.invoke(f"on_clicked_{name}", Event(kind="clicked", element=name))
+    return d.invoke(f"on_clicked_{name}", Event(kind="clicked", tag=name))
 
 
 def _write(path, text):

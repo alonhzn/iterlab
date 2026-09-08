@@ -30,7 +30,7 @@ def gui(mapped, make_app):
     """
     app = make_app()
     app.built.palette.selected.set("button")
-    app.built.create_element("button", Rect(0.1, 0.1, 0.3, 0.15), name="go")
+    app.built.create_element("button", Rect(0.1, 0.1, 0.3, 0.15), tag="go")
     app.interface.code_path.write_text(RECORD, encoding="utf-8")
     app.toggle()
     app.root.update()

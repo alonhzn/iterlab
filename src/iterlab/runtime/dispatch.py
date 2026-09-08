@@ -32,7 +32,7 @@ class Event:
     """
 
     kind: str
-    element: str
+    tag: str
     button: str | None = None
     x: float | None = None
     y: float | None = None
@@ -68,7 +68,7 @@ class Dispatcher:
         Never raises on the researcher's account: the process surviving is the
         whole point (constitution Principle III).
         """
-        element = event.element if event is not None else None
+        tag = event.tag if event is not None else None
 
         # A startup that never completed gets another chance before anything
         # else runs, so a typo there cannot strand the session (FR-026d).
@@ -89,7 +89,7 @@ class Dispatcher:
         if not self.loader.refresh():
             self._report(
                 Fault.from_exception(
-                    self.loader.load_error, kind=LOAD_FAILED, element=element
+                    self.loader.load_error, kind=LOAD_FAILED, element=tag
                 )
             )
             return False
@@ -110,7 +110,7 @@ class Dispatcher:
                 Fault.from_exception(
                     exc,
                     kind=HANDLER_RAISED,
-                    element=element,
+                    element=tag,
                     interaction=event.kind if event else None,
                 )
             )
@@ -122,7 +122,7 @@ class Dispatcher:
             if self.after_invoke is not None:
                 self.after_invoke()
 
-        self._clear(element)
+        self._clear(tag)
         return True
 
     # -- fault bookkeeping ------------------------------------------------
@@ -146,15 +146,15 @@ class Dispatcher:
             self._failing.discard(None)
             self.sink.clear(None)
 
-    def handler_for(self, element_name, interaction):
+    def handler_for(self, tag, interaction):
         """A callback bound to a name, never to a function.
 
         The closure captures strings only, so it stays correct across reloads.
         """
-        handler_name = f"on_{interaction}_{element_name}"
+        handler_name = f"on_{interaction}_{tag}"
 
         def callback(event=None, **kwargs):
-            ev = event or Event(kind=interaction, element=element_name, **kwargs)
+            ev = event or Event(kind=interaction, tag=tag, **kwargs)
             return self.invoke(handler_name, ev)
 
         return callback

@@ -23,8 +23,8 @@ def on_clicked_run_fit(ev, event):
 def gui(make_app):
     app = make_app()
     designer = app.built
-    designer.create_element("plot_area", Rect(0.05, 0.35, 0.9, 0.6), name="spectrum")
-    designer.create_element("button", Rect(0.05, 0.1, 0.25, 0.12), name="run_fit")
+    designer.create_element("plot_area", Rect(0.05, 0.35, 0.9, 0.6), tag="spectrum")
+    designer.create_element("button", Rect(0.05, 0.1, 0.25, 0.12), tag="run_fit")
     app.interface.code_path.write_text(CODE, encoding="utf-8")
     app.toggle()
     app.root.update_idletasks()

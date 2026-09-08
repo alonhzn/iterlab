@@ -59,8 +59,8 @@ class Runner:
     def _build_elements(self):
         for element in self.layout.elements.values():
             handle = element_factory.build(self.frame, element, self.dispatcher)
-            self.handles[element.name] = handle
-            self.ev._bind_element(element.name, handle)
+            self.handles[element.tag] = handle
+            self.ev._bind_element(element.tag, handle)
 
     # -- startup ---------------------------------------------------------
 

@@ -24,14 +24,14 @@ def _grid(designer, count):
         designer.create_element(
             "button",
             Rect(0.02 + col * 0.19, 0.02 + row * 0.19, 0.17, 0.15),
-            name=f"b{i}",
+            tag=f"b{i}",
         )
 
 
 def test_twenty_elements_stay_responsive(make_app):
     app = make_app()
     _grid(app.built, 20)
-    assert len(app.interface.layout.names()) == 20
+    assert len(app.interface.layout.tags()) == 20
 
     app.interface.code_path.write_text(
         "def on_clicked_b0(ev, event):\n    ev.hits = getattr(ev, 'hits', 0) + 1\n",

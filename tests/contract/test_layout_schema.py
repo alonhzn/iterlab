@@ -36,7 +36,7 @@ def test_roundtrip_byte_identical(tmp_path):
 def test_element_order_preserved(tmp_path):
     p = tmp_path / "demo.yaml"
     store.save(_sample(), p)
-    assert store.load(p).names() == ["spectrum", "run_fit"]
+    assert store.load(p).tags() == ["spectrum", "run_fit"]
 
 
 def test_version_is_always_written(tmp_path):

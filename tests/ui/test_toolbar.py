@@ -10,7 +10,7 @@ pytestmark = pytest.mark.ui
 @pytest.fixture
 def gui(make_app):
     app = make_app()
-    app.built.create_element("plot_area", Rect(0.05, 0.1, 0.9, 0.8), name="spectrum")
+    app.built.create_element("plot_area", Rect(0.05, 0.1, 0.9, 0.8), tag="spectrum")
     # Deliberately no handlers at all: the toolbar must not depend on them.
     app.interface.code_path.write_text(
         "def on_startup(ev):\n    ev.spectrum.plot([0, 1, 2], [0, 1, 4])\n",
@@ -54,7 +54,7 @@ def test_toolbar_does_not_swallow_the_researchers_click_handler(gui):
     runner.dispatcher.invoke(
         "on_clicked_spectrum",
         __import__("iterlab.runtime.dispatch", fromlist=["Event"]).Event(
-            kind="clicked", element="spectrum", x=1.0, y=1.0
+            kind="clicked", tag="spectrum", x=1.0, y=1.0
         ),
     )
     assert runner.ev.clicks == 1

@@ -33,7 +33,7 @@ def designer(make_app):
     d._size = lambda: (CANVAS_W, CANVAS_H)
     app.root.update_idletasks()
     # left .25, bottom .25, w .25, h .25  ->  pixels x 100..200, y 200..300
-    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), name="go")
+    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), tag="go")
     d.select("go")
     return d
 
@@ -86,7 +86,7 @@ def test_moving_preserves_size(designer):
 
 
 def test_dragging_an_unselected_element_selects_and_moves_it(designer):
-    designer.create_element("button", Rect(0.6, 0.6, 0.2, 0.2), name="other")
+    designer.create_element("button", Rect(0.6, 0.6, 0.2, 0.2), tag="other")
     designer.select(None)
     _drag(designer, (280, 100), (300, 120))
     assert designer.selected == "other"
@@ -120,7 +120,7 @@ def test_a_click_without_movement_does_not_rewrite_the_layout(designer):
 
 
 def test_handles_are_drawn_only_for_the_selection(designer):
-    designer.create_element("button", Rect(0.6, 0.6, 0.2, 0.2), name="other")
+    designer.create_element("button", Rect(0.6, 0.6, 0.2, 0.2), tag="other")
     designer.select("go")
     assert designer._handle_at(100, 200) == "nw", "the selection has handles"
     designer.select("other")
@@ -280,7 +280,7 @@ def test_dragging_empty_canvas_still_creates(designer):
     designer.palette.selected.set("button")
     designer.select(None)
     _drag(designer, (250, 40), (390, 160))
-    assert "button_0" in designer.layout.names()
+    assert "button_0" in designer.layout.tags()
 
 
 def test_creating_needs_no_dialog_and_focuses_the_name_field(designer):
@@ -293,7 +293,7 @@ def test_creating_needs_no_dialog_and_focuses_the_name_field(designer):
     designer.select(None)
     _drag(designer, (300, 100), (300, 100))
 
-    entry = designer.properties._entries["name"]
+    entry = designer.properties._entries["tag"]
     assert entry.get() == "button_0", "the default is pre-filled"
     assert entry.selection_present(), "and selected, so typing replaces it"
 
@@ -301,7 +301,7 @@ def test_creating_needs_no_dialog_and_focuses_the_name_field(designer):
     designer.app.root.deiconify()
     try:
         designer.app.root.update()
-        designer.properties.focus_name()
+        designer.properties.focus_tag()
         designer.app.root.update()
         assert entry.focus_get() is entry, "the cursor is already in the name field"
     finally:
@@ -329,7 +329,7 @@ def test_clicking_empty_canvas_places_a_default_sized_element(designer):
     designer.select(None)
     _drag(designer, (300, 100), (300, 100))  # a click: press and release, no movement
 
-    assert designer.layout.names() == ["go", "button_0"]
+    assert designer.layout.tags() == ["go", "button_0"]
     placed = designer.layout.elements["button_0"].position
     assert (placed.width, placed.height) == pytest.approx(DEFAULT_SIZE["button"])
 

@@ -21,7 +21,7 @@ from . import theme
 
 GEOMETRY_FIELDS = ("left", "bottom", "width", "height")
 LABELS = {
-    "name": "Name",
+    "tag": "Tag",
     "left": "Left",
     "bottom": "Bottom",
     "width": "Width",
@@ -62,7 +62,7 @@ class PropertiesPanel:
         self._danger_zone = tk.Frame(self.frame, bg=theme.BG)
         self._danger_zone.pack(side="bottom", fill="x", pady=(8, 0))
 
-        self.element_name = None
+        self.element_tag = None
         #: Guards the commit-on-focus-loss path. Rebuilding the panel destroys
         #: focused entries, and Tk fires <FocusOut> as it does — which would
         #: re-enter apply() with half-destroyed widgets.
@@ -83,7 +83,7 @@ class PropertiesPanel:
             self._entries.clear()
 
             if element is None:
-                self.element_name = None
+                self.element_tag = None
                 self._body.pack_forget()
                 self._clear_delete_control()
                 self._empty.pack(side="top", fill="x", pady=6)
@@ -91,10 +91,10 @@ class PropertiesPanel:
 
             self._empty.pack_forget()
             self._body.pack(side="top", fill="x")
-            self.element_name = element.name
+            self.element_tag = element.tag
 
             self._readonly_row("Type", element.type)
-            self._row("name", element.name)
+            self._row("tag", element.tag)
             self._section("POSITION & SIZE")
             self._geometry_grid(element.position)
             if element.displays_text:
@@ -179,23 +179,23 @@ class PropertiesPanel:
     # -- applying --------------------------------------------------------
 
     def _current_element(self):
-        if self.element_name is None:
+        if self.element_tag is None:
             return None
-        return self.designer.layout.elements.get(self.element_name)
+        return self.designer.layout.elements.get(self.element_tag)
 
     def values(self):
         return {k: e.get() for k, e in self._entries.items()}
 
-    def focus_name(self):
-        """Put the cursor in the name field with the default selected.
+    def focus_tag(self):
+        """Put the cursor in the tag field with the default selected.
 
-        This is how a newly drawn element offers its name (FR-005a): the
+        This is how a newly drawn element offers its tag (FR-005a): the
         default is already there, so accepting it needs no typing, and typing
         replaces it. A modal dialog would also satisfy the requirement, but it
         stops the researcher on every single placement - and it stops an
         automated test suite dead.
         """
-        entry = self._entries.get("name")
+        entry = self._entries.get("tag")
         if entry is None:
             return
         entry.focus_set()
@@ -209,7 +209,7 @@ class PropertiesPanel:
         just been written and re-rendered always compares equal. That is what
         stops commit-on-focus-loss from re-entering itself.
         """
-        if raw.get("name", element.name).strip() != element.name:
+        if raw.get("tag", element.tag).strip() != element.tag:
             return False
         for field in GEOMETRY_FIELDS:
             if raw.get(field, "") != f"{getattr(element.position, field):g}":
@@ -231,7 +231,7 @@ class PropertiesPanel:
         exactly as it was — the panel never accepts something it will discard
         (FR-006e).
         """
-        if self.element_name is None or self._busy:
+        if self.element_tag is None or self._busy:
             return False
         raw = self.values()
         if not raw:
@@ -253,8 +253,8 @@ class PropertiesPanel:
         self._busy = True
         try:
             self.designer.apply_properties(
-                self.element_name,
-                name=raw.get("name", self.element_name).strip(),
+                self.element_tag,
+                tag=raw.get("tag", self.element_tag).strip(),
                 position=rect,
                 label=raw.get("label"),
             )

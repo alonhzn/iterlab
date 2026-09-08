@@ -19,7 +19,7 @@ This is the paradigm behind MathWorks GUIDE and App Designer. It is close to unk
 - **Layout is drawn, never programmed.** Drag, drop, resize. No GUI code, ever.
 - **Layout and algorithm are separate files** — a `.yaml` and a `.py` sharing a name. Rearranging
   the interface cannot disturb your code, and editing your code cannot disturb the interface. The
-  only link between them is an element's name.
+  only link between them is an element's tag.
 - **Code edits take effect immediately**, without relaunching, and without losing anything already
   in memory — loaded data, computed results, and plots already drawn all survive.
 - **The process does not die on your account.** A control with no code behind it yet, or a syntax

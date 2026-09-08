@@ -12,8 +12,8 @@ pytestmark = pytest.mark.ui
 def gui(make_app):
     app = make_app()
     d = app.built
-    d.create_element("button", Rect(0.10, 0.20, 0.30, 0.15), name="go")
-    d.create_element("plot_area", Rect(0.10, 0.50, 0.80, 0.40), name="spectrum")
+    d.create_element("button", Rect(0.10, 0.20, 0.30, 0.15), tag="go")
+    d.create_element("plot_area", Rect(0.10, 0.50, 0.80, 0.40), tag="spectrum")
     app.toggle()
     app.root.update_idletasks()
     return app

@@ -28,7 +28,7 @@ def _session(tmp_path, source):
 
 def _click(dispatcher, name="go"):
     return dispatcher.invoke(
-        f"on_clicked_{name}", Event(kind="clicked", element=name, button="left")
+        f"on_clicked_{name}", Event(kind="clicked", tag=name, button="left")
     )
 
 

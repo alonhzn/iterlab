@@ -46,12 +46,12 @@ elements: {}
 | `schema_version` | int | **yes** | — | Written as `1`. See *Version gate*. |
 | `window.width` | int | no | `800` | > 0 |
 | `window.height` | int | no | `450` | > 0 |
-| `elements` | map | **yes** | `{}` | Keys are element names |
-| `elements.<name>.type` | str | **yes** | — | `plot_area` \| `button` |
-| `elements.<name>.position` | list[float] × 4 | **yes** | — | `[left, bottom, width, height]`, each in `[0,1]`; `left+width ≤ 1`; `bottom+height ≤ 1` |
-| `elements.<name>.label` | str | no | `""` | `button` only |
+| `elements` | map | **yes** | `{}` | Keys are element tags |
+| `elements.<tag>.type` | str | **yes** | — | `plot_area` \| `button` |
+| `elements.<tag>.position` | list[float] × 4 | **yes** | — | `[left, bottom, width, height]`, each in `[0,1]`; `left+width ≤ 1`; `bottom+height ≤ 1` |
+| `elements.<tag>.label` | str | no | `""` | `button` only |
 
-**Element name** (the map key) MUST satisfy all of: `str.isidentifier()`; not a Python keyword; does
+**Element tag** (the map key) MUST satisfy all of: `str.isidentifier()`; not a Python keyword; does
 not begin with `_`; unique within the file. The name becomes part of a function name and an attribute,
 so an invalid name would produce uncompilable generated code.
 

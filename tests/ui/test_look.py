@@ -75,7 +75,7 @@ def test_every_property_field_is_visible_at_the_default_window_size(mapped, make
     app.root.update()
 
     d = app.built
-    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), name="go")
+    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), tag="go")
     d.select("go")
     app.root.update()
 
@@ -93,7 +93,7 @@ def test_the_sidebar_scrolls_when_it_overflows(mapped, make_app):
     app.root.geometry("800x420")
     app.root.update()
     d = app.built
-    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), name="go")
+    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), tag="go")
     d.select("go")
     app.root.update()
 
@@ -110,7 +110,7 @@ def test_the_delete_control_is_reachable_at_a_small_window(mapped, make_app):
     app.root.geometry("800x450")
     app.root.update()
     d = app.built
-    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), name="go")
+    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), tag="go")
     d.select("go")
     app.root.update()
 
@@ -149,7 +149,7 @@ def test_switching_to_the_editor_never_shrinks_the_window(mapped, make_app):
     from iterlab.layout.schema import Rect
 
     app = make_app()
-    app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1), name="go")
+    app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1), tag="go")
     app.toggle()
     app.root.geometry("1400x900")
     app.root.update()

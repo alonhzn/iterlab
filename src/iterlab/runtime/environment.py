@@ -15,23 +15,23 @@ class Ev:
     """Whatever the researcher puts here, plus one attribute per element.
 
     Attribute names beginning with an underscore are reserved for iterlab, which
-    is why element names may not start with one (schema.validate_name).
+    is why element names may not start with one (schema.validate_tag).
     """
 
     def __init__(self):
         # Bypass __setattr__ so the reserved-prefix check does not fire on our
         # own bookkeeping.
-        object.__setattr__(self, "_element_names", set())
+        object.__setattr__(self, "_element_tags", set())
 
     # -- element handles -------------------------------------------------
 
-    def _bind_element(self, name: str, handle) -> None:
-        """Attach an element handle under the name shown in the designer."""
-        object.__setattr__(self, name, handle)
-        self._element_names.add(name)
+    def _bind_element(self, tag: str, handle) -> None:
+        """Attach an element handle under the tag shown in the designer."""
+        object.__setattr__(self, tag, handle)
+        self._element_tags.add(tag)
 
     def _element_handles(self) -> dict:
-        return {n: getattr(self, n) for n in sorted(self._element_names)}
+        return {t: getattr(self, t) for t in sorted(self._element_tags)}
 
     # -- researcher state ------------------------------------------------
 
@@ -43,8 +43,8 @@ class Ev:
         object.__setattr__(self, name, value)
 
     def __repr__(self):
-        mine = sorted(self._element_names)
+        mine = sorted(self._element_tags)
         theirs = sorted(
-            k for k in vars(self) if not k.startswith("_") and k not in self._element_names
+            k for k in vars(self) if not k.startswith("_") and k not in self._element_tags
         )
         return f"<Ev elements={mine} data={theirs}>"
