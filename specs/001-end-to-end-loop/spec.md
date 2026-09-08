@@ -390,11 +390,20 @@ may be appended stubs and the renamed handler.
 - **FR-015c**: The toggle and the editor sidebar are application chrome, not layout. They MUST NOT
   appear in the layout file, MUST NOT be movable or deletable by the researcher, and MUST NOT be
   reachable from the researcher's code as elements.
-- **FR-015d**: Switching from GUI mode to editor mode MUST end the running session. Switching from
-  editor mode to GUI mode MUST begin a fresh session and run startup. Session state does **not** carry
-  across a mode switch in this feature.
-- **FR-015e**: Because a mode switch begins a fresh session, toggling out and back MUST be sufficient
-  to apply a change to the startup code, without leaving the program (see FR-026c).
+- **FR-015d**: A session MUST belong to the interface rather than to GUI mode, and MUST survive any
+  number of mode switches. Switching modes MUST preserve session state, anything drawn on a plot area,
+  and the fact that startup has already run. Widgets are destroyed with the mode that built them and
+  rebuilt on return; the element handles reached through the session object are rebound to the new
+  widgets, and no other session state is discarded.
+  *(Amended after implementation. This originally said the opposite — that a switch ended the session.
+  That did not remove the cost of reloading data, it moved it from "every code edit" to "every layout
+  edit", which contradicts the purpose the toggle exists to serve.)*
+- **FR-015e**: Because a mode switch no longer restarts anything, there MUST be exactly one explicit
+  control that discards the session and begins again, and it is the only supported way to apply a
+  change to the startup code without leaving the program (see FR-026c). It MUST be application chrome
+  under FR-015c, and MUST be inoperable in editor mode, where there is no live session to discard.
+- **FR-015f**: State belonging to an element deleted while in editor mode MUST be discarded on the
+  next switch to GUI mode. State belonging to a renamed element MUST follow the new tag.
 - **FR-016**: The system MUST present a window containing every element in the layout, positioned as
   drawn.
 - **FR-017**: Interacting with an element MUST invoke its correspondingly named handler if one exists.

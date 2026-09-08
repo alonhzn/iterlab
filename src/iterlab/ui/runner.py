@@ -10,7 +10,6 @@ from __future__ import annotations
 import tkinter as tk
 
 from ..runtime.dispatch import Dispatcher
-from ..runtime.environment import Ev
 from ..runtime.faults import ConsoleFaultSink, MultiSink
 from ..runtime.loader import ModuleLoader
 from . import elements as element_factory
@@ -22,6 +21,8 @@ class Runner:
         self.app = app
         self.interface = app.interface
         self.layout = app.interface.layout
+        #: Owned by the App, not by this mode: it outlives every toggle.
+        self.session = app.session
 
         self.frame = tk.Frame(app.content)
         self.frame.pack(fill="both", expand=True)
@@ -29,7 +30,9 @@ class Runner:
         self.banner = FaultBanner(self.frame)
         self.sink = MultiSink(ConsoleFaultSink(), self.banner, *extra_sinks)
 
-        self.ev = Ev()
+        # Elements deleted while in the editor leave nothing behind.
+        self.session.reconcile(self.layout.tags())
+        self.ev = self.session.ev
         self.loader = ModuleLoader(self.interface.code_path)
         self.dispatcher = Dispatcher(
             self.loader,
@@ -39,26 +42,37 @@ class Runner:
             after_invoke=self._redraw_plots,
         )
 
-        # Startup has not run yet. If the code is broken at launch we still open
-        # the window (FR-032), and try again on the next interaction (FR-026d).
-        self._startup_done = False
-
         self.handles = {}
         self._build_elements()
         self.run_startup()
 
     def teardown(self):
-        """Drop the session. `ev` and everything in it goes with it."""
-        self.ev = None
+        """Drop the widgets. The session — `ev`, figures, startup — survives.
+
+        Element handles point at widgets that are about to be destroyed, so they
+        are unbound; the researcher's own data on `ev` is untouched.
+        """
+        for handle in self.handles.values():
+            disconnect = getattr(handle, "disconnect", None)
+            if disconnect is not None:
+                disconnect()
+        self.ev._unbind_elements()
+        self.handles.clear()
         self.dispatcher = None
         self.loader = None
-        self.handles.clear()
 
     # -- building --------------------------------------------------------
 
     def _build_elements(self):
         for element in self.layout.elements.values():
-            handle = element_factory.build(self.frame, element, self.dispatcher)
+            figure = (
+                self.session.figure_for(element.tag)
+                if element.type == "plot_area"
+                else None
+            )
+            handle = element_factory.build(
+                self.frame, element, self.dispatcher, figure=figure
+            )
             self.handles[element.tag] = handle
             self.ev._bind_element(element.tag, handle)
 
@@ -67,21 +81,26 @@ class Runner:
     def run_startup(self) -> bool:
         """Run `on_startup` once per session.
 
-        Never re-run once it has succeeded (FR-026e). Retried while it has never
-        completed, so a typo in startup cannot strand the session (FR-026d).
+        Once per *session*, not once per visit to GUI mode: toggling into the
+        editor and back no longer re-runs it, because the session survives.
+        Still retried while it has never completed, so a typo in startup cannot
+        strand things (FR-026d). `Session.restart()` is how it runs again.
         """
-        if self._startup_done:
+        if self.session.startup_done:
             return True
         ok = self.dispatcher.invoke("on_startup", args=(self.ev,))
         if ok:
-            self._startup_done = True
+            self.session.startup_done = True
         self._redraw_plots()
         return ok
 
     def ensure_startup(self) -> None:
         """Called before each interaction, for the deferred-first-run case."""
-        if not self._startup_done:
+        if not self.session.startup_done:
             self.run_startup()
+
+    def redraw_plots(self):
+        return self._redraw_plots()
 
     def _redraw_plots(self):
         """Repaint any plot the researcher's code just changed.

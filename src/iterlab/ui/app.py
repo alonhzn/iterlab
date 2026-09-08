@@ -84,6 +84,12 @@ class App:
         # Deferred import: modetoggle needs EDITOR/GUI from this module, and
         # importing it at module scope here would be circular. Same pattern as
         # _construct() below.
+        from .session import Session
+
+        #: Owned here, not by GUI mode, so it outlives every toggle. This is
+        #: what makes a layout edit cost nothing but a rebuild of the widgets.
+        self.session = Session()
+
         from .modetoggle import ModeToggle
 
         self._mode_toggle = ModeToggle(self)
@@ -144,6 +150,16 @@ class App:
         if mode == EDITOR:
             self._grow_for_editor()
         self._built = self._construct(mode)
+
+    def restart_session(self) -> None:
+        """Throw the session away and start again in GUI mode.
+
+        The one way to re-run `on_startup`, now that toggling preserves the
+        session instead of discarding it.
+        """
+        self.session.restart()
+        self.build(GUI)
+        self._mode_toggle.refresh()
 
     def toggle(self) -> str:
         """Switch modes. The whole of FR-015 is this method."""

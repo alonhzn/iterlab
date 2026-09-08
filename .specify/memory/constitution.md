@@ -1,6 +1,31 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 3.1.0 → 3.1.1
+Bump rationale: PATCH. One factual note corrected to match implemented behaviour. No
+principle added, removed, weakened or redefined.
+
+Modified section: Principle IV -> the "Known today" note
+
+What changed: the note said the mode toggle supplies the restart a startup change needs,
+because switching ended the session. Switching now preserves the session, so a dedicated
+restart control supplies it instead. Recorded as the shrink the surrounding paragraph
+anticipates: the list of changes requiring a restart is now one item long.
+
+Argument on record: ending the session on a mode switch was never a feature, it was the
+absence of one. It did not remove the reload cost, it moved it from every code edit to
+every layout edit - and Principle IV's stated aim explicitly includes "in time
+rearranging the layout" among the changes that should take effect in a live session.
+Preserving the session on a switch is that aim being met, not weakened. What the change
+does require is that restarting become explicit, which is why it is now a control a
+researcher presses rather than a consequence of a control they pressed for another
+reason.
+
+Follow-up TODOs: none.
+
+==================
+PREVIOUS REPORT
+==================
 Version change: 3.0.0 → 3.1.0
 Bump rationale: MINOR. Guidance in one section materially expanded; no principle
 added, removed, weakened or redefined.
@@ -254,11 +279,17 @@ work well, so this document deliberately does **not** declare which changes are 
 restart until that has been established in practice. Each feature records what currently requires
 a relaunch, and that list is expected to shrink, never to grow.
 
-Known today: changing the startup function requires restarting the session. Re-running setup over
-a populated session can double-open connections, double-register callbacks, and double-append
-data, and a clean slate is what "startup" means. Note that the mode toggle in Principle I supplies
-that restart without leaving the program — switching to editor mode and back ends the session and
-begins a fresh one, so a startup change no longer costs the researcher their whole process.
+Known today: changing the startup function requires restarting the session — and that is now the
+only change that does. Re-running setup over a populated session can double-open connections,
+double-register callbacks, and double-append data, and a clean slate is what "startup" means. A
+dedicated control supplies that restart without leaving the program.
+
+The mode toggle used to supply it, as a side effect of ending the session on every switch. That is
+no longer true and the change was an improvement, not a regression: a session now survives any
+number of switches, so rearranging the layout of a live interface costs nothing. Ending the
+session on a switch did not remove the reload cost, it relocated it — from every code edit, which
+this principle already covers, to every layout edit, which it equally should. Restarting is now
+something the researcher asks for explicitly, and never something a toggle does unannounced.
 
 **Rationale**: The paradigm's core economic claim is that expensive data loading happens once per
 session rather than once per edit, and that claim rests entirely on reload preserving state. The
@@ -509,4 +540,4 @@ that cannot satisfy all of these is not made.
 `CLAUDE.md`) and MUST remain consistent with this constitution. Where the two disagree, this
 document governs and the guidance file is corrected.
 
-**Version**: 3.1.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-07
+**Version**: 3.1.1 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-08

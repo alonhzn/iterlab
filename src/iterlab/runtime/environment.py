@@ -30,6 +30,27 @@ class Ev:
         object.__setattr__(self, tag, handle)
         self._element_tags.add(tag)
 
+    def _unbind_elements(self, tags=None) -> None:
+        """Forget element handles, keeping the researcher's own data.
+
+        Called when the widgets those handles point at are destroyed. Passing
+        `None` drops them all; a mode switch does that, because every widget
+        goes with the mode that built them.
+        """
+        targets = self._element_tags if tags is None else set(tags)
+        for tag in list(targets):
+            self.__dict__.pop(tag, None)
+            self._element_tags.discard(tag)
+
+    def _rename_element(self, old: str, new: str) -> None:
+        """Follow an element renamed in the editor, so `ev.<new>` finds it."""
+        if old not in self._element_tags:
+            return
+        handle = self.__dict__.pop(old, None)
+        self._element_tags.discard(old)
+        if handle is not None:
+            self._bind_element(new, handle)
+
     def _element_handles(self) -> dict:
         return {t: getattr(self, t) for t in sorted(self._element_tags)}
 

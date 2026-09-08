@@ -48,8 +48,9 @@ def test_toolbar_does_not_swallow_the_researchers_click_handler(gui):
         "def on_clicked_spectrum(ev, event):\n    ev.clicks += 1\n",
         encoding="utf-8",
     )
-    gui.toggle()
-    gui.toggle()
+    # A restart, not a toggle: toggling preserves the session, so the edited
+    # startup above would not run.
+    gui.restart_session()
     runner = gui.built
     runner.dispatcher.invoke(
         "on_clicked_spectrum",

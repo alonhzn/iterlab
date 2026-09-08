@@ -60,6 +60,7 @@ def _toggle_button(app):
     buttons = [
         w for w in app.chrome.winfo_children()
         if isinstance(w, (app.tk.Button, ttk.Button))
+        and "Restart" not in str(w.cget("text"))
     ]
     assert len(buttons) == 1, f"expected exactly one toggle button in chrome, found {len(buttons)}"
     return buttons[0]
@@ -117,22 +118,43 @@ def test_content_widgets_are_destroyed_not_hidden(app):
         assert not widget.winfo_exists(), "the old mode's widgets must be gone"
 
 
-def test_session_ends_on_leaving_gui_mode(app):
-    """FR-015d: ev and everything in it is discarded on a mode switch."""
+def test_the_session_survives_a_mode_switch(app):
+    """A layout tweak must not cost a data reload.
+
+    This inverts the earlier behaviour. The session used to be torn down on
+    every switch, which did not remove the reload cost so much as move it from
+    "every code edit" to "every layout edit".
+    """
     _draw_two(app)
     app.interface.code_path.write_text(
         "def on_startup(ev):\n    ev.data = list(range(500))\n", encoding="utf-8"
     )
     app.toggle()
-    runner = app.built
-    assert len(runner.ev.data) == 500
+    data = app.built.ev.data
+    assert len(data) == 500
 
+    app.toggle()          # into the editor
+    app.toggle()          # and back
+    assert app.built.ev.data is data, "the same object, not merely an equal one"
+
+
+def test_startup_runs_once_per_session_not_once_per_visit(app):
+    _draw_two(app)
+    app.interface.code_path.write_text(
+        "COUNT = []\n"
+        "def on_startup(ev):\n    COUNT.append(1)\n    ev.runs = len(COUNT)\n",
+        encoding="utf-8",
+    )
     app.toggle()
-    assert runner.ev is None, "the session was torn down"
+    assert app.built.ev.runs == 1
+    for _ in range(3):
+        app.toggle()
+        app.toggle()
+    assert app.built.ev.runs == 1, "startup re-ran on a toggle"
 
 
-def test_switching_back_starts_a_fresh_session(app):
-    """FR-015e: and that is what applies a startup change without relaunching."""
+def test_restarting_the_session_applies_a_startup_change(app):
+    """Toggling now preserves, so there must be one explicit way to start over."""
     _draw_two(app)
     app.interface.code_path.write_text(
         "def on_startup(ev):\n    ev.marker = 'first'\n", encoding="utf-8"
@@ -140,12 +162,27 @@ def test_switching_back_starts_a_fresh_session(app):
     app.toggle()
     assert app.built.ev.marker == "first"
 
-    app.toggle()
     app.interface.code_path.write_text(
         "def on_startup(ev):\n    ev.marker = 'second'\n", encoding="utf-8"
     )
     app.toggle()
-    assert app.built.ev.marker == "second", "the edited startup ran in the new session"
+    app.toggle()
+    assert app.built.ev.marker == "first", "a toggle must not re-run startup"
+
+    app.restart_session()
+    assert app.built.ev.marker == "second", "restart re-ran the edited startup"
+
+
+def test_a_restart_discards_the_researchers_data(app):
+    """That is precisely the difference between restarting and toggling."""
+    _draw_two(app)
+    app.interface.code_path.write_text(
+        "def on_startup(ev):\n    ev.data = [1, 2, 3]\n", encoding="utf-8"
+    )
+    app.toggle()
+    before = app.built.ev.data
+    app.restart_session()
+    assert app.built.ev.data is not before
 
 
 def test_toggle_is_chrome_and_never_in_the_layout(app):

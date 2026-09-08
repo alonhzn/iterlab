@@ -486,6 +486,9 @@ class Designer:
             # files stay consistent.
             rename_mod.rename_handlers(self.interface.code_path, current_tag, tag)
             self.layout.retag(current_tag, tag)
+            # Carry the session's figure across, or the plot would blank on the
+            # next switch while its data quietly stayed under the old tag.
+            self.app.session.retag(current_tag, tag)
             current_tag = tag
 
         if position is not None:

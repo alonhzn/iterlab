@@ -33,10 +33,17 @@ class ModeToggle:
         )
         self.button.pack(side="left", anchor="w", padx=10, pady=8)
 
+        # Toggling preserves the session, so there has to be one explicit way
+        # to start over - it is how a change to on_startup takes effect.
+        self.restart = ttk.Button(
+            app.chrome, text="Restart session", command=app.restart_session
+        )
+        self.restart.pack(side="left", padx=(2, 0))
+
         self.caption = tk.Label(
             app.chrome, text="", bg=theme.BG, fg=theme.TEXT_MUTED, font=theme.FONT_SMALL
         )
-        self.caption.pack(side="left", padx=4)
+        self.caption.pack(side="left", padx=8)
 
         self.refresh()
 
@@ -49,4 +56,7 @@ class ModeToggle:
         mode = self.app.mode
         self.button.configure(text=LABEL[mode])
         self.caption.configure(text=CAPTION[mode])
+        # Restarting is meaningless in the editor: there is no live session to
+        # throw away, and the next visit to GUI mode carries one anyway.
+        self.restart.state(["!disabled"] if mode == GUI else ["disabled"])
 

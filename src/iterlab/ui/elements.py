@@ -212,6 +212,20 @@ class PlotHandle(ElementHandle):
         # matplotlib owns how a plot looks; only visibility is ours.
         self._apply_visibility()
 
+    def disconnect(self):
+        """Drop this canvas's event connections.
+
+        The figure outlives the canvas, and so does its callback registry, so
+        these must be released explicitly or they accumulate one set per mode
+        switch and every click fires that many times.
+        """
+        for cid in self.__dict__.get("_cids", ()):
+            try:
+                self.canvas.mpl_disconnect(cid)
+            except Exception:
+                pass
+        self.__dict__["_cids"] = []
+
     def __getattr__(self, item):
         # A style property this handle can set must also be readable; the Axes
         # knows nothing about `visible`, so answer that here before delegating.
@@ -221,10 +235,17 @@ class PlotHandle(ElementHandle):
         return getattr(self.__dict__["axes"], item)
 
 
-def build_plot_area(parent, element, dispatcher):
+def build_plot_area(parent, element, dispatcher, figure=None):
+    """Build a plot area, reusing `figure` when the session supplies one.
+
+    Reusing it is what keeps a drawn plot across a mode switch: the canvas dies
+    with the widgets, the figure does not.
+    """
     frame = tk.Frame(parent)
-    figure = Figure(figsize=(4, 3), dpi=100)
-    axes = figure.add_subplot(111)
+    if figure is None:
+        figure = Figure(figsize=(4, 3), dpi=100)
+        figure.add_subplot(111)
+    axes = figure.axes[0]
     canvas = FigureCanvasTkAgg(figure, master=frame)
     canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
 
@@ -265,15 +286,21 @@ def build_plot_area(parent, element, dispatcher):
     def on_key(mpl_event):
         fire("key", mpl_event, key=getattr(mpl_event, "key", None))
 
-    canvas.mpl_connect("button_press_event", on_press)
-    canvas.mpl_connect("motion_notify_event", on_motion)
-    canvas.mpl_connect("key_press_event", on_key)
-    canvas.mpl_connect(
-        "axes_enter_event",
-        lambda e: fire("hover", e) if e.inaxes is axes else None,
-    )
+    # Keep the connection ids. A figure's callback registry is shared with every
+    # canvas it is ever attached to, so without disconnecting these on teardown
+    # a click would fire the handler once per mode switch ever made.
+    cids = [
+        canvas.mpl_connect("button_press_event", on_press),
+        canvas.mpl_connect("motion_notify_event", on_motion),
+        canvas.mpl_connect("key_press_event", on_key),
+        canvas.mpl_connect(
+            "axes_enter_event",
+            lambda e: fire("hover", e) if e.inaxes is axes else None,
+        ),
+    ]
 
     handle = PlotHandle(element, frame, figure, axes, canvas)
+    handle.__dict__["_cids"] = cids
     handle._apply_visibility()
     canvas.draw()
     return handle
@@ -330,5 +357,7 @@ BUILDERS = {
 }
 
 
-def build(parent, element, dispatcher):
+def build(parent, element, dispatcher, figure=None):
+    if element.type == "plot_area":
+        return build_plot_area(parent, element, dispatcher, figure=figure)
     return BUILDERS[element.type](parent, element, dispatcher)

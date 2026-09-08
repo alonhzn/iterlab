@@ -297,15 +297,23 @@ def test_creating_needs_no_dialog_and_focuses_the_name_field(designer):
     assert entry.get() == "button_0", "the default is pre-filled"
     assert entry.selection_present(), "and selected, so typing replaces it"
 
-    # Focus can only be queried on a mapped window; an unmapped one reports None.
-    designer.app.root.deiconify()
+    # Tk ignores focus_set on a withdrawn window entirely, so the root has to be
+    # mapped for the question to mean anything.
+    root = designer.app.root
+    root.deiconify()
     try:
-        designer.app.root.update()
+        root.update()
         designer.properties.focus_tag()
-        designer.app.root.update()
-        assert entry.focus_get() is entry, "the cursor is already in the name field"
+        root.update_idletasks()
+        # "focus -lastfor" asks Tk which widget takes focus when this toplevel
+        # has it. `focus_get` asks the window manager whether the toplevel has
+        # focus *right now*, and a desktop is free to say no to a test window -
+        # which is why that form passed alone and failed in a full suite, where
+        # other tests map and unmap this same shared root.
+        focused = root.tk.call("focus", "-lastfor", entry._w)
+        assert str(focused) == str(entry), "the cursor is already in the name field"
     finally:
-        designer.app.root.withdraw()
+        root.withdraw()
 
 
 def test_a_tiny_drag_counts_as_a_click(designer):

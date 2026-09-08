@@ -104,7 +104,7 @@ Make a typo and the window stays open, tells you what broke, and lets you fix it
 | | |
 |---|---|
 | **Tag** | An element's unique name, e.g. `spectrum`. Set in the editor. It is what your code sees. |
-| `ev` | The session. Everything you put on it survives every edit, until the window closes. |
+| `ev` | The session. Everything you put on it survives every edit and every mode switch, until you restart it or close the window. |
 | `on_<interaction>_<tag>` | A handler. Write one and it is wired; there is nothing to register. |
 | `ev.<tag>` | The live element, reachable by its tag. |
 
@@ -305,11 +305,16 @@ Almost nothing. For completeness:
 | Editing a handler | Next click. Nothing is lost |
 | Adding a new handler | Next click |
 | Fixing a syntax error | Next click |
-| Editing `on_startup` | Toggle to the editor and back — that starts a fresh session |
-| Moving or restyling an element | Toggle back to GUI mode |
+| Moving, restyling, adding or deleting an element | Toggle back to GUI mode. Nothing is lost |
+| Editing `on_startup` | **Restart session** — the only thing here that costs you your data |
 
-A mode switch ends the session and starts a new one, so data is reloaded. Applying layout edits to
-a *live* session is the aim, but it is not built yet and is not promised.
+**Switching modes costs you nothing.** Your data stays on `ev`, your plots keep what you drew on
+them, and `on_startup` does not run again. Draw a new button, come back, and the session you were
+in the middle of is still there.
+
+That is also why editing `on_startup` needs the **Restart session** button next to the toggle: it
+throws the session away and runs startup again, which is the whole point of it and the reason it is
+a separate button rather than something a toggle does behind your back.
 
 ---
 
@@ -334,12 +339,11 @@ Worth knowing before they surprise you.
 
 - **A long computation freezes the window.** Handlers run to completion before the interface
   repaints. Splitting slow work across clicks is the workaround for now.
-- **A mode switch reloads your data**, because it starts a fresh session.
 - **Three element types so far.** Text fields, checkboxes, radio buttons, dropdowns, lists and
   sliders are not built yet.
 - **Editing `demo.yaml` by hand** is possible but not the intended path; the editor is.
 
 ---
 
-**Guide version 0.11.0.** Everything above is verified against that release. If a description here
+**Guide version 0.12.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

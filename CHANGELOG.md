@@ -6,6 +6,50 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.12.0] — unreleased
+
+### Changed
+
+- **A session now survives a mode switch.** It belongs to the interface, not to
+  GUI mode. Toggling into the editor to nudge a button and back no longer
+  discards `ev`, no longer blanks a plot, and no longer re-runs `on_startup`.
+
+  This reverses FR-015d, which said a switch ends the session. That behaviour
+  did not remove the cost of reloading data so much as move it: from "every
+  code edit", which the reload loop already solved, to "every layout edit",
+  which is the other half of the same loop. A researcher with a slow load was
+  still paying it, just for a different reason.
+
+### Added
+
+- **A "Restart session" control** beside the mode toggle. Because toggling now
+  preserves everything deliberately, there has to be one explicit way to say
+  start over — and it is how a change to `on_startup` takes effect. Chrome
+  under FR-015c, and disabled in editor mode, where there is no live session to
+  discard (FR-015e).
+- `Session`, owning what outlives a mode: `ev`, one matplotlib `Figure` per plot
+  area, and whether startup has run. A `Figure` can be attached to a new canvas,
+  which is what makes a drawn plot survive at all.
+- `Session.reconcile` and `Session.retag`, so state belonging to an element
+  deleted in the editor is dropped and state belonging to a renamed one follows
+  the new tag (FR-015f).
+
+### Fixed
+
+- A figure's callback registry is shared with **every canvas it is ever attached
+  to**. Reusing the figure across a switch therefore left the dead canvas's
+  connections live, so a single click fired the handler once per switch ever
+  made — three toggles, four handler calls. `PlotHandle.disconnect()` releases
+  them on teardown. Found by prototyping before designing, and now covered by a
+  test that fails with `assert 4 == 1` without the fix.
+
+### Tests
+
+- Three tests driving real matplotlib events through the canvas: a drawn curve
+  survives a switch, a click fires exactly once after three switches, and a
+  renamed plot keeps its curve. Each was confirmed to fail against the
+  unfixed code.
+
 ## [0.11.1] — unreleased
 
 ### Fixed

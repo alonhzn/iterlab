@@ -107,3 +107,57 @@ def test_a_click_outside_the_axes_is_ignored(gui):
     _fire(handle, MouseEvent("button_press_event", handle.canvas, 1, 1, button=1))
     gui.root.update()
     assert not [e for e in gui.built.ev.seen if e[0] == "clicked"]
+
+
+def test_a_drawn_plot_survives_a_mode_switch(gui):
+    """The figure outlives the canvas, so the curve is still there.
+
+    Without reusing the session's figure this passes silently in code and
+    fails visibly on screen: a blank plot area after every layout tweak.
+    """
+    before = len(gui.built.handles["spectrum"].axes.lines)
+    assert before == 1, "on_startup should have drawn one line"
+
+    gui.toggle()          # into the editor
+    gui.toggle()          # and back
+    gui.root.update()
+
+    axes = gui.built.handles["spectrum"].axes
+    assert len(axes.lines) == 1, "the plotted curve was lost on a mode switch"
+
+
+def test_a_click_fires_once_however_many_switches(gui):
+    """A figure's callback registry is shared with every canvas it is attached to.
+
+    So the connections made by a dead canvas keep firing unless they are
+    disconnected on teardown: three toggles would mean three handler calls per
+    click. This is the defect that made the whole feature worth de-risking.
+    """
+    for _ in range(3):
+        gui.toggle()
+        gui.toggle()
+    gui.root.update()
+
+    handle = gui.built.handles["spectrum"]
+    handle.canvas.draw()
+    gui.built.ev.seen.clear()
+    x, y = _inside(handle)
+    _fire(handle, MouseEvent("button_press_event", handle.canvas, x, y, button=1))
+    gui.root.update()
+
+    clicks = [e for e in gui.built.ev.seen if e[0] == "clicked"]
+    assert len(clicks) == 1, f"one click fired {len(clicks)} handler calls"
+
+
+def test_a_renamed_plot_keeps_its_curve(gui):
+    """The figure is keyed by tag, so a rename has to follow it."""
+    gui.toggle()
+    designer = gui.built
+    designer.select("spectrum")
+    element = designer.layout.elements["spectrum"]
+    designer.apply_properties("spectrum", "signal", element.position, element.label)
+    gui.toggle()
+    gui.root.update()
+
+    axes = gui.built.handles["signal"].axes
+    assert len(axes.lines) == 1, "the curve was orphaned under the old tag"
