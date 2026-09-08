@@ -80,6 +80,19 @@ marked **[!]** are the ones most likely to be wrong and least likely to be caugh
 
 ---
 
+## Confirmed so far
+
+Items checked outside a full release pass. Useful because it shows what has actually been looked
+at, and at which version — a confirmation against an old build is worth less than a fresh one.
+This is **not** a substitute for a release pass: a release needs the whole list worked through and
+a row in the table below.
+
+| # | Item | Confirmed | Version | Note |
+|---|---|---|---|---|
+| 9 | **[!]** The fault banner is noticeable while looking at the plot | 2026-09-08 | 0.7.0 | Confirmed visible |
+
+---
+
 ## Recorded results
 
 One row per release. An empty table means nothing has been released.
