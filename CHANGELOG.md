@@ -6,9 +6,49 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [0.21.1] — 2026-09-08
+## [1.0.0] — 2026-09-08
 
-**First release published to PyPI.** `pip install iterlab`.
+**First public release.** `pip install iterlab`.
+
+Numbered 1.0.0 rather than continuing the 0.x line because this is the first
+version anyone else can install: a 0.21 would read as accumulated churn, where
+what it actually marks is the point the tool became available.
+
+Everything in the entries below shipped in this one release. They were written
+as the work happened and are kept as the development record; nothing before this
+had ever been published.
+
+### What this version commits to
+
+1.0.0 is a promise under semantic versioning, so the following are the public
+surface and will not change without a major bump:
+
+- the `on_<interaction>_<tag>` handler naming convention, and `ev` as the first
+  argument to every handler
+- `ev.<tag>` reaching an element, and `.text` on every element that shows text
+- an axes element being a real `matplotlib.axes.Axes`
+- the `iterlab <name>` command and `iterlab.run(name)`
+- the layout schema, which carries its own version and migrates forward
+
+The layout schema is versioned separately and independently: a file written by
+an older build is migrated on open, and one written by a newer build is refused
+rather than half-understood.
+
+### Changed
+
+- **Ordinary semantic versioning resumes.** Below 1.0.0 the constitution
+  suspended the MINOR/PATCH distinction and bumped MINOR on *every* change, so
+  that the version answered "is the thing in front of me the thing I just
+  changed?" during hand testing. From here PATCH means a fix, MINOR means an
+  addition, MAJOR means a break — which is what a version has to mean once other
+  people depend on it.
+- `Development Status` classifier moves from `3 - Alpha` to `4 - Beta`. Claiming
+  1.0.0 while advertising alpha would contradict itself. The README's "early,
+  and honest about it" stands: this is a first public release, not a mature one.
+
+## [0.21.1] — not published
+
+Renumbered to 1.0.0 before publishing.
 
 Everything in the entries below shipped in this one release; they were written as
 the work happened and are kept as the development record. Nothing before this had
