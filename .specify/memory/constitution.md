@@ -23,8 +23,7 @@ deferred.
 ---
 PRIOR AMENDMENTS
 ---
-3.0.0 (2026-09-07) — MAJOR.
-Bump rationale: MAJOR. Two principles redefined in backward-incompatible ways — I (two commands
+3.0.0 (2026-09-07) — MAJOR. Two principles redefined in backward-incompatible ways — I (two commands
 becomes one, with an in-interface mode toggle) and VII (a single automation gate becomes two
 gates, one of them human). VII is NON-NEGOTIABLE, so Governance requires MAJOR with a recorded
 argument regardless.
@@ -77,9 +76,6 @@ Consequences for feature 001 (spec, plan, contracts and tasks all require revisi
   - Toggling to editor mode and back ends the session and starts a fresh one for v1. Applying
     layout edits to a live session without losing state is recorded as the aim, not promised.
 
----
-PRIOR AMENDMENTS
----
 2.0.0 (2026-09-07) — MAJOR. Principle IV is NON-NEGOTIABLE, and this narrowed what it guarantees,
 which Governance requires be recorded as MAJOR with an explicit argument. Applying that rule the
 first time it actually bound is what keeps it from becoming decorative.
