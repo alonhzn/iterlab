@@ -80,7 +80,7 @@ class Runner:
         for element in self.layout.elements.values():
             figure = (
                 self.session.figure_for(element.tag)
-                if element.type == "plot_area"
+                if element.type == "axes"
                 else None
             )
             handle = element_factory.build(

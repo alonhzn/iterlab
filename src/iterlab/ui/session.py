@@ -8,7 +8,7 @@ moved from "every code edit" to "every layout edit".
 A session now belongs to the *interface*, and outlives both modes. What it owns:
 
 * `ev` — the researcher's data, unchanged across any number of toggles.
-* one matplotlib `Figure` per plot area, so drawn plots survive too. A Figure
+* one matplotlib `Figure` per axes element, so drawn plots survive too. A Figure
   can be attached to a new canvas, which is what makes this possible at all.
 * whether `on_startup` has run, so it runs once per session rather than once
   per visit to GUI mode.
@@ -18,8 +18,6 @@ are destroyed with it; the session rebinds fresh ones on the way back in.
 """
 
 from __future__ import annotations
-
-from matplotlib.figure import Figure
 
 from ..runtime.environment import Ev
 
@@ -37,16 +35,18 @@ class Session:
 
     # -- plot figures ----------------------------------------------------
 
-    def figure_for(self, tag) -> Figure:
-        """The Figure for this plot area, created once and reused.
+    def figure_for(self, tag):
+        """The Figure for this axes element, created once and reused.
 
         Reusing it is what keeps a drawn plot on screen across a mode switch:
         the canvas is thrown away with the widgets, the figure is not.
         """
         if tag not in self._figures:
-            figure = Figure(figsize=(4, 3), dpi=100)
-            figure.add_subplot(111)
-            self._figures[tag] = figure
+            # Built by the element module so the axes is an AxesHandle, which is
+            # what makes `ev.ax_0` a real matplotlib Axes.
+            from .elements import new_figure
+
+            self._figures[tag] = new_figure()
         return self._figures[tag]
 
     def axes_for(self, tag):

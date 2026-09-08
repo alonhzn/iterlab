@@ -54,9 +54,9 @@ def test_edge_width_must_be_a_non_negative_whole_number():
         Style(edge_width=-1)
 
 
-def test_a_plot_area_has_only_visibility():
+def test_a_axes_has_only_visibility():
     """matplotlib owns how a plot looks; offering a fill colour would be a lie."""
-    assert style_fields_for("plot_area") == ("visible",)
+    assert style_fields_for("axes") == ("visible",)
 
 
 def test_text_types_carry_the_full_set():
@@ -70,7 +70,7 @@ def test_text_types_carry_the_full_set():
 
 def test_restyle_rejects_a_property_the_type_does_not_have():
     layout = Layout()
-    layout.add(Element("spectrum", "plot_area", Rect(0.1, 0.1, 0.4, 0.4)))
+    layout.add(Element("spectrum", "axes", Rect(0.1, 0.1, 0.4, 0.4)))
     with pytest.raises(ValueError):
         layout.restyle("spectrum", background="#ffffff")
 
@@ -114,7 +114,7 @@ def test_unknown_style_key_is_rejected(tmp_path):
 def test_a_style_a_type_cannot_have_is_rejected(tmp_path):
     path = tmp_path / "demo.yaml"
     path.write_text(
-        f"schema_version: {SCHEMA_VERSION}\nelements:\n  spectrum:\n    type: plot_area\n"
+        f"schema_version: {SCHEMA_VERSION}\nelements:\n  spectrum:\n    type: axes\n"
         "    position: [0, 0, 0.4, 0.4]\n    style:\n      bold: true\n",
         encoding="utf-8",
     )

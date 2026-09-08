@@ -358,23 +358,23 @@ def test_a_clicked_element_is_centred_on_the_click(designer):
 def test_the_palette_decides_what_a_click_places(designer):
     from iterlab.layout.schema import DEFAULT_SIZE
 
-    designer.palette.selected.set("plot_area")
+    designer.palette.selected.set("axes")
     designer.select(None)
     _drag(designer, (250, 150), (250, 150))
 
-    placed = designer.layout.elements["plot_0"]
-    assert placed.type == "plot_area"
+    placed = designer.layout.elements["ax_0"]
+    assert placed.type == "axes"
     assert (placed.position.width, placed.position.height) == pytest.approx(
-        DEFAULT_SIZE["plot_area"]
+        DEFAULT_SIZE["axes"]
     )
 
 
 def test_a_click_near_the_edge_stays_fully_on_the_canvas(designer):
-    designer.palette.selected.set("plot_area")
+    designer.palette.selected.set("axes")
     designer.select(None)
     _drag(designer, (5, 395), (5, 395))  # bottom-left corner
 
-    placed = designer.layout.elements["plot_0"].position
+    placed = designer.layout.elements["ax_0"].position
     assert placed.left >= 0.0
     assert placed.bottom >= 0.0
     assert placed.left + placed.width <= 1.0 + 1e-9

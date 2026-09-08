@@ -35,7 +35,7 @@ def test_starter_file_shows_the_single_command():
 
 
 def test_stub_signature_matches_the_contract():
-    for type_ in ("button", "plot_area"):
+    for type_ in ("button", "axes"):
         tree = ast.parse(templates.default_stub(_element("thing", type_)))
         fn = tree.body[0]
         assert isinstance(fn, ast.FunctionDef)
@@ -57,7 +57,7 @@ def test_no_stub_for_non_default_interactions():
 
 
 def test_plot_stub_mentions_data_coordinates():
-    text = templates.default_stub(_element("spectrum", "plot_area"))
+    text = templates.default_stub(_element("spectrum", "axes"))
     assert "data coordinates" in text
 
 
@@ -76,18 +76,18 @@ def test_atomic_write_leaves_no_temp_files(tmp_path):
 def test_plot_stub_reports_which_mouse_button_was_clicked():
     """A click on a plot carries a button as well as coordinates, and the
     generated stub should show the researcher that it is there."""
-    text = templates.default_stub(_element("spectrum", "plot_area"))
+    text = templates.default_stub(_element("spectrum", "axes"))
     printed = next(line for line in text.splitlines() if "print(" in line)
     assert "event.button" in printed
     assert "event.x" in printed and "event.y" in printed
 
 
 def test_plot_stub_documents_the_button_values():
-    text = templates.default_stub(_element("spectrum", "plot_area"))
+    text = templates.default_stub(_element("spectrum", "axes"))
     assert '"left", "middle" or "right"' in text
 
 
 def test_both_stubs_expose_the_button():
-    for type_ in ("button", "plot_area"):
+    for type_ in ("button", "axes"):
         text = templates.default_stub(_element("thing", type_))
         assert "event.button" in text, f"{type_} stub hides the mouse button"

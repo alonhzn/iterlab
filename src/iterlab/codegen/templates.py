@@ -37,7 +37,7 @@ def on_clicked_{tag}(ev, event):
     print(f"{tag} clicked with the {{event.button}} button")
 '''
 
-_PLOT_STUB = '''
+_AXES_STUB = '''
 
 def on_clicked_{tag}(ev, event):
     # Runs when you click inside {tag}, with any mouse button.
@@ -49,7 +49,7 @@ def on_clicked_{tag}(ev, event):
 
 #: No entry for `label`: it displays text and is set from code, so a generated
 #: click handler would just be dead weight in the researcher's file.
-_STUBS = {"button": _BUTTON_STUB, "plot_area": _PLOT_STUB}
+_STUBS = {"button": _BUTTON_STUB, "axes": _AXES_STUB}
 
 
 def starter_file(name: str) -> str:

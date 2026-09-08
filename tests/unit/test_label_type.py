@@ -26,9 +26,9 @@ def test_a_label_carries_text():
     assert _element("label", label="Signal to noise").label == "Signal to noise"
 
 
-def test_a_plot_area_still_cannot_carry_text():
+def test_a_axes_still_cannot_carry_text():
     with pytest.raises(ValueError):
-        _element("plot_area", label="nope")
+        _element("axes", label="nope")
 
 
 def test_a_label_has_no_default_interaction():
@@ -42,7 +42,7 @@ def test_no_stub_is_generated_for_a_label():
 
 
 def test_stubs_are_still_generated_for_the_other_types():
-    for type_ in ("button", "plot_area"):
+    for type_ in ("button", "axes"):
         assert templates.default_stub(_element(type_)) is not None
 
 

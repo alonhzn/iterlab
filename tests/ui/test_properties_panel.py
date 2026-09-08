@@ -13,7 +13,7 @@ def editor(make_app):
     app = make_app()
     d = app.built
     d.create_element("button", Rect(0.05, 0.10, 0.25, 0.12), tag="run_fit")
-    d.create_element("plot_area", Rect(0.05, 0.40, 0.90, 0.50), tag="spectrum")
+    d.create_element("axes", Rect(0.05, 0.40, 0.90, 0.50), tag="spectrum")
     d.select("run_fit")
     yield app
 
@@ -41,7 +41,7 @@ def test_panel_exposes_the_contracted_properties(editor):
     )
 
     d.select("spectrum")
-    assert set(d.properties._entries) == core | set(style_fields_for("plot_area")), (
+    assert set(d.properties._entries) == core | set(style_fields_for("axes")), (
         "a plot area has no text and no colours; matplotlib owns how it looks"
     )
 

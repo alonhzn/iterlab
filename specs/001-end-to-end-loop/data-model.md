@@ -66,7 +66,7 @@ One visual item. The name is the sole link to the researcher's code (Principle I
 | Field | Type | Default | Rules |
 |---|---|---|---|
 | `name` | str | assigned | Unique within the layout. MUST satisfy `isidentifier()`, MUST NOT be a Python keyword, MUST NOT start with `_` (R10, FR-005b). Set at creation and **changeable** through the properties panel; renaming rewrites the element's handlers in the code file and nothing else (FR-005c, FR-005d, R14). |
-| `type` | enum | — | `plot_area` \| `button`. Closed set this feature. |
+| `type` | enum | — | `axes` \| `button`. Closed set this feature. |
 | `position` | Rect | — | Normalized `[0, 1]` fractions (Principle II, FR-021a). |
 | `label` | str | `""` | Buttons only. Display text; never affects the name or any handler. |
 
@@ -180,7 +180,7 @@ The live widget for one element, reachable as `ev.<name>`.
 
 | Element type | Exposed to the researcher |
 |---|---|
-| `plot_area` | The matplotlib `Axes`. Researchers call `ev.plot_0.plot(...)` — the API they already know. |
+| `axes` | The matplotlib `Axes`. Researchers call `ev.plot_0.plot(...)` — the API they already know. |
 | `button` | A handle exposing its label; deliberately minimal this feature. |
 
 The `Axes` choice matters: exposing anything else would mean researchers learning an iterlab plotting

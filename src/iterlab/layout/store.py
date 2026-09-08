@@ -58,7 +58,23 @@ def _migrate_1_to_2(raw):
     return raw
 
 
-MIGRATIONS = {1: _migrate_1_to_2}
+def _migrate_2_to_3(raw):
+    """v3 renamed the element type `plot_area` to `axes`.
+
+    The handle a researcher reaches through `ev` is now a real matplotlib
+    `Axes` rather than an object wrapping one, and the type name follows: what
+    it is called in the layout should be what it is. Only the type string moves
+    — tags, positions and styles are untouched, so an interface written before
+    this keeps working and keeps its names.
+    """
+    for body in (raw.get("elements") or {}).values():
+        if isinstance(body, dict) and body.get("type") == "plot_area":
+            body["type"] = "axes"
+    raw["schema_version"] = 3
+    return raw
+
+
+MIGRATIONS = {1: _migrate_1_to_2, 2: _migrate_2_to_3}
 
 
 def _migrate(raw, version, path):

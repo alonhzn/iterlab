@@ -1,6 +1,6 @@
 """Element type -> Tk widget, and native events -> iterlab Events.
 
-Controls are Tk widgets; plot areas are an embedded matplotlib canvas with the
+Controls are Tk widgets; an axes element is an embedded matplotlib canvas with the
 standard navigation toolbar. No control is ever a matplotlib.widgets widget —
 that decision capped the prior spike's vocabulary and made it slow as elements
 were added (constitution Principle VI).
@@ -14,8 +14,10 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import font as tkfont
 
+from matplotlib.axes import Axes
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+from matplotlib.projections import register_projection
 
 from ..runtime.dispatch import Event
 from . import theme
@@ -193,24 +195,93 @@ def build_button(parent, element, dispatcher):
     return handle
 
 
-class PlotHandle(ElementHandle):
-    STYLE_PROPERTIES = ("visible",)
+class AxesHandle(Axes):
+    """The handle for an axes element **is** a matplotlib `Axes`.
 
-    """Exposes the matplotlib Axes directly.
+    Not an object that forwards to one. The difference is invisible for
+    `ev.ax_0.plot(...)`, which worked either way, and decisive everywhere else:
+    `isinstance(ev.ax_0, Axes)` is true, so any library that takes an `ax=`
+    argument accepts it, and `plt.sca(ev.ax_0)` works. A forwarding wrapper
+    fails all of that, and fails it at the researcher's call site rather than
+    ours — which is precisely the kind of surprise choosing matplotlib was
+    meant to avoid.
 
-    Anything else would mean researchers learning an iterlab plotting API, which
-    is exactly what choosing matplotlib was meant to avoid.
+    Registered as a matplotlib *projection*, which is the supported way to have
+    a figure create a particular Axes subclass. Everything iterlab adds is
+    prefixed `_iterlab_`, so nothing can collide with matplotlib's own
+    attributes, now or in a later release.
     """
 
-    def __init__(self, element, widget, figure, axes, canvas):
-        super().__init__(element, widget)
-        self.__dict__["figure"] = figure
-        self.__dict__["axes"] = axes
-        self.__dict__["canvas"] = canvas
+    name = "iterlab"
 
-    def _apply(self):
-        # matplotlib owns how a plot looks; only visibility is ours.
-        self._apply_visibility()
+    #: Part of the element-handle contract, same as on the Tk-backed handles:
+    #: every style property a handle can set, it can also read. matplotlib owns
+    #: how a plot *looks*, so visibility is the only one that is ours.
+    STYLE_PROPERTIES = ("visible",)
+
+    # Class-level defaults: matplotlib constructs this, so an instance exists
+    # before iterlab has bound anything to it.
+    _iterlab_element = None
+    _iterlab_frame = None
+    _iterlab_cids = ()
+    _iterlab_visible = True
+
+    def _iterlab_bind(self, element, frame):
+        self._iterlab_element = element
+        self._iterlab_frame = frame
+        self._iterlab_visible = element.style.visible
+        self._iterlab_apply_visibility()
+
+    @property
+    def tag(self):
+        element = self._iterlab_element
+        return element.tag if element is not None else None
+
+    @property
+    def element(self):
+        return self._iterlab_element
+
+    @property
+    def widget(self):
+        """The Tk frame holding the canvas and its toolbar."""
+        return self._iterlab_frame
+
+    @property
+    def canvas(self):
+        """The canvas currently drawing this axes.
+
+        `Axes.figure` is matplotlib's own; the canvas is reached through it,
+        and changes on every mode switch as the figure is attached to a new one.
+        """
+        figure = self.figure
+        return None if figure is None else figure.canvas
+
+    @property
+    def visible(self):
+        """Whether the *element* is shown, uniform with buttons and labels.
+
+        Deliberately not matplotlib's `set_visible`, which hides the axes while
+        leaving the frame and its toolbar in place. This hides the element, so
+        `ev.ax_0.visible = False` means the same thing as it does on a button.
+        matplotlib's own `get_visible`/`set_visible` are untouched and still do
+        what matplotlib says they do.
+        """
+        return self._iterlab_visible
+
+    @visible.setter
+    def visible(self, value):
+        self._iterlab_visible = bool(value)
+        self._iterlab_apply_visibility()
+
+    def _iterlab_apply_visibility(self):
+        frame = self._iterlab_frame
+        element = self._iterlab_element
+        if frame is None or element is None:
+            return
+        if self._iterlab_visible:
+            place(frame, element.position)
+        else:
+            frame.place_forget()
 
     def disconnect(self):
         """Drop this canvas's event connections.
@@ -219,32 +290,34 @@ class PlotHandle(ElementHandle):
         these must be released explicitly or they accumulate one set per mode
         switch and every click fires that many times.
         """
-        for cid in self.__dict__.get("_cids", ()):
+        canvas = self.canvas
+        for cid in self._iterlab_cids:
             try:
-                self.canvas.mpl_disconnect(cid)
+                canvas.mpl_disconnect(cid)
             except Exception:
                 pass
-        self.__dict__["_cids"] = []
-
-    def __getattr__(self, item):
-        # A style property this handle can set must also be readable; the Axes
-        # knows nothing about `visible`, so answer that here before delegating.
-        if item in self.STYLE_PROPERTIES:
-            return getattr(self.__dict__["_style"], item)
-        # Delegate to the Axes so `ev.spectrum.plot(...)` works.
-        return getattr(self.__dict__["axes"], item)
+        self._iterlab_cids = ()
 
 
-def build_plot_area(parent, element, dispatcher, figure=None):
-    """Build a plot area, reusing `figure` when the session supplies one.
+register_projection(AxesHandle)
+
+
+def new_figure():
+    """A figure whose axes is an `AxesHandle`, not a plain `Axes`."""
+    figure = Figure(figsize=(4, 3), dpi=100)
+    figure.add_subplot(111, projection=AxesHandle.name)
+    return figure
+
+
+def build_axes(parent, element, dispatcher, figure=None):
+    """Build an axes element, reusing `figure` when the session supplies one.
 
     Reusing it is what keeps a drawn plot across a mode switch: the canvas dies
     with the widgets, the figure does not.
     """
     frame = tk.Frame(parent)
     if figure is None:
-        figure = Figure(figsize=(4, 3), dpi=100)
-        figure.add_subplot(111)
+        figure = new_figure()
     axes = figure.axes[0]
     canvas = FigureCanvasTkAgg(figure, master=frame)
     canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
@@ -299,11 +372,10 @@ def build_plot_area(parent, element, dispatcher, figure=None):
         ),
     ]
 
-    handle = PlotHandle(element, frame, figure, axes, canvas)
-    handle.__dict__["_cids"] = cids
-    handle._apply_visibility()
+    axes._iterlab_cids = tuple(cids)
+    axes._iterlab_bind(element, frame)
     canvas.draw()
-    return handle
+    return axes
 
 
 class LabelHandle(_TextHandle):
@@ -352,12 +424,12 @@ def build_label(parent, element, dispatcher):
 
 BUILDERS = {
     "button": build_button,
-    "plot_area": build_plot_area,
+    "axes": build_axes,
     "label": build_label,
 }
 
 
 def build(parent, element, dispatcher, figure=None):
-    if element.type == "plot_area":
-        return build_plot_area(parent, element, dispatcher, figure=figure)
+    if element.type == "axes":
+        return build_axes(parent, element, dispatcher, figure=figure)
     return BUILDERS[element.type](parent, element, dispatcher)

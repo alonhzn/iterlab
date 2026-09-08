@@ -47,7 +47,7 @@ def test_creating_an_element_appends_exactly_one_stub(tmp_path):
 def test_default_stub_is_click_for_both_types_and_nothing_else(tmp_path):
     """FR-017d: exactly one stub per element, and it is the click handler."""
     interface = _new(tmp_path)
-    for name, type_ in (("run_fit", "button"), ("spectrum", "plot_area")):
+    for name, type_ in (("run_fit", "button"), ("spectrum", "axes")):
         element = Element(name, type_, Rect(0.1, 0.1, 0.2, 0.1))
         interface.layout.add(element)
         inject.append_stub(interface.code_path, element, templates.default_stub(element))

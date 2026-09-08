@@ -151,7 +151,7 @@ class PropertiesPanel:
     def _style_section(self, element):
         """Editors for whatever style properties this element type has.
 
-        A plot area only gets `visible`; matplotlib owns the rest of how it
+        An axes element only gets `visible`; matplotlib owns the rest of how it
         looks, and offering a fill colour that does nothing would be a lie.
         """
         available = style_fields_for(element.type)

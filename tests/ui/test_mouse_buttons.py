@@ -81,7 +81,7 @@ def test_the_button_binds_the_extra_mouse_buttons(gui):
     assert "<ButtonRelease-3>" in bound
 
 
-def test_a_plot_area_also_reports_the_button(gui):
+def test_a_axes_also_reports_the_button(gui):
     """The plot path maps matplotlib's MouseButton enum to the same names."""
     from iterlab.ui.elements import _MPL_BUTTON
     from matplotlib.backend_bases import MouseButton

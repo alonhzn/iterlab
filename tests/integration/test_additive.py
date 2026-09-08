@@ -60,7 +60,7 @@ def test_adding_an_element_only_appends(tmp_path):
     interface = _interface(tmp_path)
     before = interface.code_path.read_text(encoding="utf-8")
 
-    element = Element("spectrum", "plot_area", Rect(0.1, 0.4, 0.5, 0.4))
+    element = Element("spectrum", "axes", Rect(0.1, 0.4, 0.5, 0.4))
     interface.layout.add(element)
     inject.append_stub(interface.code_path, element, templates.default_stub(element))
 

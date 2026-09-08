@@ -16,7 +16,7 @@ import tkinter as tk
 from ..layout.schema import ELEMENT_TYPES
 from . import theme
 
-DISPLAY_NAME = {"plot_area": "Plot area", "button": "Button", "label": "Label"}
+DISPLAY_NAME = {"axes": "Axes", "button": "Button", "label": "Label"}
 
 #: Deliberately compact: one line per type, icon and name only. The vocabulary
 #: is going to grow, and a card tall enough for a description does not survive

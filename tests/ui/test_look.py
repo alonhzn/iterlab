@@ -30,18 +30,18 @@ def test_selecting_a_palette_card_highlights_it(make_app):
     palette = app.built.palette
     palette.selected.set("button")
     assert palette._cards["button"].selected
-    assert not palette._cards["plot_area"].selected
+    assert not palette._cards["axes"].selected
 
 
 def test_setting_the_variable_updates_the_cards(make_app):
     """Anything driving the palette should not need to know it draws cards."""
     app = make_app()
     palette = app.built.palette
-    palette.selected.set("plot_area")
-    assert palette._cards["plot_area"].selected
+    palette.selected.set("axes")
+    assert palette._cards["axes"].selected
     palette.selected.set("button")
     assert palette._cards["button"].selected
-    assert not palette._cards["plot_area"].selected
+    assert not palette._cards["axes"].selected
 
 
 def test_clicking_a_card_selects_that_type(mapped, make_app):

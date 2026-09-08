@@ -13,11 +13,11 @@ from ..errors import NameInUse, NameInvalid
 
 #: Written into every layout file. Bumped only when the format changes in a way
 #: an older build could not read (contracts/layout-schema.md).
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 #: Element types this build knows. A closed set: an unknown type in a file of a
 #: recognized schema version is a defect, not something to skip over.
-ELEMENT_TYPES = ("plot_area", "button", "label")
+ELEMENT_TYPES = ("axes", "button", "label")
 
 #: Types that display text. `label` holds a button's caption and a label's
 #: text — the same idea, so it stays one field rather than two.
@@ -33,10 +33,12 @@ INTERACTIONS = ("clicked", "hover", "motion", "key")
 #: click handler for every one would leave a researcher with a pile of dead
 #: functions. Every interaction is still available on a label if they write the
 #: handler themselves (FR-017a) — only the automatic stub is withheld.
-DEFAULT_INTERACTION = {"plot_area": "clicked", "button": "clicked", "label": None}
+DEFAULT_INTERACTION = {"axes": "clicked", "button": "clicked", "label": None}
 
 #: Prefix used when auto-suggesting a tag in the designer.
-TAG_PREFIX = {"plot_area": "plot", "button": "button", "label": "label"}
+#: `axes` is deliberately abbreviated: `ax` is what a matplotlib user calls the
+#: variable, so `ev.ax_0` reads the way their own code already does.
+TAG_PREFIX = {"axes": "ax", "button": "button", "label": "label"}
 
 #: Size given to an element placed by a single click rather than a drag, as
 #: (width, height) fractions of the window.
@@ -47,14 +49,14 @@ TAG_PREFIX = {"plot_area": "plot", "button": "button", "label": "label"}
 #: 154x32 and a plot at 864x432; on the 800x450 default, 56x16, 64x14 and
 #: 360x180.
 DEFAULT_SIZE = {
-    "plot_area": (0.45, 0.40),
+    "axes": (0.45, 0.40),
     "button": (0.07, 0.035),
     "label": (0.08, 0.03),
 }
 
 #: Style properties, and which element types carry them.
 #:
-#: A plot area draws its own appearance through matplotlib, so it takes only
+#: An axes element draws its own appearance through matplotlib, so it takes only
 #: `visible`. Everything else applies to the types that render text.
 UNIVERSAL_STYLE = ("visible",)
 TEXT_STYLE = (

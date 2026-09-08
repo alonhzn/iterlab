@@ -12,7 +12,7 @@ from iterlab.layout.schema import (
 )
 
 
-@pytest.mark.parametrize("name", ["spectrum", "run_fit", "a", "x2", "plot_0"])
+@pytest.mark.parametrize("name", ["spectrum", "run_fit", "a", "x2", "ax_0"])
 def test_valid_names_accepted(name):
     assert validate_tag(name) == name
 
@@ -36,7 +36,7 @@ def test_unusable_names_rejected(name, reason):
 
 def test_duplicate_name_rejected():
     with pytest.raises(NameInUse):
-        validate_tag("plot_0", existing={"plot_0": object()})
+        validate_tag("ax_0", existing={"ax_0": object()})
 
 
 def test_rect_rejects_out_of_bounds():
@@ -56,7 +56,7 @@ def test_rect_rounds_for_readable_diffs():
 
 
 def test_handler_naming_convention():
-    e = Element("spectrum", "plot_area", Rect(0.1, 0.1, 0.5, 0.5))
+    e = Element("spectrum", "axes", Rect(0.1, 0.1, 0.5, 0.5))
     assert e.handler_name("clicked") == "on_clicked_spectrum"
     assert e.handler_name("motion") == "on_motion_spectrum"
     assert set(e.all_handler_names()) == {
@@ -69,7 +69,7 @@ def test_handler_naming_convention():
 
 def test_default_interaction_is_click_for_both_types():
     assert DEFAULT_INTERACTION["button"] == "clicked"
-    assert DEFAULT_INTERACTION["plot_area"] == "clicked"
+    assert DEFAULT_INTERACTION["axes"] == "clicked"
 
 
 def test_layout_add_rejects_duplicates():
@@ -84,7 +84,7 @@ def test_next_name_skips_taken():
     layout.add(Element("button_0", "button", Rect(0, 0, 0.1, 0.1)))
     layout.add(Element("button_1", "button", Rect(0.2, 0, 0.1, 0.1)))
     assert layout.next_tag("button") == "button_2"
-    assert layout.next_tag("plot_area") == "plot_0"
+    assert layout.next_tag("axes") == "ax_0"
 
 
 def test_retag_preserves_order():

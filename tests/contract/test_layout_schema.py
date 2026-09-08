@@ -11,7 +11,7 @@ MINIMAL = "schema_version: 1\nwindow:\n  width: 800\n  height: 450\nelements: {}
 
 def _sample():
     layout = Layout()
-    layout.add(Element("spectrum", "plot_area", Rect(0.05, 0.30, 0.90, 0.65)))
+    layout.add(Element("spectrum", "axes", Rect(0.05, 0.30, 0.90, 0.65)))
     layout.add(Element("run_fit", "button", Rect(0.05, 0.10, 0.20, 0.10), label="Run fit"))
     return layout
 

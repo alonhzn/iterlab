@@ -1,7 +1,7 @@
 """Clicking, hovering and typing on a plot area.
 
 These go through matplotlib's own callback machinery — the closures in
-`build_plot_area` — rather than calling `dispatcher.invoke` directly. That
+`build_axes` — rather than calling `dispatcher.invoke` directly. That
 distinction matters: a NameError inside those closures survived a full suite
 because every other plot test drove the dispatcher and never the wiring.
 """
@@ -32,7 +32,7 @@ def on_key_spectrum(ev, event):
 @pytest.fixture
 def gui(mapped, make_app):
     app = make_app()
-    app.built.create_element("plot_area", Rect(0.1, 0.1, 0.8, 0.8), tag="spectrum")
+    app.built.create_element("axes", Rect(0.1, 0.1, 0.8, 0.8), tag="spectrum")
     app.interface.code_path.write_text(RECORD, encoding="utf-8")
     app.toggle()
     app.root.update()
@@ -42,7 +42,7 @@ def gui(mapped, make_app):
 
 def _inside(handle, data_x=1.0, data_y=1.0):
     """A display-space point that lands inside the axes."""
-    x, y = handle.axes.transData.transform((data_x, data_y))
+    x, y = handle.transData.transform((data_x, data_y))
     return int(x), int(y)
 
 
@@ -115,14 +115,14 @@ def test_a_drawn_plot_survives_a_mode_switch(gui):
     Without reusing the session's figure this passes silently in code and
     fails visibly on screen: a blank plot area after every layout tweak.
     """
-    before = len(gui.built.handles["spectrum"].axes.lines)
+    before = len(gui.built.handles["spectrum"].lines)
     assert before == 1, "on_startup should have drawn one line"
 
     gui.toggle()          # into the editor
     gui.toggle()          # and back
     gui.root.update()
 
-    axes = gui.built.handles["spectrum"].axes
+    axes = gui.built.handles["spectrum"]
     assert len(axes.lines) == 1, "the plotted curve was lost on a mode switch"
 
 
@@ -159,5 +159,5 @@ def test_a_renamed_plot_keeps_its_curve(gui):
     gui.toggle()
     gui.root.update()
 
-    axes = gui.built.handles["signal"].axes
+    axes = gui.built.handles["signal"]
     assert len(axes.lines) == 1, "the curve was orphaned under the old tag"

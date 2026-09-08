@@ -54,7 +54,7 @@ demo.py      your code - you own this, iterlab only ever appends to it
 2. **Drag** on the canvas to size it, or **click** to drop one at a sensible default size.
 3. The **PROPERTIES** panel opens with the tag pre-filled. Type over it if you want a better one.
 
-Draw a **Plot area** tagged `spectrum` and a **Button** tagged `run_fit`.
+Draw an **Axes** and a **Button** tagged `run_fit`. The axes will be tagged `ax_0`.
 
 `demo.py` now ends with one handler for each. iterlab appends; it never edits or removes anything
 you wrote.
@@ -147,10 +147,10 @@ none. Add the others by hand when you want them.
 
 Three types so far. Each is drawn in the editor and reached in code as `ev.<tag>`.
 
-### Plot area
+### Axes
 
-A matplotlib `Axes`. Not a wrapper around one — the actual object, so every matplotlib call you
-already know works:
+A matplotlib `Axes`. Not a wrapper around one — **the actual object**, so every matplotlib call you
+already know works, and any library that takes an `ax=` argument accepts it:
 
 ```python
 def on_startup(ev):
@@ -165,11 +165,23 @@ work from the toolbar with no code at all.
 
 | In code | |
 |---|---|
-| any matplotlib `Axes` method | `ev.spectrum.plot(...)`, `.clear()`, `.set_title(...)` |
-| `ev.spectrum.visible` | show or hide the whole element |
+| any matplotlib `Axes` method | `ev.ax_0.plot(...)`, `.clear()`, `.set_title(...)` |
+| `ev.ax_0.visible` | show or hide the whole element, toolbar included |
 
-Colours, fonts and borders are matplotlib's job here, so the editor offers only **Visible** for a
-plot area. Style the plot itself through matplotlib.
+```python
+isinstance(ev.ax_0, matplotlib.axes.Axes)   # True
+seaborn.histplot(data, ax=ev.ax_0)          # works, because it really is one
+```
+
+New axes are tagged `ax_0`, `ax_1`, and so on — `ax` because that is what the variable is called in
+everyone's matplotlib code already. Rename them in the editor like any other element.
+
+Colours, fonts and borders are matplotlib's job here, so the editor offers only **Visible** for an
+axes. Style the plot itself through matplotlib.
+
+`ev.ax_0.visible` means what it means on every other element — is this thing on screen — and hides
+the axes together with its toolbar. matplotlib's own `set_visible` is untouched and still does
+matplotlib's thing, which is to hide the axes but leave the frame around it.
 
 ### Button
 
@@ -391,5 +403,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 0.14.0.** Everything above is verified against that release. If a description here
+**Guide version 0.15.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

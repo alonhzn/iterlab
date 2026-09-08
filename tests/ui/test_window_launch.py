@@ -23,7 +23,7 @@ def on_clicked_run_fit(ev, event):
 def gui(make_app):
     app = make_app()
     designer = app.built
-    designer.create_element("plot_area", Rect(0.05, 0.35, 0.9, 0.6), tag="spectrum")
+    designer.create_element("axes", Rect(0.05, 0.35, 0.9, 0.6), tag="spectrum")
     designer.create_element("button", Rect(0.05, 0.1, 0.25, 0.12), tag="run_fit")
     app.interface.code_path.write_text(CODE, encoding="utf-8")
     app.toggle()
@@ -59,10 +59,10 @@ def test_plot_handle_exposes_the_matplotlib_axes(gui):
     handle = gui.built.handles["spectrum"]
     assert hasattr(handle, "plot") and hasattr(handle, "set_title")
     handle.set_title("works")
-    assert handle.axes.get_title() == "works"
+    assert handle.get_title() == "works"
 
 
-def test_plot_area_has_the_navigation_toolbar(gui):
+def test_axes_has_the_navigation_toolbar(gui):
     """Pan and zoom with no handler written (FR-017e)."""
     frame = gui.built.handles["spectrum"].widget
     kinds = [type(c).__name__ for c in frame.winfo_children()]
@@ -75,7 +75,7 @@ def test_button_label_comes_from_the_layout(gui):
 
 def test_missing_handler_click_is_silent(gui):
     """An element with no code behind it does nothing, and says nothing."""
-    gui.built.handles["spectrum"].axes.figure.canvas.draw()
+    gui.built.handles["spectrum"].figure.canvas.draw()
     assert gui.built.banner.visible is False
 
 

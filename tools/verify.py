@@ -61,7 +61,7 @@ def main():
 
     app = open_interface(str(work / name), _show=False)
     designer = app.built
-    designer.create_element("plot_area", Rect(0.06, 0.42, 0.88, 0.52), name="spectrum")
+    designer.create_element("axes", Rect(0.06, 0.42, 0.88, 0.52), name="spectrum")
     designer.create_element("label", Rect(0.06, 0.33, 0.55, 0.05), name="status")
     designer.create_element("button", Rect(0.06, 0.16, 0.14, 0.07), name="redraw")
     designer.create_element("button", Rect(0.24, 0.16, 0.14, 0.07), name="break_it")

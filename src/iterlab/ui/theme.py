@@ -31,8 +31,8 @@ DANGER = "#c2334d"
 DANGER_SOFT = "#fdecef"
 
 # Element fills on the canvas, kept distinct but quiet.
-ELEMENT_FILL = {"plot_area": "#dbeafe", "button": "#e9e3fb", "label": "#e7f2e9"}
-ELEMENT_EDGE = {"plot_area": "#7ba7f0", "button": "#a48fe0", "label": "#84b795"}
+ELEMENT_FILL = {"axes": "#dbeafe", "button": "#e9e3fb", "label": "#e7f2e9"}
+ELEMENT_EDGE = {"axes": "#7ba7f0", "button": "#a48fe0", "label": "#84b795"}
 
 FONT = ("Segoe UI", 9)
 FONT_BOLD = ("Segoe UI", 9, "bold")
@@ -108,7 +108,7 @@ def apply_theme(root):
 # -- icons -----------------------------------------------------------------
 
 
-def _plot_icon(canvas, size, colour):
+def _axes_icon(canvas, size, colour):
     """A pair of axes with a line on them."""
     pad = size * 0.18
     canvas.create_line(pad, pad * 0.7, pad, size - pad, fill=colour, width=2)
@@ -152,7 +152,7 @@ def _label_icon(canvas, size, colour):
         )
 
 
-ICONS = {"plot_area": _plot_icon, "button": _button_icon, "label": _label_icon}
+ICONS = {"axes": _axes_icon, "button": _button_icon, "label": _label_icon}
 
 
 def element_icon(parent, element_type, size=24, colour=TEXT, background=BG):

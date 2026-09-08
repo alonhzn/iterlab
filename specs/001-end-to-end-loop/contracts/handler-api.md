@@ -80,7 +80,7 @@ however many times the code is edited.
 
 | Type | Handle |
 |---|---|
-| `plot_area` | A matplotlib `Axes`. Use the matplotlib API you already know. Plus `visible`. |
+| `axes` | A matplotlib `Axes`. Use the matplotlib API you already know. Plus `visible`. |
 | `button`, `label` | `text`, and every style property below. |
 
 **Style from code.** A button or label exposes `background`, `text_color`,
@@ -125,7 +125,7 @@ Stubs for other interactions are never generated; the researcher writes those wh
 
 | Element type | Default interaction | Generated |
 |---|---|---|
-| `plot_area` | click | `on_clicked_<tag>` |
+| `axes` | click | `on_clicked_<tag>` |
 | `button` | click | `on_clicked_<tag>` |
 
 ```python

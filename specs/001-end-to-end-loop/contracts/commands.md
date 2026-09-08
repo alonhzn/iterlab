@@ -85,7 +85,7 @@ Properties exposed per type:
 | Type | Properties |
 |---|---|
 | `button` | position, name, label |
-| `plot_area` | position, name |
+| `axes` | position, name |
 
 Every one is editable, **including the name** — renaming rewrites that element's handlers in the code
 file and changes nothing else (FR-005c, FR-005d). Position is editable both by dragging and by typing

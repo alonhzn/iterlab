@@ -82,8 +82,8 @@ def test_styling_never_touches_the_code_file(editor):
     assert editor.interface.code_path.read_bytes() == before
 
 
-def test_a_plot_area_offers_no_colour_fields(editor):
-    editor.create_element("plot_area", Rect(0.5, 0.5, 0.3, 0.3), tag="spectrum")
+def test_a_axes_offers_no_colour_fields(editor):
+    editor.create_element("axes", Rect(0.5, 0.5, 0.3, 0.3), tag="spectrum")
     editor.select("spectrum")
     assert "background" not in editor.properties._entries
     assert "visible" in editor.properties._entries
@@ -190,7 +190,7 @@ def test_a_plot_style_property_can_be_read_back(editor):
     knows nothing about `visible` - so reading it raised AttributeError while
     setting it worked fine.
     """
-    editor.create_element("plot_area", Rect(0.5, 0.5, 0.3, 0.3), tag="spectrum")
+    editor.create_element("axes", Rect(0.5, 0.5, 0.3, 0.3), tag="spectrum")
     editor.app.toggle()
     editor.app.root.update()
 
@@ -201,7 +201,7 @@ def test_a_plot_style_property_can_be_read_back(editor):
 
 
 def test_every_settable_style_property_is_also_readable(editor):
-    editor.create_element("plot_area", Rect(0.5, 0.5, 0.3, 0.3), tag="spectrum")
+    editor.create_element("axes", Rect(0.5, 0.5, 0.3, 0.3), tag="spectrum")
     editor.app.toggle()
     editor.app.root.update()
 

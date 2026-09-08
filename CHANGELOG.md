@@ -6,6 +6,42 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.15.0] — unreleased
+
+### Changed
+
+- **`ev.<tag>` for a plot is now a real matplotlib `Axes`**, not an object that
+  forwards to one. `AxesHandle` subclasses `Axes` and is registered as a
+  matplotlib projection, which is the supported way to have a figure build a
+  particular Axes subclass.
+
+  The difference is invisible for `ev.ax_0.plot(...)`, which worked either way,
+  and decisive everywhere else. `isinstance(ev.ax_0, Axes)` is now true, so any
+  library that takes an `ax=` argument accepts it, and matplotlib's own
+  machinery does too. A forwarding wrapper fails all of that — and fails it
+  inside whatever library the researcher passed it to, a long way from anything
+  iterlab wrote.
+
+- **The element type `plot_area` is renamed `axes`**, and new ones are tagged
+  `ax_0`, `ax_1`, … rather than `plot_0`. `ax` is what the variable is called in
+  everyone's matplotlib code, so `ev.ax_0` reads the way a researcher's own code
+  already does. What the layout calls the thing is now what the thing is.
+
+- **Layout schema 2 → 3**, with a migration that rewrites `type: plot_area` to
+  `type: axes`. Tags, positions and styles are untouched, so an interface drawn
+  before this keeps working and keeps its names.
+
+### Notes
+
+- Everything iterlab adds to the Axes subclass is prefixed `_iterlab_`, except
+  the deliberate public surface (`tag`, `visible`, `canvas`, `widget`,
+  `element`, `disconnect`). A test asserts that nothing added shadows a
+  matplotlib attribute, so a future matplotlib release cannot quietly collide
+  with us.
+- `visible` keeps its element-level meaning — is this on screen — uniform with
+  buttons and labels, and hides the toolbar with it. matplotlib's own
+  `set_visible` is left alone and still does matplotlib's thing.
+
 ## [0.14.0] — unreleased
 
 ### Added

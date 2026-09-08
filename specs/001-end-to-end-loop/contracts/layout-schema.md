@@ -7,6 +7,20 @@ requires a MAJOR release. A layout written by any version MUST open in every lat
 
 ---
 
+## Amendments since this contract was written
+
+The shape below is the schema as first specified, at version 1. Two changes have
+landed since, each with a migration in `layout/store.py` and a test that opens a
+file written by the older build:
+
+| Version | Change |
+|---|---|
+| 2 | Added the per-element `style` block. An absent block means every default, which is what a v1 element had. |
+| 3 | Renamed the element type `plot_area` to `axes`, and the suggested tag prefix from `plot` to `ax`. Tags, positions and styles are untouched, so names chosen before the rename survive it. |
+
+The current `SCHEMA_VERSION` is **3**. Everything else below still holds; the
+element type names in the examples are shown as they are written today.
+
 ## Shape
 
 ```yaml
@@ -17,8 +31,8 @@ window:
   height: 450
 
 elements:
-  plot_0:
-    type: plot_area
+  ax_0:
+    type: axes
     position: [0.05, 0.30, 0.90, 0.65]
 
   run_fit:
@@ -47,14 +61,14 @@ elements: {}
 | `window.width` | int | no | `800` | > 0 |
 | `window.height` | int | no | `450` | > 0 |
 | `elements` | map | **yes** | `{}` | Keys are element tags |
-| `elements.<tag>.type` | str | **yes** | — | `plot_area` \| `button` |
+| `elements.<tag>.type` | str | **yes** | — | `axes` \| `button` |
 | `elements.<tag>.position` | list[float] × 4 | **yes** | — | `[left, bottom, width, height]`, each in `[0,1]`; `left+width ≤ 1`; `bottom+height ≤ 1` |
 | `elements.<tag>.label` | str | no | `""` | text-bearing types only (`button`, `label`) |
 | `elements.<tag>.style` | map | no | `{}` | appearance; only non-defaults are written |
 
 ### `style`
 
-Which properties an element has depends on its type. A `plot_area` takes only
+Which properties an element has depends on its type. A `axes` takes only
 `visible`; matplotlib owns the rest of how a plot looks.
 
 | Key | Type | Default | Applies to |
@@ -126,4 +140,4 @@ ordering; changing the coordinate origin; making an optional field required; cha
 rules to reject names that were previously legal.
 
 Per-type properties live under the element rather than in a shared namespace precisely so that adding
-one to `button` cannot affect `plot_area`.
+one to `button` cannot affect `axes`.
