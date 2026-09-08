@@ -233,10 +233,10 @@ def build_plot_area(parent, element, dispatcher):
 
     def fire(kind, mpl_event, **extra):
         dispatcher.invoke(
-            f"on_{kind}_{name}",
+            f"on_{kind}_{tag}",
             Event(
                 kind=kind,
-                element=name,
+                tag=tag,
                 x=getattr(mpl_event, "xdata", None),
                 y=getattr(mpl_event, "ydata", None),
                 **extra,

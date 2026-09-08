@@ -6,6 +6,24 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.10.0] — unreleased
+
+### Fixed
+
+- Clicking, hovering or typing on a **plot area** raised `NameError: name
+  'name' is not defined`. The v0.8.0 tag rename missed the closure inside
+  `build_plot_area`, which still referred to `name` and still passed
+  `element=` to an `Event` whose field had become `tag`. Plot areas were the
+  only element type affected.
+
+### Added
+
+- `tests/ui/test_plot_events.py` drives matplotlib's own callback machinery —
+  the closures in `build_plot_area` — rather than calling the dispatcher
+  directly. Every other plot test went straight to the dispatcher, so the
+  closures were never executed and a NameError in them survived a 291-test
+  suite. Seven of the eight new tests fail against the bug.
+
 ## [0.9.0] — unreleased
 
 ### Added
