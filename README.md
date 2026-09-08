@@ -1,29 +1,16 @@
 # iterlab
 
-**The GUI as a development environment for algorithms — not a wrapper over a finished program.**
+You are a **scientist**, not a software developer, **focus on what matters to you!**
+Science and research are iterative processes and they require a lot of graphs, plots and inputs, data processing and algorithms. Iterlab is the tool that lets you focus on your work, not on the visualization and GUI code - those are made for you seamlessly. 
 
-Most GUIs are built *after* a program works, to put a friendly face on a working command-line tool.
-That is one legitimate use of a GUI, and the belief that it is the *only* correct use has hidden a
-second one.
-
-In engineering and research, the GUI can be the environment in which the algorithm is *developed*.
-Instead of writing a script, running it, waiting, reading numbers, closing figures, editing
-constants, and running again, you draw a small interactive surface — plots, buttons, fields,
-selectors — and iterate inside it. The overhead of re-running, re-loading data, re-opening figures,
-and re-typing parameters moves to the interface. What remains is the algorithm.
-
-This is the paradigm behind MathWorks GUIDE and App Designer. It is close to unknown in Python.
 
 ## What this means in practice
 
 - **Layout is drawn, never programmed.** Drag, drop, resize. No GUI code, ever.
-- **Layout and algorithm are separate files** — a `.yaml` and a `.py` sharing a name. Rearranging
-  the interface cannot disturb your code, and editing your code cannot disturb the interface. The
-  only link between them is an element's tag.
-- **Code edits take effect immediately**, without relaunching, and without losing anything already
-  in memory — loaded data, computed results, and plots already drawn all survive.
-- **The process does not die on your account.** A control with no code behind it yet, or a syntax
-  error mid-edit, never takes the session down. Restarting is the cost the tool exists to remove.
+- **Add code? Change layout? No problem!** — We know science is iterative and constantly changes. Start with one plot and go from there. The magic happens because we create two separate files, a  `.yaml` and a `.py` sharing a name. Rearranging the interface cannot disturb your code, and editing your code cannot disturb the interface. The only link between them is an element's **tag**.
+- **No need to re-run the script when you change code!** Yes you heard correctly, change your algorithm, add axis labels, no need to re-run the app, no need to reload from scratch! save hours and hours without losing anything already in memory — loaded data, computed results, and plots already drawn all survive.
+- **Made a bug? Just fix it without re-running heavy code** Code bugs and typos are part of life, that doesn’t mean you should waste time re-running heavy code. Everything survives and stays in memory until you fix the code and continue from where you left off. Restarting is the cost the tool exists to remove.
+
 
 ## Usage
 
@@ -37,12 +24,13 @@ a properties panel. Drag out a plot area and a button, name them, then click the
 top-left corner to switch to **GUI mode** and use what you drew.
 
 `demo.py` is yours. iterlab appends one handler stub per element and never touches anything else:
+- assume we have a Matplotlib axes with the tag `spectrum`
 
 ```python
 import numpy as np
 
 def on_startup(ev):
-    ev.x = np.linspace(0, 10, 500)      # loaded once per session
+    ev.x = np.linspace(0, 10, 500)      # loaded once per session, accessible from anywhere in your code
     ev.spectrum.plot(ev.x, np.sin(ev.x))
 
 def on_clicked_run_fit(ev, event):
@@ -50,7 +38,7 @@ def on_clicked_run_fit(ev, event):
     ev.spectrum.plot(ev.x, np.sin(2 * ev.x))
 ```
 
-Edit that file while the window is open, click the button, and the new code runs — no restart, and
+Edit that file **while the window is open**, click the button, and the new code runs — **no restart**, and
 `ev.x` is never reloaded. Make a typo and the session survives, tells you what broke, and lets you fix
 it and carry on.
 
