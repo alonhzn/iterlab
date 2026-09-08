@@ -48,6 +48,18 @@ def _box(designer, name="go"):
     return tuple(round(v) for v in designer._to_pixels(designer.layout.elements[name].position))
 
 
+#: Positions snap to two decimals - one part in a hundred of the window - so a
+#: pixel assertion has to allow for the grid the value was snapped to. On the
+#: fixture's canvas that is a handful of pixels.
+SNAP_PX = 12
+
+
+def _assert_box(designer, expected, name="go"):
+    actual = _box(designer, name)
+    off = [abs(a - e) for a, e in zip(actual, expected)]
+    assert max(off) <= SNAP_PX, f"expected about {expected}, got {actual}"
+
+
 def test_the_fixture_lands_where_the_arithmetic_expects(designer):
     assert _box(designer) == (100, 200, 200, 300)
 
@@ -72,7 +84,7 @@ def test_the_canvas_actually_binds_the_drag_sequences(designer):
 
 def test_dragging_inside_an_element_moves_it(designer):
     _drag(designer, (150, 250), (200, 300))
-    assert _box(designer) == (150, 250, 250, 350)
+    _assert_box(designer, (150, 250, 250, 350))
 
 
 def test_moving_preserves_size(designer):
@@ -98,7 +110,8 @@ def test_a_move_is_persisted(designer):
     from iterlab.layout import store
 
     saved = store.load(designer.interface.layout_path)
-    assert saved.elements["go"].position.left == pytest.approx(0.325, abs=1e-3)
+    # Half a grid step of tolerance: positions snap to two decimals.
+    assert saved.elements["go"].position.left == pytest.approx(0.325, abs=6e-3)
 
 
 def test_moving_cannot_push_an_element_off_the_canvas(designer):
@@ -199,12 +212,12 @@ def test_moving_and_resizing_never_touch_the_code_file(designer):
     before = designer.interface.code_path.read_bytes()
 
     _drag(designer, (150, 250), (180, 280))
-    assert _box(designer) == (130, 230, 230, 330), "moved"
+    _assert_box(designer, (130, 230, 230, 330))  # moved
 
     # Grab the moved element's own se handle, not empty canvas - a drag that
     # starts on the background is a create, and would legitimately add a stub.
     _drag(designer, (230, 330), (280, 380))
-    assert _box(designer) == (130, 230, 280, 380), "resized"
+    _assert_box(designer, (130, 230, 280, 380))  # resized
 
     assert designer.interface.code_path.read_bytes() == before
 
@@ -351,7 +364,8 @@ def test_a_clicked_element_is_centred_on_the_click(designer):
     placed = designer.layout.elements["button_0"].position
     centre_x = placed.left + placed.width / 2
     centre_y = placed.bottom + placed.height / 2
-    assert centre_x == pytest.approx(300 / CANVAS_W, abs=1e-3)
+    # A centred element can sit up to half a grid step off centre.
+    assert centre_x == pytest.approx(300 / CANVAS_W, abs=6e-3)
     assert centre_y == pytest.approx(1.0 - 120 / CANVAS_H, abs=1e-3)
 
 

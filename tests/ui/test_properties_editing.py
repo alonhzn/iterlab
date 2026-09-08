@@ -23,12 +23,19 @@ def editor(mapped, make_app):
     return d
 
 
-def _type(panel, field, value):
-    """Type into a field the way a researcher does: focus it first.
+#: Fields a researcher can reach without opening the "More" drawer.
+BASIC_FIELDS = {"tag", "label"}
 
-    Key events are routed via the focus, so an unfocused entry never sees the
-    Return.
+
+def _type(panel, field, value):
+    """Type into a field the way a researcher does: open it, then focus it.
+
+    Key events are routed via the focus, and a widget inside a collapsed drawer
+    is not on screen to receive them - so reaching a position or a colour means
+    opening the drawer first, exactly as a person would have to.
     """
+    if field not in BASIC_FIELDS and not panel.advanced_open:
+        panel.toggle_advanced()
     entry = panel._entries[field]
     entry.focus_set()
     entry.update()

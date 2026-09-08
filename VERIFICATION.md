@@ -67,7 +67,13 @@ is *there*; only a person can see that the window still looks like the session t
 | 21 | Press **Restart app** | Everything reloads: data, plots, code, layout. It is obvious that is what happened | Whether the button reads as destructive *before* it is pressed is a human judgement |
 | 22 | Edit `on_startup`, then click any element | The strip appears, and its two actions read as clearly different from each other | Visibility is asserted; whether a researcher can tell "re-run" from "restart" at a glance is not |
 | 23 | Press **Re-run startup** with data already loaded | The edit applies and the data is still there | The object identity is asserted; whether the researcher *believes* nothing was lost is not |
-| 24 | Edit a helper module you import, then press **Restart app** | The change takes effect. Without the restart it does not | A documented assumption. Worth confirming a researcher can discover the workaround from the guide |
+| 24 | Edit a helper module you import, then press **Hard reset** | The change takes effect. Without the restart it does not | A documented assumption. Worth confirming a researcher can discover the workaround from the guide |
+| 25 | Hover each top-bar button | The text appears without chasing the pointer, and reading it makes clear which one costs you your data | Presence is asserted; whether it arrives before you have moved on is a human judgement |
+| 26 | **[!]** Press **Screenshot**, then open the PNG | It shows your interface, at the size on screen, with no top bar and nothing clipped | The capture is faked in tests, because a screen grab needs a screen. Only a person can look at the picture |
+| 27 | Press **Screenshot** with a plot mid-zoom | The PNG shows the zoom you were looking at | The point of a screen grab over a redraw, and only visible by looking |
+| 28 | Draw an element, then look at PROPERTIES | The two fields that matter are there and the rest is out of the way; **More** reads as openable | Whether a panel feels uncluttered is exactly what a machine cannot say |
+| 29 | Open **More**, select a different element | The drawer is still open | Asserted, but worth feeling: this is the difference between the drawer helping and annoying |
+| 30 | Drag an element slowly across the canvas | Movement is smooth, not visibly stepped, despite positions snapping to hundredths | One part in a hundred should be below the threshold of notice. If stepping is visible, the grid is too coarse |
 
 ### Being told things
 

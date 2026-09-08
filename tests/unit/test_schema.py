@@ -50,9 +50,29 @@ def test_rect_rejects_out_of_bounds():
         Rect(left=0.1, bottom=0.1, width=0.0, height=0.2)
 
 
-def test_rect_rounds_for_readable_diffs():
+def test_rect_rounds_to_two_decimals():
+    """One part in a hundred of the window - finer than that is noise."""
     r = Rect(0.123456, 0.2, 0.3, 0.4)
-    assert r.as_list()[0] == 0.1235
+    assert r.as_list() == [0.12, 0.2, 0.3, 0.4]
+
+
+def test_rounding_happens_on_construction_not_only_on_save():
+    """So what is in memory is what is on disk, always."""
+    r = Rect(0.123456, 0.51234, 0.31111, 0.4)
+    assert (r.left, r.bottom, r.width) == (0.12, 0.51, 0.31)
+
+
+def test_a_sliver_becomes_the_smallest_real_element(): 
+    """Rounding must not turn a thin element into an invalid one."""
+    r = Rect(0.5, 0.5, 0.004, 0.004)
+    assert r.width == 0.01 and r.height == 0.01
+
+
+def test_rounding_never_pushes_an_element_off_the_window():
+    """Rounding out and away from the origin could cross the far edge."""
+    r = Rect(0.996, 0.996, 0.004, 0.004)
+    assert r.left + r.width <= 1.0
+    assert r.bottom + r.height <= 1.0
 
 
 def test_handler_naming_convention():

@@ -6,6 +6,52 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.17.0] — unreleased
+
+### Added
+
+- **Hover text on the top-bar buttons.** Two of them differ only in how much
+  they throw away, and a two-word label cannot carry that. `Tooltip` is drawn as
+  a borderless toplevel that never takes focus.
+- **A "Screenshot" button**, writing a PNG beside the interface's own files as
+  `demo-<date>-<time>.png`. It captures the **content area only** — the top bar
+  is iterlab's furniture and has no business in a figure someone pastes into a
+  report. No file dialog: a modal blocks the test suite outright, the same
+  reason element creation does not ask for a name. Pillow already ships with
+  matplotlib, so this adds no dependency. A machine that cannot grab the screen
+  (headless Linux) reports it through the fault banner rather than taking the
+  window down.
+- **A "More" drawer in the properties panel.** Only the tag, and the text for a
+  button or label, are shown by default; position, size, colour, font and state
+  are behind it. The set is declared per element type in
+  `schema.BASIC_PROPERTIES`, so a future slider declares its range and starting
+  position the same way a button declares its caption.
+
+  The advanced widgets are *built* either way and only packed or not, so
+  committing an edit never depends on which fields the researcher happened to
+  reveal. The drawer stays open across selections — someone adjusting colours
+  across several elements should not have to reopen it each time.
+
+### Changed
+
+- **"Restart app" is now "Hard reset"**, in the top bar and in the startup
+  notice.
+- **Positions and sizes are rounded to two decimals on construction**, not only
+  when saved. Hundredths of the window is finer than anyone can place by hand or
+  see, and finer than that turns the layout file into digits whose diffs mean
+  nothing. Rounding at construction means what is in memory is what is on disk,
+  so a value never changes under a researcher between drawing it and reopening
+  it.
+
+  Validation still runs first, so a genuinely invalid rectangle is rejected
+  rather than quietly rounded into an acceptable one. Only rounding's own
+  artefacts are corrected: a sliver that would round away to nothing becomes the
+  smallest real element, and an edge rounded past the window is given its
+  position back rather than being shrunk.
+
+  `DEFAULT_SIZE["button"]` moves from `0.035` to `0.04` high, since a default
+  ought to be expressible on the grid it will be snapped to.
+
 ## [0.16.0] — unreleased
 
 ### Fixed

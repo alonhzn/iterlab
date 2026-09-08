@@ -161,6 +161,34 @@ class App:
         self.build(GUI)
         self._mode_toggle.refresh()
 
+    def save_screenshot(self):
+        """Write a PNG of the interface beside the interface's own files.
+
+        Returns the path, or None if capture was not possible here. A failure is
+        reported like any other fault and never takes the window down: a
+        screenshot is a convenience, and a convenience that can kill the session
+        is not one (Principle III).
+        """
+        from . import screenshot as screenshot_mod
+
+        try:
+            path = screenshot_mod.save(
+                self._content, self.interface.dir, self.interface.name
+            )
+        except Exception as exc:  # noqa: BLE001 - reported, never swallowed
+            from ..runtime.faults import HANDLER_RAISED, Fault
+
+            sink = getattr(self._built, "sink", None)
+            if sink is not None:
+                sink.report(Fault.from_exception(exc, HANDLER_RAISED))
+            else:  # pragma: no cover - only in editor mode with no sink
+                print(f"iterlab: could not save a screenshot: {exc}")
+            return None
+
+        self._mode_toggle.announce(f"Saved {path.name}")
+        print(f"iterlab: screenshot saved to {path}")
+        return path
+
     def rerun_startup(self) -> bool:
         """Run `on_startup` again over the live session, keeping the data.
 

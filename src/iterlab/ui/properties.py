@@ -18,7 +18,7 @@ from tkinter import ttk
 from dataclasses import replace
 
 from ..errors import IterlabError
-from ..layout.schema import ALIGNMENTS, Rect, style_fields_for
+from ..layout.schema import ALIGNMENTS, Rect, basic_properties, style_fields_for
 from . import theme
 
 GEOMETRY_FIELDS = ("left", "bottom", "width", "height")
@@ -66,6 +66,16 @@ class PropertiesPanel:
             justify="left", anchor="w", wraplength=165,
         )
         self._body = tk.Frame(self.frame, bg=theme.BG)
+        #: Where row helpers put their widgets. Swapped to the drawer while the
+        #: advanced sections are built, so one set of helpers serves both.
+        self._target = self._body
+        #: Whether the drawer is open. Kept on the panel rather than rebuilt per
+        #: element: a researcher who opened it to nudge a colour should not have
+        #: it slam shut the moment they select something else.
+        self.advanced_open = False
+        self._advanced = None
+        self._drawer_arrow = None
+        self._drawer_label = None
         self._entries = {}
         self._swatches = {}
 
@@ -113,20 +123,75 @@ class PropertiesPanel:
             self._body.pack(side="top", fill="x")
             self.element_tag = element.tag
 
+            # Basic: what you had to decide to have made the element at all.
             self._readonly_row("Type", element.type)
             self._row("tag", element.tag)
-            self._section("POSITION & SIZE")
-            self._geometry_grid(element.position)
-            if element.displays_text:
-                self._section("TEXT")
-                self._row("label", element.label)
-            self._style_section(element)
+            for prop in basic_properties(element.type):
+                if prop == "label":
+                    self._row("label", element.label)
+
+            # Everything else lives behind the drawer. It is *built* either way,
+            # so the values are always there to commit and nothing depends on
+            # whether the researcher happened to open it - only packed or not.
+            self._build_drawer()
+            self._target = self._advanced
+            try:
+                self._section("POSITION & SIZE")
+                self._geometry_grid(element.position)
+                self._style_section(element)
+            finally:
+                self._target = self._body
+
             self._fill_delete_control()
         finally:
             self._busy = previous
 
+    def _build_drawer(self):
+        """The "More" header and the frame it reveals."""
+        header = tk.Frame(self._body, bg=theme.BG, cursor="hand2")
+        header.pack(fill="x", pady=(10, 0))
+
+        # Drawn rather than a glyph character: an arrow depends on the platform
+        # font having it, and a missing glyph renders as a hollow box.
+        self._drawer_arrow = tk.Canvas(
+            header, width=12, height=12, bg=theme.BG, highlightthickness=0
+        )
+        self._drawer_arrow.pack(side="left", padx=(0, 5))
+        self._drawer_label = tk.Label(
+            header, text="", bg=theme.BG, fg=theme.TEXT_MUTED,
+            font=theme.FONT_SMALL, anchor="w",
+        )
+        self._drawer_label.pack(side="left")
+
+        for widget in (header, self._drawer_arrow, self._drawer_label):
+            widget.bind("<Button-1>", lambda _e: self.toggle_advanced())
+
+        self._advanced = tk.Frame(self._body, bg=theme.BG)
+        self._render_drawer()
+
+    def _render_drawer(self):
+        canvas = self._drawer_arrow
+        if canvas is None:
+            return
+        canvas.delete("all")
+        # Down when closed (press to open), up when open (press to close).
+        points = (
+            (2, 4, 10, 4, 6, 10) if not self.advanced_open else (2, 9, 10, 9, 6, 3)
+        )
+        canvas.create_polygon(*points, fill=theme.TEXT_MUTED, outline="")
+        self._drawer_label.configure(text="Less" if self.advanced_open else "More")
+        if self.advanced_open:
+            self._advanced.pack(fill="x")
+        else:
+            self._advanced.pack_forget()
+
+    def toggle_advanced(self):
+        self.advanced_open = not self.advanced_open
+        self._render_drawer()
+        return self.advanced_open
+
     def _geometry_grid(self, rect):
-        grid = tk.Frame(self._body, bg=theme.BG)
+        grid = tk.Frame(self._target, bg=theme.BG)
         grid.pack(fill="x")
         grid.columnconfigure(1, weight=1)
         grid.columnconfigure(3, weight=1)
@@ -180,7 +245,7 @@ class PropertiesPanel:
 
     def _colour_row(self, field, value):
         """A hex entry with a swatch that opens the colour picker."""
-        row = tk.Frame(self._body, bg=theme.BG)
+        row = tk.Frame(self._target, bg=theme.BG)
         row.pack(fill="x", pady=2)
         tk.Label(
             row, text=STYLE_LABELS[field], width=7, anchor="w",
@@ -216,7 +281,7 @@ class PropertiesPanel:
         self.apply()
 
     def _font_row(self, value):
-        row = tk.Frame(self._body, bg=theme.BG)
+        row = tk.Frame(self._target, bg=theme.BG)
         row.pack(fill="x", pady=2)
         tk.Label(
             row, text=STYLE_LABELS["font"], width=7, anchor="w",
@@ -232,7 +297,7 @@ class PropertiesPanel:
         self._entries["font"] = box
 
     def _style_entry(self, field, value):
-        row = tk.Frame(self._body, bg=theme.BG)
+        row = tk.Frame(self._target, bg=theme.BG)
         row.pack(fill="x", pady=2)
         tk.Label(
             row, text=STYLE_LABELS[field], width=7, anchor="w",
@@ -245,7 +310,7 @@ class PropertiesPanel:
         self._entries[field] = entry
 
     def _toggle_row(self, *fields):
-        row = tk.Frame(self._body, bg=theme.BG)
+        row = tk.Frame(self._target, bg=theme.BG)
         row.pack(fill="x", pady=2)
         for field, value in fields:
             var = tk.BooleanVar(value=bool(value))
@@ -258,7 +323,7 @@ class PropertiesPanel:
             self._entries[field] = var
 
     def _align_row(self, value):
-        row = tk.Frame(self._body, bg=theme.BG)
+        row = tk.Frame(self._target, bg=theme.BG)
         row.pack(fill="x", pady=2)
         tk.Label(
             row, text=STYLE_LABELS["align"], width=7, anchor="w",
@@ -277,12 +342,12 @@ class PropertiesPanel:
 
     def _section(self, title):
         tk.Label(
-            self._body, text=title, bg=theme.BG, fg=theme.TEXT_MUTED,
+            self._target, text=title, bg=theme.BG, fg=theme.TEXT_MUTED,
             font=theme.FONT_SMALL, anchor="w",
         ).pack(fill="x", pady=(9, 2))
 
     def _readonly_row(self, title, value):
-        row = tk.Frame(self._body, bg=theme.BG)
+        row = tk.Frame(self._target, bg=theme.BG)
         row.pack(fill="x", pady=2)
         tk.Label(
             row, text=title, width=7, anchor="w",
@@ -294,7 +359,7 @@ class PropertiesPanel:
         ).pack(side="left", fill="x", expand=True)
 
     def _row(self, key, value):
-        row = tk.Frame(self._body, bg=theme.BG)
+        row = tk.Frame(self._target, bg=theme.BG)
         row.pack(fill="x", pady=2)
         tk.Label(
             row, text=LABELS.get(key, key), width=7, anchor="w",

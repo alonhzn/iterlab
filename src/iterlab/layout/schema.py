@@ -50,7 +50,7 @@ TAG_PREFIX = {"axes": "ax", "button": "button", "label": "label"}
 #: 360x180.
 DEFAULT_SIZE = {
     "axes": (0.45, 0.40),
-    "button": (0.07, 0.035),
+    "button": (0.07, 0.04),
     "label": (0.08, 0.03),
 }
 
@@ -66,7 +66,44 @@ TEXT_STYLE = (
 
 ALIGNMENTS = ("left", "center", "right")
 
-_ROUND = 4
+#: Properties shown in the editor without opening the "More" drawer, per type,
+#: beyond the tag — which every element has and every element shows.
+#:
+#: "Basic" means what you must decide to have made the element at all. A button
+#: needs its caption; an axes needs nothing, since matplotlib decides how it
+#: looks. Everything else — position, colour, font, state — is a refinement, and
+#: refinements are what the drawer is for.
+#:
+#: A new element type adds its own here: a slider's range and starting position
+#: are basic in exactly this sense, because a slider without them is not yet a
+#: slider.
+BASIC_PROPERTIES = {
+    "axes": (),
+    "button": ("label",),
+    "label": ("label",),
+}
+
+
+def basic_properties(element_type):
+    """Editable properties this type shows before the drawer is opened."""
+    return BASIC_PROPERTIES.get(element_type, ())
+
+#: Positions and sizes are held to two decimals — one part in a hundred of the
+#: window. Finer than that is noise: it is below what a researcher can place by
+#: dragging, below what they can see, and it makes the layout file unreadable
+#: and its diffs meaningless. Rounding happens on construction rather than only
+#: on save, so what is in memory is what is on disk and a value never changes
+#: under a researcher between drawing it and reopening it.
+_ROUND = 2
+
+#: The smallest element that still means something after rounding. Anything
+#: rounding to zero would be invalid, so a sliver becomes this instead of an
+#: error the researcher did not ask for.
+_MIN_EXTENT = 0.01
+
+
+def _snap(value):
+    return round(float(value), _ROUND)
 
 
 def validate_tag(tag: str, existing=()) -> str:
@@ -120,14 +157,37 @@ class Rect:
             raise ValueError("element extends past the right edge")
         if self.bottom + self.height > 1.0 + 1e-9:
             raise ValueError("element extends past the top edge")
+        self._snap_to_grid()
+
+    def _snap_to_grid(self):
+        """Round to two decimals, keeping the rectangle valid.
+
+        Validation runs first, so a genuinely bad rectangle is still rejected
+        rather than quietly rounded into something acceptable. What is corrected
+        here are only the artefacts rounding itself introduces: a sliver that
+        would round away to nothing, and an edge that rounding nudges past the
+        window. Neither is a mistake the researcher made.
+
+        Frozen dataclass, so the fields are set the way `dataclasses.replace`
+        would - this is the documented way to normalise in __post_init__.
+        """
+        left, bottom = _snap(self.left), _snap(self.bottom)
+        width = max(_snap(self.width), _MIN_EXTENT)
+        height = max(_snap(self.height), _MIN_EXTENT)
+        # Rounding out and away from the origin can push a right or top edge
+        # past 1.0; give the position back rather than shrink what was drawn.
+        left = min(left, round(1.0 - width, _ROUND))
+        bottom = min(bottom, round(1.0 - height, _ROUND))
+        for name, value in (
+            ("left", max(left, 0.0)),
+            ("bottom", max(bottom, 0.0)),
+            ("width", width),
+            ("height", height),
+        ):
+            object.__setattr__(self, name, value)
 
     def as_list(self):
-        return [
-            round(float(self.left), _ROUND),
-            round(float(self.bottom), _ROUND),
-            round(float(self.width), _ROUND),
-            round(float(self.height), _ROUND),
-        ]
+        return [self.left, self.bottom, self.width, self.height]
 
     @classmethod
     def from_list(cls, values):

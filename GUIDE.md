@@ -257,7 +257,12 @@ The reverse is also true — moving an element in the editor never touches `demo
 
 ### In the editor
 
-Select an element and use **PROPERTIES**:
+Select an element and use **PROPERTIES**. It shows the essentials — the **tag**, and the **text** for
+a button or label. Everything else is behind **More**, which opens a drawer with position and size,
+colour, font and state.
+
+The drawer stays open once you open it, so adjusting colours across several elements does not mean
+reopening it each time.
 
 - **COLOUR** — type a hex value, or click the swatch for a colour picker.
 - **FONT** — family dropdown, size, bold, italic, alignment.
@@ -319,6 +324,7 @@ Almost nothing. For completeness:
 | Fixing a syntax error | Next click |
 | Moving, restyling, adding or deleting an element | Toggle back to GUI mode. Nothing is lost |
 | Editing `on_startup` | iterlab notices and offers to re-run it — see below |
+| Editing a module you `import` | **Hard reset** |
 
 **Switching modes costs you nothing.** Your data stays on `ev`, your plots keep what you drew on
 them, and `on_startup` does not run again. Draw a new button, come back, and the session you were
@@ -337,7 +343,7 @@ bottom offering:
 | | What it does | When you want it |
 |---|---|---|
 | **Re-run startup** | Runs the new `on_startup` over the session you already have. Your data stays | Almost always. This is the cheap one |
-| **Restart app** | Throws everything away and starts cold | When re-running would not be safe — see below |
+| **Hard reset** | Throws everything away and starts cold | When re-running would not be safe — see below |
 | **Dismiss** | Nothing. Hides the strip | When you know the edit does not matter yet |
 
 You do not have to click anything for this to appear, and it does not matter whether the element you
@@ -358,14 +364,14 @@ def on_startup(ev):
 ```
 
 The idiom this guide teaches — assign onto `ev` — is safe. If yours accumulates, use **Restart
-app** instead. iterlab offers both rather than choosing for you, because only your code knows which
+reset** instead. iterlab offers both rather than choosing for you, because only your code knows which
 it is.
 
 Dismissing does not mark the edit as accepted: change `on_startup` again and the notice comes back.
 
-### Restart app
+### Hard reset
 
-**Restart app** sits next to the toggle, in both modes. It is the big hammer, and it does what
+**Hard reset** sits next to the toggle, in both modes. It is the big hammer, and it does what
 re-launching `iterlab demo` would do without closing the window:
 
 - your layout is re-read **from the file**, so a hand edit to `demo.yaml` is picked up
@@ -376,9 +382,28 @@ You stay in whichever mode you pressed it in, and the window is not resized.
 
 Reach for it when a warm reload is not enough — most often after editing a **module you import**.
 iterlab assumes imported modules do not change during a session, so if you split your work across
-`demo.py` and `fitting.py`, edits to `fitting.py` are not picked up. Restart app is the answer.
+`demo.py` and `fitting.py`, edits to `fitting.py` are not picked up. Hard reset is the answer.
+
+Every button in the top bar has hover text saying exactly what it will do, because two of them
+differ only in how much they throw away.
 
 ---
+
+## Saving a picture
+
+**Screenshot** in the top bar writes a PNG next to your `.py` and `.yaml`, named `demo-<date>-<time>.png`.
+
+It captures your interface only — the top bar with iterlab's own buttons is left out, because it is
+this tool's furniture and not part of what you built.
+
+## Positions and sizes
+
+Everything positional is held to **two decimals** — hundredths of the window. Drag something and its
+position lands on that grid, in the editor and in the file alike.
+
+Finer than a hundredth is below what you can place by hand and below what you can see, and it turns
+`demo.yaml` into a wall of digits whose diffs mean nothing. If you type `0.333` into a position
+field, you will get `0.33`.
 
 ## Running from a script
 
@@ -409,5 +434,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 0.16.0.** Everything above is verified against that release. If a description here
+**Guide version 0.17.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

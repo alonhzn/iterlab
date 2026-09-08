@@ -38,9 +38,9 @@ def _restart_button(app):
     buttons = [
         w for w in app.chrome.winfo_children()
         if isinstance(w, (app.tk.Button, ttk.Button))
-        and "Restart" in str(w.cget("text"))
+        and "reset" in str(w.cget("text")).lower()
     ]
-    assert len(buttons) == 1, f"expected one restart button, found {len(buttons)}"
+    assert len(buttons) == 1, f"expected one hard-reset button, found {len(buttons)}"
     return buttons[0]
 
 
