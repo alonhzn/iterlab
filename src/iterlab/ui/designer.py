@@ -26,7 +26,7 @@ from ..codegen import inject
 from ..codegen import rename as rename_mod
 from ..codegen import templates
 from ..errors import CodeFileUnparseable, IterlabError
-from ..layout.schema import DEFAULT_SIZE, Element, Rect, validate_name
+from ..layout.schema import DEFAULT_SIZE, TEXT_TYPES, Element, Rect, validate_name
 from . import theme
 from .palette import Palette
 from .scroll import ScrollableColumn
@@ -426,11 +426,13 @@ class Designer:
             name=suggested,
             type=element_type,
             position=rect,
-            label=suggested if element_type == "button" else "",
+            label=suggested if element_type in TEXT_TYPES else "",
         )
         self.layout.add(element)
         self.interface.save_layout()
         try:
+            # Returns False for a type with no default interaction, such as a
+            # label; nothing is written and nothing is wrong.
             inject.append_stub(
                 self.interface.code_path, element, templates.default_stub(element)
             )
@@ -470,7 +472,7 @@ class Designer:
 
         if position is not None:
             self.layout.move(current_name, position)
-        if label is not None and self.layout.elements[current_name].type == "button":
+        if label is not None and self.layout.elements[current_name].displays_text:
             self.layout.relabel(current_name, label)
 
         self.interface.save_layout()

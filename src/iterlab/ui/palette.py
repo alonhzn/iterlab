@@ -16,11 +16,13 @@ import tkinter as tk
 from ..layout.schema import ELEMENT_TYPES
 from . import theme
 
-DISPLAY_NAME = {"plot_area": "Plot area", "button": "Button"}
-DESCRIPTION = {
-    "plot_area": "Axes you draw on",
-    "button": "Runs your code",
-}
+DISPLAY_NAME = {"plot_area": "Plot area", "button": "Button", "label": "Label"}
+
+#: Deliberately compact: one line per type, icon and name only. The vocabulary
+#: is going to grow, and a card tall enough for a description does not survive
+#: a dozen element types in a sidebar.
+ROW_PAD = 4
+ICON_SIZE = 18
 
 
 class _Card:
@@ -35,29 +37,22 @@ class _Card:
             highlightbackground=theme.BORDER, highlightcolor=theme.BORDER,
             cursor="hand2",
         )
-        self.frame.pack(fill="x", pady=3)
+        self.frame.pack(fill="x", pady=1)
 
         inner = tk.Frame(self.frame, bg=theme.BG)
-        inner.pack(fill="x", padx=8, pady=7)
+        inner.pack(fill="x", padx=7, pady=ROW_PAD)
 
-        self.icon = theme.element_icon(inner, element_type, size=24)
+        self.icon = theme.element_icon(inner, element_type, size=ICON_SIZE)
         self.icon.pack(side="left")
 
-        text = tk.Frame(inner, bg=theme.BG)
-        text.pack(side="left", padx=(9, 0), fill="x", expand=True)
         self.title = tk.Label(
-            text, text=DISPLAY_NAME.get(element_type, element_type),
-            bg=theme.BG, fg=theme.TEXT, font=theme.FONT_BOLD, anchor="w",
+            inner, text=DISPLAY_NAME.get(element_type, element_type),
+            bg=theme.BG, fg=theme.TEXT, font=theme.FONT, anchor="w",
         )
-        self.title.pack(fill="x")
-        self.subtitle = tk.Label(
-            text, text=DESCRIPTION.get(element_type, ""),
-            bg=theme.BG, fg=theme.TEXT_MUTED, font=theme.FONT_SMALL, anchor="w",
-        )
-        self.subtitle.pack(fill="x")
+        self.title.pack(side="left", padx=(8, 0), fill="x", expand=True)
 
-        # Every child swallows clicks aimed at the card, so bind them all.
-        for widget in (self.frame, inner, self.icon, text, self.title, self.subtitle):
+        # Every child swallows clicks aimed at the row, so bind them all.
+        for widget in (self.frame, inner, self.icon, self.title):
             widget.bind("<Button-1>", lambda _e: on_click(element_type))
 
     def set_selected(self, selected):
@@ -76,7 +71,7 @@ class _Card:
         self.icon.delete("all")
         painter = theme.ICONS.get(self.element_type)
         if painter is not None:
-            painter(self.icon, 24, icon_colour)
+            painter(self.icon, ICON_SIZE, icon_colour)
 
     def _paint(self, widget, background):
         try:
@@ -106,7 +101,7 @@ class Palette:
 
         tk.Label(
             self.frame,
-            text="Drag on the canvas, or click to drop one at a default size.",
+            text="Drag on the canvas, or click to drop one.",
             bg=theme.BG, fg=theme.TEXT_MUTED, font=theme.FONT_SMALL,
             wraplength=165, justify="left", anchor="w",
         ).pack(fill="x", pady=(6, 0))

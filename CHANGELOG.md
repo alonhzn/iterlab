@@ -6,6 +6,33 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.6.0] — unreleased
+
+### Added
+
+- A **label** element: text placed in the layout and set from code with
+  `ev.status.text = "..."`. It is the first type with **no generated handler** —
+  a label displays text rather than being clicked, and a stub for every one
+  would leave a pile of dead functions in the researcher's file. Every
+  interaction is still available if the handler is written by hand (FR-017a);
+  only the automatic stub is withheld.
+
+### Changed
+
+- The editor opens at 1080x760 rather than the interface's own size. That size
+  describes the *interface*, and is advisory; editor mode adds a sidebar the
+  interface knows nothing about. Switching to the editor grows a window that is
+  too small but never shrinks one — a size chosen deliberately stays.
+- The default button is smaller: roughly 134x38 px on a maximised 1920x1080
+  window, down from 230x65, which read as unusually large.
+- Palette entries are single compact rows of icon and name, about 33 px each,
+  rather than cards with descriptions. The vocabulary is going to grow, and a
+  card tall enough for a description does not survive a dozen types in a
+  sidebar.
+- The text field in the properties panel now serves any text-bearing type, not
+  just buttons. `label` holds a button's caption and a label's text — the same
+  idea, so it stays one schema field rather than two.
+
 ## [0.5.0] — unreleased
 
 ### Added

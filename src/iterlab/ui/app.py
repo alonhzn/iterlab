@@ -15,6 +15,17 @@ from __future__ import annotations
 EDITOR = "editor"
 GUI = "gui"
 
+#: Room the editor needs beyond the interface itself: the sidebar and its
+#: separator. The layout's own window size describes the *interface*, and is
+#: advisory (data-model.md), so the editor may ask for more.
+SIDEBAR_ALLOWANCE = 230
+
+#: Floors for editor mode, so the palette and every property field fit without
+#: scrolling on a first run. Tk unmaps children that do not fit rather than
+#: clipping them, so an editor that is too small loses controls silently.
+MIN_EDITOR_WIDTH = 1080
+MIN_EDITOR_HEIGHT = 760
+
 _TK_MISSING_MESSAGE = """\
 iterlab needs tkinter, which is missing from this Python installation.
 
@@ -60,7 +71,7 @@ class App:
 
         theme.apply_theme(self.root)
         self.root.title(f"iterlab — {interface.name}")
-        self.root.geometry(f"{interface.layout.window.width}x{interface.layout.window.height}")
+        self.root.geometry("{}x{}".format(*self._size_for(start_mode)))
 
         # Chrome lives outside the content frame so it survives every rebuild.
         self._chrome = self.tk.Frame(self.root, bg=theme.BG)
@@ -98,10 +109,40 @@ class App:
             child.destroy()
         self._built = None
 
+    def _size_for(self, mode):
+        """Window size for a mode, in pixels.
+
+        GUI mode uses the interface's own size. Editor mode adds the sidebar
+        and applies a floor, because the editor has controls of its own to fit
+        and the interface may have been designed small.
+        """
+        window = self.interface.layout.window
+        if mode != EDITOR:
+            return window.width, window.height
+        return (
+            max(window.width + SIDEBAR_ALLOWANCE, MIN_EDITOR_WIDTH),
+            max(window.height, MIN_EDITOR_HEIGHT),
+        )
+
+    def _grow_for_editor(self) -> None:
+        """Enlarge the window if it is too small to edit in — never shrink it.
+
+        Shrinking would discard a size the researcher chose deliberately, and
+        switching modes should not rearrange their desktop.
+        """
+        self.root.update_idletasks()
+        width, height = self._size_for(EDITOR)
+        current_w = max(self.root.winfo_width(), 1)
+        current_h = max(self.root.winfo_height(), 1)
+        if current_w < width or current_h < height:
+            self.root.geometry(f"{max(current_w, width)}x{max(current_h, height)}")
+
     def build(self, mode) -> None:
         """Build `mode` into the content frame, replacing whatever was there."""
         self.teardown()
         self.mode = mode
+        if mode == EDITOR:
+            self._grow_for_editor()
         self._built = self._construct(mode)
 
     def toggle(self) -> str:

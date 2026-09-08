@@ -31,8 +31,8 @@ DANGER = "#c2334d"
 DANGER_SOFT = "#fdecef"
 
 # Element fills on the canvas, kept distinct but quiet.
-ELEMENT_FILL = {"plot_area": "#dbeafe", "button": "#e9e3fb"}
-ELEMENT_EDGE = {"plot_area": "#7ba7f0", "button": "#a48fe0"}
+ELEMENT_FILL = {"plot_area": "#dbeafe", "button": "#e9e3fb", "label": "#e7f2e9"}
+ELEMENT_EDGE = {"plot_area": "#7ba7f0", "button": "#a48fe0", "label": "#84b795"}
 
 FONT = ("Segoe UI", 9)
 FONT_BOLD = ("Segoe UI", 9, "bold")
@@ -143,7 +143,16 @@ def _button_icon(canvas, size, colour):
     )
 
 
-ICONS = {"plot_area": _plot_icon, "button": _button_icon}
+def _label_icon(canvas, size, colour):
+    """Three text rules, the middle one short."""
+    for index, (start, end) in enumerate(((0.18, 0.82), (0.18, 0.58), (0.18, 0.74))):
+        y = size * (0.32 + index * 0.19)
+        canvas.create_line(
+            size * start, y, size * end, y, fill=colour, width=2
+        )
+
+
+ICONS = {"plot_area": _plot_icon, "button": _button_icon, "label": _label_icon}
 
 
 def element_icon(parent, element_type, size=24, colour=TEXT, background=BG):

@@ -50,6 +50,10 @@ def append_stub(code_path, element, stub_text: str) -> bool:
     handler is already there, and a duplicate definition would silently shadow
     the researcher's own work.
     """
+    if stub_text is None or element.default_interaction is None:
+        # A type with no default interaction, such as a label.
+        return False
+
     path = Path(code_path)
     source = read_source(path)
     handler = element.handler_name(element.default_interaction)

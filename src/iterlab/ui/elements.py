@@ -18,6 +18,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 from ..runtime.dispatch import Event
+from . import theme
 
 #: Fonts are fixed in points and never scaled, so text stays readable at every
 #: window size while geometry scales with it (FR-021b).
@@ -174,7 +175,54 @@ def build_plot_area(parent, element, dispatcher):
     return PlotHandle(element, frame, figure, axes, canvas)
 
 
-BUILDERS = {"button": build_button, "plot_area": build_plot_area}
+class LabelHandle(ElementHandle):
+    """Text on screen. Set it from code: `ev.title.text = "..."`."""
+
+    @property
+    def text(self):
+        return self.widget.cget("text")
+
+    @text.setter
+    def text(self, value):
+        self.widget.configure(text=str(value))
+
+    # The layout calls the field `label`, so accept that name too.
+    label = text
+
+
+def build_label(parent, element, dispatcher):
+    """A label displays text. No handler is generated for it, but every
+    interaction is still available if the researcher writes one (FR-017a)."""
+    widget = tk.Label(
+        parent,
+        text=element.label or element.name,
+        font=base_font(),
+        anchor="w",
+        justify="left",
+        bg=theme.SURFACE,
+        fg=theme.TEXT,
+    )
+    name = element.name
+
+    def fire(kind, **fields):
+        dispatcher.invoke(f"on_{kind}_{name}", Event(kind=kind, element=name, **fields))
+
+    widget.bind("<ButtonRelease-1>", lambda _e: fire("clicked", button="left"))
+    widget.bind("<ButtonRelease-2>", lambda _e: fire("clicked", button="middle"))
+    widget.bind("<ButtonRelease-3>", lambda _e: fire("clicked", button="right"))
+    widget.bind("<Enter>", lambda _e: fire("hover"))
+    widget.bind("<Motion>", lambda _e: fire("motion"))
+    widget.bind("<Key>", lambda e: fire("key", key=e.keysym))
+
+    place(widget, element.position)
+    return LabelHandle(element, widget)
+
+
+BUILDERS = {
+    "button": build_button,
+    "plot_area": build_plot_area,
+    "label": build_label,
+}
 
 
 def build(parent, element, dispatcher):

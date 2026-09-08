@@ -97,8 +97,8 @@ class PropertiesPanel:
             self._row("name", element.name)
             self._section("POSITION & SIZE")
             self._geometry_grid(element.position)
-            if element.type == "button":
-                self._section("APPEARANCE")
+            if element.displays_text:
+                self._section("TEXT")
                 self._row("label", element.label)
             self._fill_delete_control()
         finally:
@@ -214,7 +214,7 @@ class PropertiesPanel:
         for field in GEOMETRY_FIELDS:
             if raw.get(field, "") != f"{getattr(element.position, field):g}":
                 return False
-        if element.type == "button" and raw.get("label", element.label) != element.label:
+        if element.displays_text and raw.get("label", element.label) != element.label:
             return False
         return True
 

@@ -47,6 +47,8 @@ def on_clicked_{name}(ev, event):
     print(f"{name} clicked with the {{event.button}} button at ({{event.x}}, {{event.y}})")
 '''
 
+#: No entry for `label`: it displays text and is set from code, so a generated
+#: click handler would just be dead weight in the researcher's file.
 _STUBS = {"button": _BUTTON_STUB, "plot_area": _PLOT_STUB}
 
 
@@ -54,16 +56,18 @@ def starter_file(name: str) -> str:
     return STARTER_FILE.format(name=name)
 
 
-def default_stub(element) -> str:
+def default_stub(element):
     """The single stub generated when an element is created (FR-017d).
 
-    Stubs for the other interactions are never generated; the researcher writes
-    those when they want them.
+    Returns None for a type that has no default interaction. Stubs for the
+    other interactions are never generated; the researcher writes those when
+    they want them.
     """
-    try:
-        template = _STUBS[element.type]
-    except KeyError:  # pragma: no cover - closed set, guarded by schema
-        raise NotImplementedError(f"no stub template for {element.type!r}") from None
+    if element.default_interaction is None:
+        return None
+    template = _STUBS.get(element.type)
+    if template is None:  # pragma: no cover - closed set, guarded by schema
+        raise NotImplementedError(f"no stub template for {element.type!r}")
     return template.format(name=element.name)
 
 

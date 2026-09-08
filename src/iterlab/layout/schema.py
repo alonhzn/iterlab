@@ -17,26 +17,40 @@ SCHEMA_VERSION = 1
 
 #: Element types this build knows. A closed set: an unknown type in a file of a
 #: recognized schema version is a defect, not something to skip over.
-ELEMENT_TYPES = ("plot_area", "button")
+ELEMENT_TYPES = ("plot_area", "button", "label")
+
+#: Types that display text. `label` holds a button's caption and a label's
+#: text — the same idea, so it stays one field rather than two.
+TEXT_TYPES = ("button", "label")
 
 #: Interactions available on every element type. Universal, not per-type
 #: (FR-017a); what varies per type is which single stub is generated.
 INTERACTIONS = ("clicked", "hover", "motion", "key")
 
 #: The one stub generated when an element is created (FR-017d).
-DEFAULT_INTERACTION = {"plot_area": "clicked", "button": "clicked"}
+#:
+#: A label is `None`: it displays text and is set from code, so generating a
+#: click handler for every one would leave a researcher with a pile of dead
+#: functions. Every interaction is still available on a label if they write the
+#: handler themselves (FR-017a) — only the automatic stub is withheld.
+DEFAULT_INTERACTION = {"plot_area": "clicked", "button": "clicked", "label": None}
 
 #: Prefix used when auto-suggesting a name in the designer.
-NAME_PREFIX = {"plot_area": "plot", "button": "button"}
+NAME_PREFIX = {"plot_area": "plot", "button": "button", "label": "label"}
 
 #: Size given to an element placed by a single click rather than a drag, as
 #: (width, height) fractions of the window.
 #:
 #: Fractions scale with the window, so no single pair is ideal at every size;
-#: these are chosen to look right on a maximised window while staying usable on
-#: a small one. On 1920x1080 a button lands at roughly 230x65 px and a plot at
-#: 864x432; on the 800x450 default, 96x27 and 360x180.
-DEFAULT_SIZE = {"plot_area": (0.45, 0.40), "button": (0.12, 0.06)}
+#: these are chosen so that a maximised window does not produce an absurdly
+#: large control. On 1920x1080 a button lands at roughly 134x38 px, a label at
+#: 154x32 and a plot at 864x432; on the 800x450 default, 56x16, 64x14 and
+#: 360x180.
+DEFAULT_SIZE = {
+    "plot_area": (0.45, 0.40),
+    "button": (0.07, 0.035),
+    "label": (0.08, 0.03),
+}
 
 _ROUND = 4
 
@@ -120,12 +134,17 @@ class Element:
             raise ValueError(
                 f"unknown element type {self.type!r}; expected one of {ELEMENT_TYPES}"
             )
-        if self.type != "button" and self.label:
-            raise ValueError(f"{self.type} elements do not have a label")
+        if self.type not in TEXT_TYPES and self.label:
+            raise ValueError(f"{self.type} elements do not display text")
 
     @property
-    def default_interaction(self) -> str:
+    def default_interaction(self):
+        """The one interaction that gets a generated stub, or None."""
         return DEFAULT_INTERACTION[self.type]
+
+    @property
+    def displays_text(self) -> bool:
+        return self.type in TEXT_TYPES
 
     def handler_name(self, interaction: str) -> str:
         if interaction not in INTERACTIONS:

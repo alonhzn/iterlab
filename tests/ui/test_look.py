@@ -115,3 +115,45 @@ def test_the_delete_control_is_reachable_at_a_small_window(mapped, make_app):
     app.root.update()
 
     assert d.properties._danger_zone.winfo_children(), "no delete control built"
+
+
+def test_the_palette_lists_every_element_type(make_app):
+    from iterlab.layout.schema import ELEMENT_TYPES
+
+    app = make_app()
+    assert set(app.built.palette._cards) == set(ELEMENT_TYPES)
+
+
+def test_palette_rows_stay_compact_as_types_are_added(mapped, make_app):
+    """The vocabulary is going to grow; a tall card per type would not survive
+    a dozen of them in a sidebar."""
+    app = make_app()
+    app.root.update()
+    for element_type, card in app.built.palette._cards.items():
+        height = card.frame.winfo_reqheight()
+        assert height <= 34, f"{element_type} row is {height}px, too tall to scale"
+
+
+def test_the_editor_opens_large_enough_for_its_own_controls(mapped, make_app):
+    """Editor mode adds a sidebar the interface size knows nothing about."""
+    from iterlab.ui.app import MIN_EDITOR_HEIGHT, MIN_EDITOR_WIDTH
+
+    app = make_app()
+    app.root.update()
+    assert app.root.winfo_width() >= MIN_EDITOR_WIDTH - 1
+    assert app.root.winfo_height() >= MIN_EDITOR_HEIGHT - 1
+
+
+def test_switching_to_the_editor_never_shrinks_the_window(mapped, make_app):
+    """A size the researcher chose is theirs; toggling should not undo it."""
+    from iterlab.layout.schema import Rect
+
+    app = make_app()
+    app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1), name="go")
+    app.toggle()
+    app.root.geometry("1400x900")
+    app.root.update()
+    app.toggle()
+    app.root.update()
+    assert app.root.winfo_width() >= 1400
+    assert app.root.winfo_height() >= 900
