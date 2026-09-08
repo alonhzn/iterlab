@@ -1,4 +1,5 @@
-# iterlab user guide
+<h1><img src="docs/logo.png" alt="" width="40" height="40"> iterlab user guide</h1>
+
 
 The GUI as a place to *develop* an algorithm, not a wrapper you bolt on afterwards.
 
@@ -56,8 +57,11 @@ demo.py      your code - you own this, iterlab only ever appends to it
 
 Draw an **Axes** and a **Button**. They will be tagged `ax_0` and `cmd_0`.
 
-`demo.py` now ends with one handler for each. iterlab appends; it never edits or removes anything
-you wrote.
+`demo.py` now ends with a handler for each. iterlab appends; it never edits or removes anything you
+wrote.
+
+Prefer better names? Rename them in the editor at any point and iterlab renames the handlers to
+match. The examples below use `ax_0` and `cmd_0` because that is what you just drew.
 
 ### Write the algorithm
 
@@ -71,12 +75,12 @@ def on_startup(ev):
     # Runs once when the interface opens. Load your data HERE, not at the top
     # of the file - see "The one gotcha" below.
     ev.x = np.linspace(0, 10, 500)
-    ev.spectrum.plot(ev.x, np.sin(ev.x))
+    ev.ax_0.plot(ev.x, np.sin(ev.x))
 
 
-def on_clicked_run_fit(ev, event):
-    ev.spectrum.clear()
-    ev.spectrum.plot(ev.x, np.sin(2 * ev.x))
+def on_clicked_cmd_0(ev, event):
+    ev.ax_0.clear()
+    ev.ax_0.plot(ev.x, np.sin(2 * ev.x))
 ```
 
 ### Use it
@@ -124,8 +128,9 @@ Available on **every** element type. Write only the ones you want:
 | `on_motion_<tag>(ev, event)` | The pointer moves over it |
 | `on_key_<tag>(ev, event)` | A key is pressed while it has focus |
 
-Creating an element generates just one of these — click, for buttons and plot areas. Labels get
-none. Add the others by hand when you want them.
+Creating an element generates just one of these — click, for **buttons and axes**. Labels, text
+boxes and number boxes get none, because they are usually read rather than reacted to. Add any of
+these by hand whenever you want them.
 
 ### The `event` argument
 
@@ -134,7 +139,7 @@ none. Add the others by hand when you want them.
 | `event.kind` | `"clicked"`, `"hover"`, `"motion"` or `"key"` |
 | `event.tag` | Which element |
 | `event.button` | `"left"`, `"middle"` or `"right"` |
-| `event.x`, `event.y` | **Data coordinates** on a plot area; `None` elsewhere |
+| `event.x`, `event.y` | **Data coordinates** on an axes; `None` elsewhere |
 | `event.key` | The key, on key events |
 | `event.double` | Whether a click was a double click |
 
@@ -166,10 +171,10 @@ already know works, and any library that takes an `ax=` argument accepts it:
 
 ```python
 def on_startup(ev):
-    ev.spectrum.plot(x, y, label="raw")
-    ev.spectrum.set_xlabel("wavelength (nm)")
-    ev.spectrum.legend()
-    ev.spectrum.set_ylim(0, 1)
+    ev.ax_0.plot(x, y, label="raw")
+    ev.ax_0.set_xlabel("wavelength (nm)")
+    ev.ax_0.legend()
+    ev.ax_0.set_ylim(0, 1)
 ```
 
 You never call `plt.show()` or `draw()` — iterlab repaints whatever your handler drew. Pan and zoom
@@ -184,9 +189,6 @@ work from the toolbar with no code at all.
 isinstance(ev.ax_0, matplotlib.axes.Axes)   # True
 seaborn.histplot(data, ax=ev.ax_0)          # works, because it really is one
 ```
-
-New axes are tagged `ax_0`, `ax_1`, and so on — `ax` because that is what the variable is called in
-everyone's matplotlib code already. Rename them in the editor like any other element.
 
 Colours, fonts and borders are matplotlib's job here, so the editor offers only **Visible** for an
 axes. Style the plot itself through matplotlib.
@@ -274,8 +276,9 @@ want it clickable, write `on_clicked_<tag>` yourself and it will be wired.
 
 ## Styling
 
-Buttons and labels carry these. Set them **in the editor** for how the interface starts, and
-**in code** to change them while it runs.
+Buttons, labels, text boxes and number boxes all carry these. Set them **in the editor** for how the
+interface starts, and **in code** to change them while it runs. (An axes carries only `visible`;
+matplotlib owns the rest of how a plot looks.)
 
 | Property | Values | Example |
 |---|---|---|
@@ -302,24 +305,25 @@ if not ev.go.enabled:
 
 **The editor sets the starting appearance. Code overrides it for the session.**
 
-Assigning a style in code changes the live element and is **never written back to `demo.yaml`**.
-Close and reopen, and you are back to what the editor says. That is deliberate: your layout file
-stays a description of the interface, not a log of what happened to it.
+Assigning a style in code changes the live element and is **never written back to `demo.yaml`**. It
+survives mode switches, because that is the same session — but close the window, or press **Hard
+reset**, and you are back to what the editor says. That is deliberate: your layout file stays a
+description of the interface, not a log of what happened to it.
 
 The reverse is also true — moving an element in the editor never touches `demo.py`.
 
 ### In the editor
 
 Select an element and use **PROPERTIES**. It shows the essentials — the **tag**, and the **text** for
-a button or label. Everything else is behind **More**, which opens a drawer with position and size,
-colour, font and state.
+anything that shows text. Everything else is behind **More**, which opens a drawer with position and
+size, colour, font and state.
 
 The drawer stays open once you open it, so adjusting colours across several elements does not mean
 reopening it each time.
 
 - **COLOUR** — type a hex value, or click the swatch for a colour picker.
 - **FONT** — family dropdown, size, bold, italic, alignment.
-- **STATE** — visible, and enabled for buttons.
+- **STATE** — visible, and enabled for anything a person can interact with.
 
 The canvas previews your choices, so you can judge them without switching modes.
 
@@ -422,7 +426,7 @@ def on_startup(ev):
     ev.conn = open_connection()     # NOT safe unless it closes the old one
 ```
 
-The idiom this guide teaches — assign onto `ev` — is safe. If yours accumulates, use **Restart
+The idiom this guide teaches — assign onto `ev` — is safe. If yours accumulates, use **Hard
 reset** instead. iterlab offers both rather than choosing for you, because only your code knows which
 it is.
 
@@ -488,10 +492,10 @@ Worth knowing before they surprise you.
 - **Five element types so far.** Checkboxes, radio buttons, dropdowns, lists and sliders are not
   built yet.
 - **Modules you import are assumed not to change** while the session runs. Editing a helper module
-  of your own has no effect until you press **Restart app**.
+  of your own has no effect until you press **Hard reset**.
 - **Editing `demo.yaml` by hand** is possible but not the intended path; the editor is.
 
 ---
 
-**Guide version 0.20.1.** Everything above is verified against that release. If a description here
+**Guide version 0.20.2.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

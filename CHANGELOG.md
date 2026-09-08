@@ -6,6 +6,39 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.20.2] — unreleased
+
+### Documentation
+
+- **The logo now heads `README.md` and `GUIDE.md`**, from `docs/logo.png`.
+
+- **Both documents brought back in line with the code.** Everything below was
+  wrong, not merely dated:
+
+  - `README.md` said `pip install iterlab`. It is not on PyPI, and the guide
+    said so two paragraphs later in a different file. Now both give the
+    repository install.
+  - `README.md` claimed "two element types" with "text boxes, labels ... next".
+    There are five, and text boxes and labels are two of them.
+  - `GUIDE.md` told the reader to draw `ax_0` and `cmd_0` and then showed an
+    example using `ev.spectrum` and `on_clicked_run_fit` — tags it had never
+    asked anyone to create. The worked example now uses the tags it just named,
+    and says renaming is available.
+  - Two leftovers from a careless find-and-replace: "use **Restart reset**" and
+    "press **Restart app**", for a button now called **Hard reset**.
+  - "Buttons and labels carry these" under Styling, written before boxes
+    existed and never revisited.
+  - Stubs were described as generated for "buttons and plot areas", with
+    "plot areas" long since renamed and boxes never mentioned.
+  - The styling note said code-set style is lost when you "close and reopen".
+    True, but it now survives a mode switch, which is the case a researcher
+    actually meets.
+
+- Every code example in the guide was executed against this build — startup,
+  the click handler, all eleven style properties, `.text` on each type, and
+  `.value` on a number box — rather than read over. No fault was raised by any
+  of them.
+
 ## [0.20.1] — unreleased
 
 ### Fixed

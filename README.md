@@ -1,7 +1,8 @@
-# iterlab
+<h1><img src="docs/logo.png" alt="" width="40" height="40"> iterlab</h1>
+
 
 You are a **scientist**, not a software developer, **focus on what matters to you!**
-Science and research are iterative processes and they require a lot of graphs, plots and inputs, data processing and algorithms. Iterlab is the tool that lets you focus on your work, not on the visualization and GUI code - those are made for you seamlessly. 
+Science and research are iterative processes and they require a lot of graphs, plots and inputs, data processing and algorithm revisions. IterLab is the tool that lets you focus on your work, not on the visualization and GUI code - those are made for you seamlessly. 
 
 
 ## What this means in practice
@@ -14,17 +15,22 @@ Science and research are iterative processes and they require a lot of graphs, p
 
 ## Usage
 
+iterlab is not on PyPI yet, so install it from the repository:
+
 ```console
-pip install iterlab
+git clone https://github.com/alonhzn/iterlab.git
+cd iterlab
+pip install -e .
+
 iterlab demo
 ```
 
 One command. A new interface opens in **editor mode**: a blank canvas, a palette of element types, and
-a properties panel. Drag out a plot area and a button, name them, then click the toggle in the
-top-left corner to switch to **GUI mode** and use what you drew.
+a properties panel. Drag out an axes and a button, tag them, then click the toggle in the top-left
+corner to switch to **GUI mode** and use what you drew.
 
-`demo.py` is yours. iterlab appends one handler stub per element and never touches anything else:
-- assume we have a Matplotlib axes with the tag `spectrum`
+`demo.py` is yours. iterlab appends a handler stub for the elements that need one, and never touches
+anything else. Assume an axes tagged `spectrum` and a button tagged `run_fit`:
 
 ```python
 import numpy as np
@@ -42,9 +48,10 @@ Edit that file **while the window is open**, click the button, and the new code 
 `ev.x` is never reloaded. Make a typo and the session survives, tells you what broke, and lets you fix
 it and carry on.
 
-`ev` is yours to fill: anything you assign to it lives for the session. Each element is reachable on it
-under the name you gave it in the designer, and a plot area *is* a matplotlib `Axes`, so you use the
-API you already know.
+`ev` is yours to fill: anything you assign to it lives for the session. Each element is reachable on
+it under the tag you gave it in the designer, and an axes **is** a matplotlib `Axes` — not a wrapper
+around one — so every call you already know works, and any library taking an `ax=` argument accepts
+it.
 
 **On Linux**, tkinter is packaged separately: `apt install python3-tk` or `dnf install python3-tkinter`.
 
@@ -53,21 +60,13 @@ code API for every element.
 
 ## Status
 
-Early, and honest about it. Feature 001 — the end-to-end loop — is implemented and tested, with two
-element types. Text boxes, labels, radio buttons, dropdowns, lists and sliders are next.
-
-Known limits, all recorded rather than hidden: switching modes ends the session, so a layout edit costs
-a data reload; long computations block the window; and data loaded at module level rather than inside
-`on_startup` reloads on every edit.
-
-The project was specified before it was built — see
-[`.specify/memory/constitution.md`](.specify/memory/constitution.md) for the principles that govern it,
-each traceable to a documented failure of an earlier prototype.
+Early, and honest about it. The end-to-end loop is implemented and tested, with five element types:
+**axes, button, label, text box, number box**. Checkboxes, radio buttons, dropdowns, lists and
+sliders are next.
 
 ## Built on
 
 Tk and matplotlib, both used deliberately: Tk for every control, matplotlib for plots only.
-Minimal dependencies is a constraint, not an aspiration.
 
 ## License
 
