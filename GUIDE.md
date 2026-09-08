@@ -383,6 +383,12 @@ Almost nothing. For completeness:
 them, and `on_startup` does not run again. Draw a new button, come back, and the session you were
 in the middle of is still there.
 
+That includes what your elements are *showing*: text somebody typed into a box, a caption or colour
+your code set. Those survive the switch too, so nudging a button never costs you a retyped filename.
+
+The one exception is deliberate — if you **edit** a property in the editor, your edit wins. Change a
+button's caption there and the old one does not come back.
+
 ### When you edit `on_startup`
 
 Every other handler takes effect on your next click, because your next click is what runs it.
@@ -487,5 +493,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 0.20.0.** Everything above is verified against that release. If a description here
+**Guide version 0.20.1.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

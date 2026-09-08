@@ -78,6 +78,9 @@ def test_iterlab_additions_do_not_shadow_matplotlib(gui):
     intended = {
         "name", "tag", "element", "widget", "canvas", "visible",
         "disconnect", "STYLE_PROPERTIES", "__doc__", "__module__",
+        # The element-handle contract every type implements, so that a mode
+        # switch can put back what the running interface changed.
+        "_presentation", "_restore",
     }
     unexpected = {n for n in ours if not n.startswith("_iterlab_") and n not in intended}
     assert not unexpected, f"unprefixed names added to the Axes subclass: {unexpected}"

@@ -75,6 +75,8 @@ is *there*; only a person can see that the window still looks like the session t
 | 29 | Open **More**, select a different element | The drawer is still open | Asserted, but worth feeling: this is the difference between the drawer helping and annoying |
 | 30 | Drag an element slowly across the canvas | Movement is smooth, not visibly stepped, despite positions snapping to hundredths | One part in a hundred should be below the threshold of notice. If stepping is visible, the grid is too coarse |
 | 31 | **[!]** Open an interface and look at the title bar and taskbar | The iterlab mark is there, and is the mark - not a blank square or a generic placeholder | Tk reports success for an icon that renders as an empty grey box. Only a person looking at the title bar can tell the difference, which is how this shipped broken once |
+| 32 | **[!]** Type into a text box, click a button that changes a label, then toggle to the editor and back | Everything is exactly as you left it - the typed text, the changed label, any colour your code set | Asserted now, but this shipped broken and was found by hand. Worth confirming it *feels* like the same session rather than a reset one |
+| 33 | Change a button's caption in the editor, then return to GUI mode | The new caption is there, not the one the code had set | The rule that makes item 32 safe: an explicit edit beats a remembered value |
 
 ### Being told things
 

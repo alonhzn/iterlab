@@ -32,6 +32,9 @@ class Session:
         #: edit to it can be noticed and offered rather than silently ignored.
         self.startup_fingerprint = None
         self._figures = {}
+        #: How each element looked when its widgets were last destroyed, so a
+        #: mode switch does not undo what the running interface did.
+        self._presentation = {}
 
     # -- plot figures ----------------------------------------------------
 
@@ -55,6 +58,40 @@ class Session:
     def has_figure(self, tag) -> bool:
         return tag in self._figures
 
+    # -- what the running interface changed ------------------------------
+
+    def remember(self, tag, element, state) -> None:
+        """Keep how an element looked, alongside what the layout said at the time.
+
+        Both halves are needed. The state is what to put back; the layout values
+        are what makes it possible to tell later whether the researcher has
+        since changed their mind in the editor.
+        """
+        self._presentation[tag] = {
+            "state": dict(state),
+            "label": element.label,
+            "style": element.style,
+        }
+
+    def presentation_for(self, tag, element) -> dict:
+        """What to reapply to a freshly built widget for `tag`.
+
+        Anything the researcher has edited in the editor since is dropped: an
+        explicit change to the layout is a decision, and it must win over a
+        value the interface happened to be holding. Editing a button's caption
+        and having the old one come straight back would be its own bug report.
+        """
+        remembered = self._presentation.get(tag)
+        if remembered is None:
+            return {}
+        state = dict(remembered["state"])
+        if element.label != remembered["label"]:
+            state.pop("text", None)
+        if element.style != remembered["style"]:
+            state.pop("style", None)
+            state.pop("visible", None)
+        return state
+
     # -- reconciling with a changed layout -------------------------------
 
     def retag(self, old, new) -> None:
@@ -65,17 +102,20 @@ class Session:
         """
         if old in self._figures:
             self._figures[new] = self._figures.pop(old)
+        if old in self._presentation:
+            self._presentation[new] = self._presentation.pop(old)
         self.ev._rename_element(old, new)
 
     def forget(self, tags) -> None:
         """Drop everything belonging to elements that no longer exist."""
         for tag in list(tags):
             self._figures.pop(tag, None)
+            self._presentation.pop(tag, None)
         self.ev._unbind_elements(tags)
 
     def reconcile(self, live_tags) -> None:
         """Discard state for elements deleted since the last visit."""
-        known = set(self._figures) | set(self.ev._element_tags)
+        known = set(self._figures) | set(self._presentation) | set(self.ev._element_tags)
         self.forget(known - set(live_tags))
 
     # -- lifecycle -------------------------------------------------------
@@ -91,3 +131,4 @@ class Session:
         self.startup_done = False
         self.startup_fingerprint = None
         self._figures.clear()
+        self._presentation.clear()

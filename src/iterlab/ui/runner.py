@@ -65,6 +65,16 @@ class Runner:
         Element handles point at widgets that are about to be destroyed, so they
         are unbound; the researcher's own data on `ev` is untouched.
         """
+        # Capture how each element looks before its widgets go, so the rebuild
+        # can put it back. Without this a mode switch silently reverts anything
+        # the running interface did - text typed into a box, a colour a handler
+        # chose - to whatever the layout file happens to say.
+        for tag, handle in self.handles.items():
+            element = self.layout.elements.get(tag)
+            capture = getattr(handle, "_presentation", None)
+            if element is not None and capture is not None:
+                self.session.remember(tag, element, capture())
+
         for handle in self.handles.values():
             disconnect = getattr(handle, "disconnect", None)
             if disconnect is not None:
@@ -92,6 +102,10 @@ class Runner:
             handle = element_factory.build(
                 self.frame, element, self.dispatcher, figure=figure
             )
+            state = self.session.presentation_for(element.tag, element)
+            restore = getattr(handle, "_restore", None)
+            if state and restore is not None:
+                restore(state)
             self.handles[element.tag] = handle
             self.ev._bind_element(element.tag, handle)
 

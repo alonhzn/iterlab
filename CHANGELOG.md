@@ -6,6 +6,36 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.20.1] — unreleased
+
+### Fixed
+
+- **A mode switch reset every element to its layout value.** Text typed into a
+  box, and a caption, colour or enabled-state set from code, all reverted on the
+  way back from the editor. Reported as "gui objects get reset when going to
+  editor".
+
+  The session introduced in 0.12.0 kept `ev` and the contents of each plot, but
+  not the widgets' own state — and a switch destroys every widget and builds new
+  ones from the layout file, so anything the *running* interface had done was
+  lost. The layout is where an element starts, not where it currently is.
+
+  Each handle can now report its presentation and have it restored; the session
+  holds it across the switch. Programmatic style was reverting too, which was
+  not in the report but is the same defect.
+
+  **An edit in the editor still wins.** The remembered value is recorded
+  alongside the layout value it was based on, so if the researcher has since
+  changed the caption or the colour themselves, the remembered one is dropped —
+  editing a button's caption and having the old one come straight back would be
+  its own bug report. Position is not presentation, so moving an element does
+  not discard what it was showing.
+
+  A **hard reset** still clears everything, which is the difference between
+  restarting and toggling.
+
+  14 tests; 10 of them fail against the unfixed code.
+
 ## [0.20.0] — unreleased
 
 ### Added

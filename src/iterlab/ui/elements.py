@@ -136,6 +136,23 @@ class ElementHandle:
             return
         object.__setattr__(self, name, value)
 
+    # -- surviving a rebuild ---------------------------------------------
+
+    def _presentation(self) -> dict:
+        """What this element looks like *now*, as opposed to in the layout file.
+
+        A mode switch destroys every widget and builds new ones from the layout,
+        so without this, anything set while the interface was running is lost:
+        a colour a handler chose, or text somebody typed. The layout is where an
+        element *starts*; this is where it currently is.
+        """
+        return {"style": self.__dict__["_style"]}
+
+    def _restore(self, state) -> None:
+        if "style" in state:
+            self.__dict__["_style"] = state["style"]
+        self._apply()
+
 
 class _TextHandle(ElementHandle):
     """Shared by the element types that render text.
@@ -153,6 +170,16 @@ class _TextHandle(ElementHandle):
         if name in STYLE_PROPERTY_NAMES:
             return getattr(self.__dict__["_style"], name)
         raise AttributeError(name)
+
+    def _presentation(self) -> dict:
+        state = super()._presentation()
+        state["text"] = self.text
+        return state
+
+    def _restore(self, state) -> None:
+        super()._restore(state)
+        if "text" in state:
+            self.text = state["text"]
 
 
 class _CaptionHandle(_TextHandle):
@@ -295,6 +322,15 @@ class AxesHandle(Axes):
             place(frame, element.position)
         else:
             frame.place_forget()
+
+    def _presentation(self) -> dict:
+        # matplotlib owns everything else about an axes, and the figure itself
+        # already survives a rebuild - only whether the element is shown is ours.
+        return {"visible": self._iterlab_visible}
+
+    def _restore(self, state) -> None:
+        if "visible" in state:
+            self.visible = state["visible"]
 
     def disconnect(self):
         """Drop this canvas's event connections.
