@@ -6,6 +6,16 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [0.11.1] — unreleased
+
+### Fixed
+
+- A UI test asserted real OS focus, which the window manager can withhold and
+  which other tests disturb by mapping and unmapping the shared Tk root. It
+  passed alone and failed in the full suite. Now asks Tk which widget is last
+  focused *for that toplevel*, which is the same question without depending on
+  the desktop.
+
 ## [0.11.0] — unreleased
 
 ### Added
