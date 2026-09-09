@@ -36,10 +36,12 @@ DANGER_SOFT = "#fdecef"
 ELEMENT_FILL = {
     "axes": "#dbeafe", "button": "#e9e3fb", "label": "#e7f2e9",
     "text_box": "#fdf0e3", "number_box": "#fce9ee",
+    "file_select": "#e6f0ea", "folder_select": "#fdf6de",
 }
 ELEMENT_EDGE = {
     "axes": "#7ba7f0", "button": "#a48fe0", "label": "#84b795",
     "text_box": "#e0a86a", "number_box": "#d98aa3",
+    "file_select": "#79b394", "folder_select": "#ddc164",
 }
 
 FONT = ("Segoe UI", 9)
@@ -190,12 +192,38 @@ def _number_box_icon(canvas, size, colour):
     )
 
 
+def _file_select_icon(canvas, size, colour):
+    """A page with a turned corner."""
+    left, right = size * 0.28, size * 0.72
+    top, bottom = size * 0.20, size * 0.80
+    fold = size * 0.16
+    canvas.create_polygon(
+        left, top, right - fold, top, right, top + fold, right, bottom, left, bottom,
+        outline=colour, fill="", width=2,
+    )
+    canvas.create_line(right - fold, top, right - fold, top + fold, fill=colour, width=2)
+    canvas.create_line(right - fold, top + fold, right, top + fold, fill=colour, width=2)
+
+
+def _folder_select_icon(canvas, size, colour):
+    """A folder with a tab."""
+    left, right = size * 0.18, size * 0.82
+    top, bottom = size * 0.30, size * 0.74
+    canvas.create_line(left, top, size * 0.42, top, fill=colour, width=2)
+    canvas.create_line(size * 0.42, top, size * 0.50, top + size * 0.09, fill=colour, width=2)
+    canvas.create_rectangle(
+        left, top + size * 0.09, right, bottom, outline=colour, width=2
+    )
+
+
 ICONS = {
     "axes": _axes_icon,
     "button": _button_icon,
     "label": _label_icon,
     "text_box": _text_box_icon,
     "number_box": _number_box_icon,
+    "file_select": _file_select_icon,
+    "folder_select": _folder_select_icon,
 }
 
 

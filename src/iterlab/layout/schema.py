@@ -13,20 +13,33 @@ from ..errors import NameInUse, NameInvalid
 
 #: Written into every layout file. Bumped only when the format changes in a way
 #: an older build could not read (contracts/layout-schema.md).
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 #: Element types this build knows. A closed set: an unknown type in a file of a
 #: recognized schema version is a defect, not something to skip over.
-ELEMENT_TYPES = ("axes", "button", "label", "text_box", "number_box")
+ELEMENT_TYPES = (
+    "axes", "button", "label", "text_box", "number_box",
+    "file_select", "folder_select",
+)
 
 #: Types that display text. One field, `label`, holds it for all of them: a
 #: button's caption, a label's text, and the contents of a box. They are the
 #: same idea — the string the element shows — and in code they are all reached
 #: as `.text`.
-TEXT_TYPES = ("button", "label", "text_box", "number_box")
+TEXT_TYPES = (
+    "button", "label", "text_box", "number_box",
+    "file_select", "folder_select",
+)
 
 #: Types that take typed input rather than only displaying text.
 INPUT_TYPES = ("text_box", "number_box")
+
+#: Types that open an operating-system dialog and remember what was chosen.
+SELECT_TYPES = ("file_select", "folder_select")
+
+#: Types carrying the `extensions` filter. Only the file selector: filtering a
+#: folder chooser by file type would mean nothing.
+EXTENSION_TYPES = ("file_select",)
 
 #: Interactions available on every element type. Universal, not per-type
 #: (FR-017a); what varies per type is which single stub is generated.
@@ -48,6 +61,11 @@ DEFAULT_INTERACTION = {
     "label": None,
     "text_box": None,
     "number_box": None,
+    # A selector's stub fires *after* a choice is made, so the generated code
+    # can show the path straight away - which is also where the researcher
+    # finds out the attribute is called `.path`.
+    "file_select": "clicked",
+    "folder_select": "clicked",
 }
 
 #: Prefix used when auto-suggesting a tag in the designer.
@@ -62,7 +80,15 @@ TAG_PREFIX = {
     "label": "lbl",
     "text_box": "edt",
     "number_box": "val",
+    "file_select": "fileselect",
+    "folder_select": "folderselect",
 }
+
+#: Types whose first element takes the bare prefix — `fileselect`, not
+#: `fileselect_0`. An interface almost always has exactly one of these, and a
+#: number on the only one of something is noise the researcher then types into
+#: every handler. A second one becomes `fileselect_1`.
+BARE_FIRST_TAG = SELECT_TYPES
 
 #: What an element says before anyone has typed anything into it.
 #:
@@ -76,6 +102,8 @@ DEFAULT_TEXT = {
     "label": "Information:",
     "text_box": "",
     "number_box": "0",
+    "file_select": "Select a File",
+    "folder_select": "Select a Folder",
 }
 
 
@@ -96,6 +124,9 @@ DEFAULT_SIZE = {
     "label": (0.10, 0.03),
     "text_box": (0.14, 0.04),
     "number_box": (0.07, 0.04),
+    # Wider than a plain button: their captions are longer than "Click here!".
+    "file_select": (0.12, 0.04),
+    "folder_select": (0.13, 0.04),
 }
 
 #: Style properties, and which element types carry them.
@@ -127,7 +158,29 @@ BASIC_PROPERTIES = {
     "label": ("label",),
     "text_box": ("label",),
     "number_box": ("label",),
+    # `extensions` is basic in the same sense a slider's range would be: a file
+    # selector that shows every file on the disk is not yet the element the
+    # researcher meant to draw.
+    "file_select": ("label", "extensions"),
+    "folder_select": ("label",),
 }
+
+
+def parse_extensions(raw):
+    """"txt, .CSV , jpeg" -> ("txt", "csv", "jpeg"). Empty means every file.
+
+    Deliberately forgiving about how they are written: a leading dot, upper
+    case and stray spaces are all things a person types, and none of them is a
+    mistake worth refusing. Order is kept, duplicates are not.
+    """
+    if not raw:
+        return ()
+    seen = []
+    for piece in str(raw).replace(";", ",").split(","):
+        cleaned = piece.strip().lstrip("*").lstrip(".").strip().lower()
+        if cleaned and cleaned not in seen:
+            seen.append(cleaned)
+    return tuple(seen)
 
 
 def basic_properties(element_type):
@@ -318,6 +371,10 @@ class Element:
     position: Rect
     label: str = ""
     style: Style = field(default_factory=Style)
+    #: Comma-separated file extensions a file selector will offer, e.g.
+    #: "txt, csv". Empty means every file. Meaningless on any other type, and
+    #: rejected there rather than silently ignored.
+    extensions: str = ""
 
     def __post_init__(self):
         if self.type not in ELEMENT_TYPES:
@@ -326,6 +383,8 @@ class Element:
             )
         if self.type not in TEXT_TYPES and self.label:
             raise ValueError(f"{self.type} elements do not display text")
+        if self.type not in EXTENSION_TYPES and self.extensions:
+            raise ValueError(f"{self.type} elements do not filter by extension")
 
     @property
     def default_interaction(self):
@@ -335,6 +394,10 @@ class Element:
     @property
     def displays_text(self) -> bool:
         return self.type in TEXT_TYPES
+
+    @property
+    def filters_files(self) -> bool:
+        return self.type in EXTENSION_TYPES
 
     def handler_name(self, interaction: str) -> str:
         if interaction not in INTERACTIONS:
@@ -410,9 +473,29 @@ class Layout:
             for t, e in self.elements.items()
         }
 
+    def set_extensions(self, tag: str, extensions: str) -> None:
+        """Set which file types a file selector offers."""
+        element = self.elements[tag]
+        self.elements[tag] = replace(element, extensions=str(extensions or "").strip())
+
     def next_tag(self, element_type: str) -> str:
-        """The tag offered when an element is created (FR-005a)."""
+        """The tag offered when an element is created (FR-005a).
+
+        Most types number from zero: `cmd_0`, `cmd_1`. A few take the bare
+        prefix first, because an interface almost always has exactly one of
+        them and `fileselect` reads better than `fileselect_0` in every handler
+        that mentions it. The second one is `fileselect_1`, not `_0`, since the
+        bare name is already taken.
+        """
         prefix = TAG_PREFIX[element_type]
+        if element_type in BARE_FIRST_TAG:
+            if prefix not in self.elements:
+                return prefix
+            index = 1
+            while f"{prefix}_{index}" in self.elements:
+                index += 1
+            return f"{prefix}_{index}"
+
         index = 0
         while f"{prefix}_{index}" in self.elements:
             index += 1

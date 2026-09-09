@@ -154,9 +154,11 @@ these by hand whenever you want them.
 
 ## Elements
 
-Five types so far. Each is drawn in the editor and reached in code as `ev.<tag>`.
+Seven types so far. Each is drawn in the editor and reached in code as `ev.<tag>`.
 
 New elements are tagged by type — `ax_0`, `cmd_0`, `lbl_0`, `edt_0`, `val_0` — and numbered upward.
+The two selectors are the exception: the first is just `fileselect` and `folderselect`, with no
+number, because an interface almost always has one of each. A second becomes `fileselect_1`.
 Rename any of them in the editor.
 
 **Every element that shows text has `.text`**, whatever kind it is. You never have to remember
@@ -275,6 +277,64 @@ def on_clicked_run_fit(ev, event):
 
 A label gets no generated handler, because a label is usually read rather than clicked. If you do
 want it clickable, write `on_clicked_<tag>` yourself and it will be wired.
+
+### File select
+
+A button that opens your operating system's own file chooser — the one you already know, with your
+places and network drives in it.
+
+```python
+def on_clicked_fileselect(ev, event):
+    ev.lbl_0.text = ev.fileselect.path
+    ev.data = np.loadtxt(ev.fileselect.path)
+```
+
+| In code | |
+|---|---|
+| `ev.fileselect.path` | the chosen file, or `""` if there isn't a usable one |
+| `ev.fileselect.extensions` | which file types the chooser offers, e.g. `"txt, csv"` |
+| `ev.fileselect.text` | the button's caption, like any button |
+| every style property below | |
+
+**It remembers.** The last choice comes back next time you open the interface — after a hard reset,
+and after closing the program entirely. Nothing is written into your project folder; the memory
+lives in your own user directory (`%LOCALAPPDATA%\iterlab` on Windows,
+`~/Library/Application Support/iterlab` on macOS, `~/.local/state/iterlab` on Linux), keyed by where
+the interface is. Move or copy the project and it simply starts fresh.
+
+**The caption never changes.** The button still says "Select a File" after a choice — showing the
+selection is one line in your handler, which is why the generated stub shows it. That keeps how your
+interface looks something you decide rather than something that changes under you.
+
+**`.path` is `""` when the file has gone.** Not just before the first choice: if what you picked was
+deleted or moved, `.path` is empty rather than a path that no longer resolves. So `if
+ev.fileselect.path:` is always the right check. The chooser still opens where the file used to be.
+
+**Filtering by type.** Set **Types** in the editor, or `ev.fileselect.extensions` in code, to a
+comma-separated list: `txt, jpeg, png, csv`. Leading dots, capitals and stray spaces are all fine
+(`.TXT` works). Blank shows every file. "All files" is always offered as well, so a filter can never
+trap you when the one file you need was saved with the wrong suffix.
+
+### Folder select
+
+The same, for a directory.
+
+```python
+def on_clicked_folderselect(ev, event):
+    ev.out_dir = ev.folderselect.path
+```
+
+| In code | |
+|---|---|
+| `ev.folderselect.path` | the chosen folder, or `""` |
+| `ev.folderselect.text` | the caption |
+| every style property below | |
+
+It remembers and falls back exactly as the file selector does, and has no **Types** — filtering a
+folder chooser by file type would mean nothing.
+
+Both fire `on_clicked_<tag>` **after** a choice, so `.path` is already set when your code runs.
+Cancelling the dialog does nothing at all: no handler, no change.
 
 ---
 
@@ -493,7 +553,7 @@ Worth knowing before they surprise you.
 
 - **A long computation freezes the window.** Handlers run to completion before the interface
   repaints. Splitting slow work across clicks is the workaround for now.
-- **Five element types so far.** Checkboxes, radio buttons, dropdowns, lists and sliders are not
+- **Seven element types so far.** Checkboxes, radio buttons, dropdowns, lists and sliders are not
   built yet.
 - **Modules you import are assumed not to change** while the session runs. Editing a helper module
   of your own has no effect until you press **Hard reset**.
@@ -501,5 +561,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 1.0.0.** Everything above is verified against that release. If a description here
+**Guide version 1.1.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

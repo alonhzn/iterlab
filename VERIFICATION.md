@@ -77,6 +77,11 @@ is *there*; only a person can see that the window still looks like the session t
 | 31 | **[!]** Open an interface and look at the title bar and taskbar | The iterlab mark is there, and is the mark - not a blank square or a generic placeholder | Tk reports success for an icon that renders as an empty grey box. Only a person looking at the title bar can tell the difference, which is how this shipped broken once |
 | 32 | **[!]** Type into a text box, click a button that changes a label, then toggle to the editor and back | Everything is exactly as you left it - the typed text, the changed label, any colour your code set | Asserted now, but this shipped broken and was found by hand. Worth confirming it *feels* like the same session rather than a reset one |
 | 33 | Change a button's caption in the editor, then return to GUI mode | The new caption is there, not the one the code had set | The rule that makes item 32 safe: an explicit edit beats a remembered value |
+| 34 | **[!]** Draw a file selector and click it | Your operating system's real file chooser opens, looks native, and is not behind the window | Every automated test replaces this dialog, because a suite that waits for a human is not a gate. Nothing but a person has ever seen the real one open |
+| 35 | **[!]** Set **Types** to `txt, csv`, then open the chooser | Only those files are offered, and "All files" is still available in the dropdown | The filter reaching Tk is asserted; whether the OS honours it, and whether the escape hatch is findable, is not |
+| 36 | **[!]** Pick a file, close iterlab completely, reopen and click the selector | It opens where you left off, and `ev.fileselect.path` already holds the choice | The point of storing it outside the process. Asserted against a fake dialog; worth seeing survive a genuine restart |
+| 37 | Pick a file, delete it outside iterlab, then look at the interface | `.path` reads as empty and the chooser opens in the folder it was in | The fallback only matters when it happens to a real file on a real disk |
+| 38 | Move the whole project folder somewhere else and open it | The remembered selection is gone and it behaves like a first run - no error, no stale path | A documented consequence of keeping the memory out of the project. Worth confirming it is uneventful rather than confusing |
 
 ### Being told things
 

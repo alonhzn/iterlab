@@ -484,7 +484,7 @@ class Designer:
     # -- property edits --------------------------------------------------
 
     def apply_properties(self, current_tag, tag=None, position=None, label=None,
-                         style=None):
+                         style=None, extensions=None):
         """Apply typed values. A rename rewrites the code file first (R14)."""
         self.layout.elements[current_tag]  # KeyError if it vanished
 
@@ -507,6 +507,8 @@ class Designer:
             self.layout.relabel(current_tag, label)
         if style:
             self.layout.restyle(current_tag, **style)
+        if extensions is not None and self.layout.elements[current_tag].filters_files:
+            self.layout.set_extensions(current_tag, extensions)
 
         self.interface.save_layout()
         self.select(current_tag)

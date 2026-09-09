@@ -47,9 +47,51 @@ def on_clicked_{tag}(ev, event):
     print(f"{tag} clicked with the {{event.button}} button at ({{event.x}}, {{event.y}})")
 '''
 
-#: No entry for `label`: it displays text and is set from code, so a generated
-#: click handler would just be dead weight in the researcher's file.
-_STUBS = {"button": _BUTTON_STUB, "axes": _AXES_STUB}
+_FILE_SELECT_STUB = '''
+
+def on_clicked_{tag}(ev, event):
+    # Runs after a file is chosen. Cancelling the dialog calls nothing and
+    # changes nothing.
+    #
+    # The chosen path is a string on the element, and is still there next time
+    # you open this interface - even after a hard reset:
+    #
+    #     ev.lbl_0.text = ev.{tag}.path       # show it in a label
+    #     ev.data = np.loadtxt(ev.{tag}.path) # or just open it
+    #
+    # It is "" when nothing has been chosen yet, so `if ev.{tag}.path:` is safe.
+    # Delete this function if you don't need it - nothing will break.
+    print(f"{tag}: {{ev.{tag}.path}}")
+'''
+
+_FOLDER_SELECT_STUB = '''
+
+def on_clicked_{tag}(ev, event):
+    # Runs after a folder is chosen. Cancelling the dialog calls nothing and
+    # changes nothing.
+    #
+    # The chosen folder is a string on the element, and is still there next time
+    # you open this interface - even after a hard reset:
+    #
+    #     ev.lbl_0.text = ev.{tag}.path   # show it in a label
+    #     ev.out_dir = ev.{tag}.path      # remember where to save results
+    #
+    #     from pathlib import Path
+    #     ev.files = sorted(Path(ev.{tag}.path).glob("*.csv"))
+    #
+    # It is "" when nothing has been chosen yet, so `if ev.{tag}.path:` is safe.
+    # Delete this function if you don't need it - nothing will break.
+    print(f"{tag}: {{ev.{tag}.path}}")
+'''
+
+#: No entry for `label`, `text_box` or `number_box`: they are read when
+#: something else happens, so a generated click handler would be dead weight.
+_STUBS = {
+    "button": _BUTTON_STUB,
+    "axes": _AXES_STUB,
+    "file_select": _FILE_SELECT_STUB,
+    "folder_select": _FOLDER_SELECT_STUB,
+}
 
 
 def starter_file(name: str) -> str:

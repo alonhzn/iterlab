@@ -6,6 +6,64 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.1.0] — 2026-09-09
+
+### Added
+
+- **Two new element types: `file_select` and `folder_select`.** Each is a button
+  that opens the operating system's own chooser — the one a researcher already
+  knows, with their places and network drives in it.
+
+  The first of each takes the bare tag, `fileselect` and `folderselect`, with no
+  `_0`: an interface almost always has exactly one, and a number on the only one
+  of something is noise that then appears in every handler mentioning it. A
+  second becomes `fileselect_1`.
+
+  `.path` is the choice. It is `""` before anything is picked **and** when what
+  was picked has since been deleted or moved — a path that no longer resolves is
+  worse than none, because `if ev.fileselect.path:` would pass and the open
+  would fail on something that looks perfectly valid. The chooser still reopens
+  where the file used to be, since a renamed file is usually still beside it.
+
+  The handler fires **after** a choice, so `.path` is set when researcher code
+  runs. Cancelling does nothing at all: no handler, no change.
+
+  The caption stays "Select a File"; showing the selection is one line in the
+  researcher's handler, and the generated stub shows it. How the interface looks
+  stays theirs to decide.
+
+- **`extensions` on the file selector**, in the editor as **Types** and in code
+  as `ev.fileselect.extensions`. Comma-separated, forgiving about `.TXT`,
+  `*.csv` and stray spaces, blank meaning every file. "All files" is always
+  offered alongside, because a filter nobody can escape is a trap the moment one
+  file was saved with the wrong suffix.
+
+- **Selections persist across a hard reset and across the process.** Stored in
+  the user's own state directory keyed by the interface's path, never in the
+  layout file: `demo.yaml` describes the interface, and writing a runtime choice
+  into it would make it a log of what happened and a spurious diff in everyone's
+  repository. The project folder stays the two files it has always been. The
+  accepted cost is that moving or copying a project starts fresh, which behaves
+  exactly like a first run.
+
+  Nothing there can raise on the researcher's account: a missing file, unreadable
+  JSON, a read-only profile all mean "nothing remembered", which is a state every
+  caller already handles because it is what a first run looks like.
+
+- `ui/dialogs.py`, one seam for the only modal dialogs iterlab opens. The test
+  suite's ban on `tkinter.filedialog` stays exactly as it was, so a path that
+  reaches a real chooser without being replaced fails loudly instead of hanging.
+  It also normalises Tk's mix of `""`, `()` and `None` for a cancelled dialog
+  into one shape.
+
+- `Event.path`, carrying what was just chosen.
+
+### Changed
+
+- **Layout schema 4 → 5**, no-op migration. Nothing in an existing file changes;
+  the version moves so a version-4 build refuses a file containing a type it has
+  never heard of rather than reporting it as a defect in the layout.
+
 ## [1.0.0] — 2026-09-08
 
 **First public release.** `pip install iterlab`.

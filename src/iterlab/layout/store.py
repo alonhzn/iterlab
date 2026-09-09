@@ -24,7 +24,7 @@ from .schema import (
     validate_tag,
 )
 
-_ELEMENT_KEYS = {"type", "position", "label", "style"}
+_ELEMENT_KEYS = {"type", "position", "label", "style", "extensions"}
 _TOP_KEYS = {"schema_version", "window", "elements"}
 _WINDOW_KEYS = {"width", "height"}
 
@@ -88,7 +88,23 @@ def _migrate_3_to_4(raw):
     return raw
 
 
-MIGRATIONS = {1: _migrate_1_to_2, 2: _migrate_2_to_3, 3: _migrate_3_to_4}
+def _migrate_4_to_5(raw):
+    """v5 added the `file_select` and `folder_select` types, and `extensions`.
+
+    Nothing in an existing file changes - no v4 element had either. As with
+    3 -> 4, the version moves so a v4 build refuses a file containing a type it
+    has never heard of, instead of reporting it as a defect in the layout.
+    """
+    raw["schema_version"] = 5
+    return raw
+
+
+MIGRATIONS = {
+    1: _migrate_1_to_2,
+    2: _migrate_2_to_3,
+    3: _migrate_3_to_4,
+    4: _migrate_4_to_5,
+}
 
 
 def _migrate(raw, version, path):
@@ -161,6 +177,7 @@ def load(path) -> Layout:
                 position=Rect.from_list(body.get("position")),
                 label=body.get("label", "") or "",
                 style=_read_style(body.get("style"), element_type),
+                extensions=body.get("extensions", "") or "",
             )
         except Exception as exc:
             raise LayoutInvalid(f"element {tag!r} is invalid: {exc}") from exc
@@ -194,6 +211,8 @@ def _serialize(layout: Layout) -> str:
         if element.displays_text:
             entry["label"] = element.label
         # Only what differs from the defaults, so a plain element stays terse.
+        if element.extensions:
+            entry["extensions"] = element.extensions
         style = element.style.non_defaults()
         if style:
             entry["style"] = style

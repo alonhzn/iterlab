@@ -45,6 +45,7 @@ LABELS = {
     "width": "Width",
     "height": "Height",
     "label": "Label",
+    "extensions": "Types",
 }
 
 
@@ -129,6 +130,9 @@ class PropertiesPanel:
             for prop in basic_properties(element.type):
                 if prop == "label":
                     self._row("label", element.label)
+                elif prop == "extensions":
+                    self._row("extensions", element.extensions)
+                    self._hint("Comma separated, e.g. txt, csv. Blank shows every file.")
 
             # Everything else lives behind the drawer. It is *built* either way,
             # so the values are always there to commit and nothing depends on
@@ -340,6 +344,13 @@ class PropertiesPanel:
             ).pack(side="left", padx=1)
         self._entries["align"] = var
 
+    def _hint(self, text):
+        """A line under a field, for a format that is not obvious from its name."""
+        tk.Label(
+            self._target, text=text, bg=theme.BG, fg=theme.TEXT_MUTED,
+            font=theme.FONT_SMALL, anchor="w", justify="left", wraplength=165,
+        ).pack(fill="x", pady=(0, 4))
+
     def _section(self, title):
         tk.Label(
             self._target, text=title, bg=theme.BG, fg=theme.TEXT_MUTED,
@@ -466,6 +477,9 @@ class PropertiesPanel:
                 return False
         if element.displays_text and raw.get("label", element.label) != element.label:
             return False
+        if element.filters_files:
+            if str(raw.get("extensions", element.extensions)).strip() != element.extensions:
+                return False
         try:
             changes = self._style_changes(element)
         except (TypeError, ValueError):
@@ -518,6 +532,7 @@ class PropertiesPanel:
                 position=rect,
                 label=raw.get("label"),
                 style=style_changes,
+                extensions=raw.get("extensions"),
             )
         except (IterlabError, ValueError) as exc:
             self._show_message(str(exc))

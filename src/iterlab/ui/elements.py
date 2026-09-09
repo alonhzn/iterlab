@@ -19,8 +19,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from matplotlib.projections import register_projection
 
+from ..layout.schema import SELECT_TYPES, parse_extensions
+from ..runtime import remembered
 from ..runtime.dispatch import Event
-from . import theme
+from . import dialogs, theme
 
 #: Fonts are fixed in points and never scaled, so text stays readable at every
 #: window size while geometry scales with it (FR-021b).
@@ -585,16 +587,180 @@ def build_number_box(parent, element, dispatcher):
     )
 
 
+class _SelectHandle(_CaptionHandle):
+    """A button that opens an OS chooser and remembers what was picked.
+
+    The caption is a caption, deliberately: it says "Select a File" before and
+    after, and never becomes the filename. Showing the choice is one line in the
+    researcher's own handler, and the generated stub shows it - which keeps the
+    element's appearance something they control rather than something that
+    changes under them.
+    """
+
+    #: Overridden per subclass: whether the thing chosen is a directory.
+    EXPECTS_DIR = False
+
+    def __init__(self, element, widget, interface_path):
+        super().__init__(element, widget)
+        self.__dict__["_interface_path"] = interface_path
+        remembered_paths = remembered.load(interface_path)
+        self.__dict__["_path"] = remembered_paths.get(element.tag, "")
+
+    # -- what the researcher reads ---------------------------------------
+
+    @property
+    def path(self) -> str:
+        """The chosen file or folder, or "" if there is not a usable one.
+
+        Empty when nothing has been chosen *and* when what was chosen has since
+        been deleted or moved. A path that no longer resolves is worse than no
+        path: `if ev.fileselect.path:` would pass and the open would fail on
+        something that looks perfectly valid.
+        """
+        stored = self.__dict__["_path"]
+        return stored if remembered.usable(stored, expect_dir=self.EXPECTS_DIR) else ""
+
+    @path.setter
+    def path(self, value):
+        self._record(str(value or ""))
+
+    def _record(self, selection) -> None:
+        self.__dict__["_path"] = selection
+        remembered.remember(self.__dict__["_interface_path"], self.tag, selection)
+
+    def _starting_directory(self) -> str:
+        # The raw stored value, not `.path`: a file that was renamed still tells
+        # us the folder to open, even though it is no longer a usable choice.
+        return remembered.starting_directory(
+            self.__dict__["_path"], expect_dir=self.EXPECTS_DIR
+        )
+
+    # -- surviving a rebuild ---------------------------------------------
+
+    def _presentation(self) -> dict:
+        state = super()._presentation()
+        state["path"] = self.__dict__["_path"]
+        return state
+
+    def _restore(self, state) -> None:
+        super()._restore(state)
+        if "path" in state:
+            self.__dict__["_path"] = state["path"]
+
+
+class FileSelectHandle(_SelectHandle):
+    EXPECTS_DIR = False
+
+    def __init__(self, element, widget, interface_path):
+        super().__init__(element, widget, interface_path)
+        self.__dict__["_extensions"] = element.extensions
+
+    @property
+    def extensions(self) -> str:
+        """Which files the chooser offers, e.g. "txt, csv". Empty means all."""
+        return self.__dict__["_extensions"]
+
+    @extensions.setter
+    def extensions(self, value):
+        self.__dict__["_extensions"] = "" if value is None else str(value)
+
+    def _presentation(self) -> dict:
+        state = super()._presentation()
+        state["extensions"] = self.__dict__["_extensions"]
+        return state
+
+    def _restore(self, state) -> None:
+        super()._restore(state)
+        if "extensions" in state:
+            self.__dict__["_extensions"] = state["extensions"]
+
+
+class FolderSelectHandle(_SelectHandle):
+    EXPECTS_DIR = True
+
+
+def _build_select(parent, element, dispatcher, *, handle_class, interface_path):
+    widget = tk.Button(parent, text=element.label or element.tag, font=base_font())
+    tag = element.tag
+    handle_box = {}
+
+    def choose(button="left"):
+        """Open the chooser, then call the researcher's handler.
+
+        In that order, and only on a real choice: the handler runs with
+        `ev.<tag>.path` already set, and a cancelled dialog does nothing at all
+        rather than firing a handler that would find the old value.
+        """
+        handle = handle_box.get("handle")
+        if handle is None:  # pragma: no cover - the widget outliving its handle
+            return
+        if handle.EXPECTS_DIR:
+            chosen = dialogs.ask_directory(
+                parent=parent, initial_dir=handle._starting_directory()
+            )
+        else:
+            chosen = dialogs.ask_open_file(
+                parent=parent,
+                initial_dir=handle._starting_directory(),
+                extensions=parse_extensions(handle.extensions),
+            )
+        if not chosen:
+            return
+        handle._record(chosen)
+        dispatcher.invoke(
+            f"on_clicked_{tag}",
+            Event(kind="clicked", tag=tag, button=button, path=chosen),
+        )
+
+    widget.configure(command=choose)
+    widget.bind("<ButtonRelease-2>", lambda _e: choose("middle"))
+    widget.bind("<ButtonRelease-3>", lambda _e: choose("right"))
+
+    def fire(kind, **fields):
+        dispatcher.invoke(f"on_{kind}_{tag}", Event(kind=kind, tag=tag, **fields))
+
+    widget.bind("<Enter>", lambda _e: fire("hover"))
+    widget.bind("<Motion>", lambda _e: fire("motion"))
+    widget.bind("<Key>", lambda e: fire("key", key=e.keysym))
+
+    handle = handle_class(element, widget, interface_path)
+    handle_box["handle"] = handle
+    handle._apply()
+    return handle
+
+
+def build_file_select(parent, element, dispatcher, interface_path=None):
+    return _build_select(
+        parent, element, dispatcher,
+        handle_class=FileSelectHandle, interface_path=interface_path,
+    )
+
+
+def build_folder_select(parent, element, dispatcher, interface_path=None):
+    return _build_select(
+        parent, element, dispatcher,
+        handle_class=FolderSelectHandle, interface_path=interface_path,
+    )
+
+
 BUILDERS = {
     "button": build_button,
     "axes": build_axes,
     "label": build_label,
     "text_box": build_text_box,
     "number_box": build_number_box,
+    "file_select": build_file_select,
+    "folder_select": build_folder_select,
 }
 
 
-def build(parent, element, dispatcher, figure=None):
+def build(parent, element, dispatcher, figure=None, interface_path=None):
     if element.type == "axes":
         return build_axes(parent, element, dispatcher, figure=figure)
+    if element.type in SELECT_TYPES:
+        # These need to know which interface they belong to: what they remember
+        # is stored per interface, outside the project folder.
+        return BUILDERS[element.type](
+            parent, element, dispatcher, interface_path=interface_path
+        )
     return BUILDERS[element.type](parent, element, dispatcher)

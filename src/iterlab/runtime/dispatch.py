@@ -38,6 +38,10 @@ class Event:
     y: float | None = None
     key: str | None = None
     double: bool = False
+    #: What a file or folder selector just chose. `None` on every other event,
+    #: so a handler can tell "not that kind of event" from "chose nothing" -
+    #: which the element reports as `.path` being "" rather than through here.
+    path: str | None = None
 
 
 class Dispatcher:

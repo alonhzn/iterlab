@@ -100,7 +100,10 @@ class Runner:
                 else None
             )
             handle = element_factory.build(
-                self.frame, element, self.dispatcher, figure=figure
+                self.frame, element, self.dispatcher, figure=figure,
+                # Selectors remember per interface, and the memory lives outside
+                # the project folder, so they need to know which one they are in.
+                interface_path=self.interface.layout_path,
             )
             state = self.session.presentation_for(element.tag, element)
             restore = getattr(handle, "_restore", None)
