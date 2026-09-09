@@ -6,6 +6,47 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.1.1] — 2026-09-09
+
+### Fixed
+
+- **A typed property was lost unless focus went to another property field.**
+  Editing a value and then clicking an element, the canvas, or a palette card
+  silently discarded it. Tabbing to the next field worked, which is what made it
+  look intermittent rather than broken.
+
+  `<FocusOut>` cannot carry this on its own. Tk fires it when another *widget*
+  takes keyboard focus, and most of what a researcher clicks next does not take
+  it — a Canvas, an element drawn on it and a palette card are all unfocusable.
+  Even when focus does move, Tk delivers the event on the next pass through the
+  event loop, by which time the panel has been rebuilt for the new selection and
+  the entry holding the edit no longer exists. The canvas already called
+  `focus_set()` first thing on a press, which looked like it should have covered
+  this and could not.
+
+  Committing is now explicit and synchronous on the events where focus really
+  leaves: a press on the canvas, a palette choice, opening the **More** drawer.
+
+- **The reported extension filter was this same bug.** Typing `pdf` into
+  **Types** and clicking away never saved it, so the chooser had nothing to
+  filter by and offered everything. It works once the value is committed.
+
+- **An editor change to `extensions` lost to a value set from code.** Found
+  while checking the above. Session state is deliberately preserved across a
+  mode switch, and an explicit edit in the editor is supposed to beat it — the
+  rule already covered `label` and `style`, and `extensions` was simply missed
+  when it was added a version ago.
+
+### Notes
+
+- The first attempt at the commit fix also committed inside `select`, which is
+  the refresh path that a drag, a resize and an apply all end on. That wrote the
+  panel's now-stale position back over the change that had just happened, and a
+  dragged element snapped home — 15 tests caught it, and the suite time went from
+  63s to 161s from the churn. There is now a test for that specific regression,
+  and one asserting that clicking about without typing does not rewrite the
+  layout file at all.
+
 ## [1.1.0] — 2026-09-09
 
 ### Added

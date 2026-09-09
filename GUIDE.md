@@ -561,5 +561,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 1.1.0.** Everything above is verified against that release. If a description here
+**Guide version 1.1.1.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

@@ -190,6 +190,10 @@ class PropertiesPanel:
             self._advanced.pack_forget()
 
     def toggle_advanced(self):
+        # Opening the drawer rebuilds nothing, but the header is a Label and
+        # takes no focus, so a value typed and then "committed" by clicking
+        # More would otherwise sit there uncommitted.
+        self.commit_pending()
         self.advanced_open = not self.advanced_open
         self._render_drawer()
         return self.advanced_open
@@ -485,6 +489,34 @@ class PropertiesPanel:
         except (TypeError, ValueError):
             return False  # invalid input is a change, so apply() can report it
         return all(getattr(element.style, k) == v for k, v in changes.items())
+
+    def commit_pending(self) -> None:
+        """Save a typed-but-uncommitted edit, now, before anything else happens.
+
+        `<FocusOut>` is not enough on its own. Tk fires it when another widget
+        takes *keyboard* focus, and most of what a researcher clicks next does
+        not take it - the canvas, an element on it, a palette card. Even where
+        focus does move, Tk delivers it on the next pass through the event loop,
+        by which time the panel has been rebuilt for the new selection and the
+        entry holding the edit no longer exists.
+
+        So anything that is about to rebuild this panel calls here first. Doing
+        nothing when the value is unchanged is what makes that safe to call
+        liberally, and `_busy` keeps it from re-entering the apply it is part of.
+        """
+        if self._busy or self.element_tag is None:
+            return
+        element = self._current_element()
+        if element is None:
+            return
+        raw = self.values()
+        # Checked before applying, not inside it: applying re-selects the
+        # element to put the panel back in step, and doing that on every click
+        # when nothing was typed is both wasteful and a way to write stale text
+        # over a change made by other means.
+        if not raw or self._unchanged(raw, element):
+            return
+        self.apply()
 
     def _commit(self, _event=None):
         """Enter, or focus leaving a field. Both mean 'I meant that'."""

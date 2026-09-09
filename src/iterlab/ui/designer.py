@@ -101,6 +101,9 @@ class Designer:
         self.sidebar.outer.pack(side="left", fill="y")
         self.palette = Palette(self.sidebar.inner, on_select=None)
         self.properties = PropertiesPanel(self.sidebar.inner, self)
+        # Traced rather than hooked through the palette's own callback, so a
+        # type chosen programmatically counts exactly as a clicked card does.
+        self.palette.selected.trace_add("write", self._on_palette_change)
         self.sidebar.bind_wheel_to_children()
 
         tk.Frame(container, bg=theme.BORDER, width=1).pack(side="left", fill="y")
@@ -330,6 +333,11 @@ class Designer:
         return None
 
     def _on_press(self, event):
+        # Before anything: a value typed into the properties panel and not yet
+        # committed would otherwise be lost the moment this rebuilds the panel.
+        # focus_set() below cannot do it - Tk delivers the resulting FocusOut on
+        # the next pass through the event loop, long after that has happened.
+        self.properties.commit_pending()
         self.canvas.focus_set()
 
         # A handle takes priority over the element under it: the corner of a
@@ -426,12 +434,22 @@ class Designer:
         self.select(name)
 
     def select(self, tag):
+        # Deliberately does NOT commit pending edits. `select` is the refresh
+        # path - it is how a drag, a resize and an apply all put the panel back
+        # in step - and committing here writes the panel's now-stale text over
+        # the change that just happened, snapping a dragged element home.
+        # Committing belongs on the events where focus actually leaves: a press
+        # on the canvas, a palette choice, opening the drawer.
         self.selected = tag
         self.properties.show(self.layout.elements.get(tag) if tag else None)
         self.sidebar.inner.update_idletasks()
         self.sidebar._on_inner_resize()
         self.sidebar.bind_wheel_to_children()
         self.redraw()
+
+    def _on_palette_change(self, *_args):
+        """Choosing a different element type is also "focus went elsewhere"."""
+        self.properties.commit_pending()
 
     def create_element(self, element_type, rect, tag=None):
         """Draw one element: layout, then stub, then redraw.

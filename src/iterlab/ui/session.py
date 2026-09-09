@@ -71,6 +71,7 @@ class Session:
             "state": dict(state),
             "label": element.label,
             "style": element.style,
+            "extensions": element.extensions,
         }
 
     def presentation_for(self, tag, element) -> dict:
@@ -90,6 +91,8 @@ class Session:
         if element.style != remembered["style"]:
             state.pop("style", None)
             state.pop("visible", None)
+        if element.extensions != remembered.get("extensions", element.extensions):
+            state.pop("extensions", None)
         return state
 
     # -- reconciling with a changed layout -------------------------------
