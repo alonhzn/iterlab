@@ -281,9 +281,10 @@ ever been published.
   publishing. A broken logo on the page people arrive at first is not worth
   discovering after an upload that cannot be undone.
 
-## [0.21.0] — not published
+## [0.21.0] — 2026-09-08
 
-Superseded by 0.21.1 before it ever reached PyPI.
+*Published to PyPI, then superseded fourteen minutes later by 1.0.0.
+It is the earliest version installable from PyPI; 1.0.0 is the one to use.*
 
 Everything in the entries below shipped in this one release; they were written
 as the work happened and are kept as the development record. Their "unreleased"
