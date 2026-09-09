@@ -100,24 +100,25 @@ def on_clicked_{tag}(ev, event):
 
 _TEXT_BOX_STUB = '''
 
-def on_key_{tag}(ev, event):
-    # Runs on every keystroke in {tag}, so you can react as someone types —
-    # redrawing a plot from the new value, for instance.
+def on_changed_{tag}(ev, event):
+    # Runs when you finish entering a value in {tag}: press Enter, or click
+    # away after changing it. Not on every keystroke - so you can redraw a plot
+    # here without it happening once per character.
     #
-    # ev.{tag}.text is what the box holds right now. event.key is the key
-    # that was just pressed.
+    # ev.{tag}.text is what the box holds.
     # Delete this function if you don't need it — nothing will break.
     print(f"{tag}: {{ev.{tag}.text}}")
 '''
 
 _NUMBER_BOX_STUB = '''
 
-def on_key_{tag}(ev, event):
-    # Runs on every keystroke in {tag}, so you can react as someone types —
-    # redrawing a plot from the new value, for instance.
+def on_changed_{tag}(ev, event):
+    # Runs when you finish entering a value in {tag}: press Enter, or click
+    # away after changing it. Not on every keystroke - so you can redraw a plot
+    # here without it happening once per character.
     #
     # ev.{tag}.value is the number; ev.{tag}.text is the same thing as a
-    # string. A half-typed box ("", "-", "0.") reads as 0 rather than raising.
+    # string. An empty box reads as 0 rather than raising.
     # Delete this function if you don't need it — nothing will break.
     print(f"{tag}: {{ev.{tag}.value}}")
 '''

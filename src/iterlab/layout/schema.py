@@ -43,7 +43,14 @@ EXTENSION_TYPES = ("file_select",)
 
 #: Interactions available on every element type. Universal, not per-type
 #: (FR-017a); what varies per type is which single stub is generated.
-INTERACTIONS = ("clicked", "hover", "motion", "key")
+#:
+#: `changed` is universal in the same sense the rest are: any element may have a
+#: handler written for it, and one that never changes simply never fires — the
+#: same as an element nobody wrote a handler for. It exists because a box needs
+#: an event meaning "the researcher finished entering a value", which is not the
+#: same question as "a key went down" and cannot be built out of `key` without
+#: every researcher reimplementing the same debounce.
+INTERACTIONS = ("clicked", "hover", "motion", "key", "changed")
 
 #: The one stub generated when an element is created (FR-017d).
 #:
@@ -55,11 +62,12 @@ DEFAULT_INTERACTION = {
     "axes": "clicked",
     "button": "clicked",
     "label": None,
-    # A box reports every keystroke, so a researcher can redraw from the value
-    # as it is typed. That is the reason to want a handler on one at all; the
-    # generated stub prints the value, which also shows where to read it.
-    "text_box": "key",
-    "number_box": "key",
+    # On a committed value, not on every keystroke. Redrawing a plot per
+    # character is expensive and jumpy, and half-typed input is mostly
+    # meaningless - "1" on the way to "100" is a different plot, drawn twice for
+    # nothing. `key` is still there for anyone who does want each keystroke.
+    "text_box": "changed",
+    "number_box": "changed",
     # A selector's stub fires *after* a choice is made, so the generated code
     # can show the path straight away - which is also where the researcher
     # finds out the attribute is called `.path`.

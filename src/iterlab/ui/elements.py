@@ -568,6 +568,28 @@ def _build_box(parent, element, dispatcher, *, handle_class, numeric):
     # the time the handler reads it. On press it would still be the old value.
     widget_frame.bind("<KeyRelease>", lambda e: fire("key", key=e.keysym))
 
+    # `changed` means the researcher finished entering a value, not that a key
+    # went down. Two triggers, deliberately not treated the same way:
+    #
+    #   Enter is a deliberate act, so it always runs the handler - that is how
+    #   someone re-runs the same value on purpose.
+    #
+    #   Losing focus is incidental. Clicking past a box on the way to something
+    #   else should not redraw a plot, so it runs only if the value actually
+    #   moved since the handler last saw it.
+    last_fired = {"value": variable.get()}
+
+    def changed(force):
+        current = variable.get()
+        if not force and current == last_fired["value"]:
+            return
+        last_fired["value"] = current
+        fire("changed")
+
+    widget_frame.bind("<Return>", lambda _e: changed(force=True))
+    widget_frame.bind("<KP_Enter>", lambda _e: changed(force=True))
+    widget_frame.bind("<FocusOut>", lambda _e: changed(force=False))
+
     handle = handle_class(element, widget_frame, variable)
     handle._apply()
     return handle

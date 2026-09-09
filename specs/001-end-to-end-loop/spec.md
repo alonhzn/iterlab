@@ -408,7 +408,14 @@ may be appended stubs and the renamed handler.
   drawn.
 - **FR-017**: Interacting with an element MUST invoke its correspondingly named handler if one exists.
 - **FR-017a**: The set of interactions MUST be universal across element types, not specific to any one
-  type. Every element MUST be able to respond to **click**, **hover**, **move**, and **keyboard key**.
+  type. Every element MUST be able to respond to **click**, **hover**, **move**, **keyboard key**, and
+  **changed**.
+  *(`changed` added after implementation. It is universal in the same sense as the rest — any element
+  may have a handler written for it, and one whose value never changes simply never fires, which is
+  indistinguishable from an element nobody wrote a handler for. It exists because "the researcher
+  finished entering a value" is not the same question as "a key went down", and cannot be built from
+  `key` without every researcher reimplementing the same debounce. This is the interaction the text
+  box convention below was always describing.)*
 - **FR-017b**: Every handler MUST be optional. An element responds to exactly those interactions the
   researcher has written handlers for, and to no others; the absence of a handler is never an error
   (see FR-029).
@@ -569,6 +576,11 @@ may be appended stubs and the renamed handler.
   decided for a deferred type: a **text box** commits its value on Enter or on leaving the field, never
   on every keystroke, so that a handler sees complete input rather than a stream of fragments. It is
   recorded here so the convention is not re-litigated when text boxes are built.
+
+  *Implemented as the `changed` interaction. Worth recording that it was briefly re-litigated anyway:
+  boxes shipped a per-keystroke default in 1.2.0, which this note had ruled out before the element
+  existed. Nobody re-read it. Written-down decisions only help if they are consulted when the thing
+  they describe is finally built.*
 - The properties panel covers position, size, name, and a button's label — all editable, including
   the name. Visual properties such as colors, fonts, borders, and cursors are acknowledged as
   necessary and deferred; each would be a new schema field, and the schema is public surface that is

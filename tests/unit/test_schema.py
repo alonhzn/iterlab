@@ -84,6 +84,9 @@ def test_handler_naming_convention():
         "on_hover_spectrum",
         "on_motion_spectrum",
         "on_key_spectrum",
+        # Renaming an element has to carry this one too, or a box's handler
+        # would be orphaned by a rename.
+        "on_changed_spectrum",
     }
 
 

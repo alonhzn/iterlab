@@ -131,9 +131,10 @@ Available on **every** element type. Write only the ones you want:
 | `on_hover_<tag>(ev, event)` | The pointer enters it |
 | `on_motion_<tag>(ev, event)` | The pointer moves over it |
 | `on_key_<tag>(ev, event)` | A key is pressed while it has focus |
+| `on_changed_<tag>(ev, event)` | A box's value is committed — Enter, or leaving it after an edit |
 
 Creating an element generates just one of these: **click** for buttons, axes and the two selectors,
-**key** for text and number boxes. A label gets none, because it is written to rather than
+**changed** for text and number boxes. A label gets none, because it is written to rather than
 interacted with. Add any of the others by hand whenever you want them.
 
 ### The `event` argument
@@ -257,17 +258,27 @@ def on_clicked_cmd_0(ev, event):
 empty box reads as `0` rather than raising: someone who cleared it to retype is mid-edit, not
 mistaken.
 
-**Both boxes get an `on_key_<tag>` handler**, which fires on every keystroke. That is what lets a
-plot follow a value as it is typed:
+**Both boxes get an `on_changed_<tag>` handler**, which fires when you **finish** entering a value —
+not on every keystroke:
 
 ```python
-def on_key_val_0(ev, event):
+def on_changed_val_0(ev, event):
     ev.ax_0.clear()
     ev.ax_0.plot(ev.x, np.sin(ev.val_0.value * ev.x))
 ```
 
-The generated one just prints the value, so you can see it working before you write anything. Delete
-it if you would rather read the box when a button is clicked instead — nothing breaks.
+Two things run it, and they are not treated the same:
+
+| | |
+|---|---|
+| **Enter** | Always runs it. That is also how you re-run the same value on purpose |
+| **Leaving the box** | Runs it only if you actually changed something. Clicking past a box on the way somewhere else does nothing |
+
+Per keystroke would redraw once for `1`, again for `10`, again for `100` — expensive, and two of those
+plots are of a number nobody meant. If you do want every keystroke, `on_key_<tag>` is still there.
+
+The generated handler just prints the value, so you can see it working before you write anything.
+Delete it if you would rather read the box when a button is clicked instead — nothing breaks.
 
 ### Label
 
@@ -594,5 +605,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 1.2.0.** Everything above is verified against that release. If a description here
+**Guide version 1.3.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

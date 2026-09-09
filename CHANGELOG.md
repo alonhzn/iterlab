@@ -6,7 +6,45 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.3.0] — 2026-09-09
+
+### Changed
+
+- **Text and number boxes fire on a committed value, not on every keystroke.**
+  Enter always runs the handler; leaving the box runs it only if the value
+  actually changed, so clicking past a box on the way somewhere else does
+  nothing. The generated stub is now `on_changed_<tag>`.
+
+  Per keystroke redraws once for `1`, again for `10`, again for `100` — two of
+  those plots are of a number nobody meant, and each one costs whatever the
+  researcher's handler costs.
+
+  **This was already decided, and I missed it.** The spec has carried a note
+  since before boxes existed: a text box "commits its value on Enter or on
+  leaving the field, never on every keystroke ... recorded here so the
+  convention is not re-litigated when text boxes are built". 1.2.0 re-litigated
+  it by accident, because nobody re-read the note when the element was finally
+  built. The note now records that too — a written-down decision only helps if
+  it is consulted at the moment the thing it describes gets made.
+
+### Added
+
+- **A `changed` interaction**, joining click, hover, move and key. Universal in
+  the same sense as the others: any element may have a handler written for it,
+  and one whose value never changes simply never fires — indistinguishable from
+  an element nobody wrote a handler for. It exists because "the researcher
+  finished entering a value" is not the same question as "a key went down", and
+  cannot be built out of `key` without every researcher reimplementing the same
+  debounce. FR-017a is amended accordingly.
+
+  Renaming an element carries its `on_changed_` handler, like every other.
+
+- `on_key_<tag>` is untouched and still fires per keystroke for anyone who wants
+  it, so nothing written against 1.2.0 stops working.
+
 ## [1.2.0] — 2026-09-09
+
+*Reached GitHub but not PyPI; superseded by 1.3.0.*
 
 ### Added
 
