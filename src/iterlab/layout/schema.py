@@ -47,20 +47,19 @@ INTERACTIONS = ("clicked", "hover", "motion", "key")
 
 #: The one stub generated when an element is created (FR-017d).
 #:
-#: A label is `None`: it displays text and is set from code, so generating a
-#: click handler for every one would leave a researcher with a pile of dead
-#: functions. Every interaction is still available on a label if they write the
-#: handler themselves (FR-017a) — only the automatic stub is withheld.
-#: A box gets no generated stub, for the same reason a label does not: its value
-#: is normally *read* inside another element's handler
-#: (`ev.cmd_0` clicked, then `ev.edt_0.text`) rather than reacted to keystroke by
-#: keystroke. Every interaction is still available if the researcher writes one.
+#: A label is `None`: it is written to rather than interacted with, so a click
+#: handler on every one would leave a researcher with a pile of dead functions.
+#: Every interaction stays available on any type if they write the handler
+#: themselves (FR-017a) — only the automatic stub is withheld.
 DEFAULT_INTERACTION = {
     "axes": "clicked",
     "button": "clicked",
     "label": None,
-    "text_box": None,
-    "number_box": None,
+    # A box reports every keystroke, so a researcher can redraw from the value
+    # as it is typed. That is the reason to want a handler on one at all; the
+    # generated stub prints the value, which also shows where to read it.
+    "text_box": "key",
+    "number_box": "key",
     # A selector's stub fires *after* a choice is made, so the generated code
     # can show the path straight away - which is also where the researcher
     # finds out the attribute is called `.path`.
@@ -68,12 +67,10 @@ DEFAULT_INTERACTION = {
     "folder_select": "clicked",
 }
 
-#: Prefix used when auto-suggesting a tag in the designer.
-#: `axes` is deliberately abbreviated: `ax` is what a matplotlib user calls the
-#: variable, so `ev.ax_0` reads the way their own code already does.
-#: Short, and the shorthand a person would use themselves: `ax` for an axes,
-#: `cmd` for a command button, `lbl` for a label, `edt` for an edit box, `val`
-#: for a numeric one. `ev.cmd_0` reads the way the code around it already does.
+#: Prefix used when auto-suggesting a tag in the designer. Short, and the
+#: shorthand a person would use themselves: `ax` for an axes, `cmd` for a command
+#: button, `lbl` for a label, `edt` for an edit box, `val` for a numeric one, so
+#: `ev.ax_0` reads the way their own matplotlib code already does.
 TAG_PREFIX = {
     "axes": "ax",
     "button": "cmd",

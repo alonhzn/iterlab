@@ -132,9 +132,9 @@ Available on **every** element type. Write only the ones you want:
 | `on_motion_<tag>(ev, event)` | The pointer moves over it |
 | `on_key_<tag>(ev, event)` | A key is pressed while it has focus |
 
-Creating an element generates just one of these — click, for **buttons and axes**. Labels, text
-boxes and number boxes get none, because they are usually read rather than reacted to. Add any of
-these by hand whenever you want them.
+Creating an element generates just one of these: **click** for buttons, axes and the two selectors,
+**key** for text and number boxes. A label gets none, because it is written to rather than
+interacted with. Add any of the others by hand whenever you want them.
 
 ### The `event` argument
 
@@ -257,8 +257,17 @@ def on_clicked_cmd_0(ev, event):
 empty box reads as `0` rather than raising: someone who cleared it to retype is mid-edit, not
 mistaken.
 
-Neither box gets a generated handler, because a box is normally *read* when something else happens
-rather than reacted to keystroke by keystroke. Write `on_key_<tag>` yourself if you do want that.
+**Both boxes get an `on_key_<tag>` handler**, which fires on every keystroke. That is what lets a
+plot follow a value as it is typed:
+
+```python
+def on_key_val_0(ev, event):
+    ev.ax_0.clear()
+    ev.ax_0.plot(ev.x, np.sin(ev.val_0.value * ev.x))
+```
+
+The generated one just prints the value, so you can see it working before you write anything. Delete
+it if you would rather read the box when a button is clicked instead — nothing breaks.
 
 ### Label
 
@@ -532,6 +541,30 @@ Finer than a hundredth is below what you can place by hand and below what you ca
 `demo.yaml` into a wall of digits whose diffs mean nothing. If you type `0.333` into a position
 field, you will get `0.33`.
 
+## Running it from your IDE
+
+`demo.py` ends with this, and it is there from the moment the file is created:
+
+```python
+if __name__ == "__main__":
+    import iterlab
+
+    iterlab.run(__file__)
+```
+
+So you can press your IDE's run button on `demo.py` and get your interface — no terminal, nothing to
+remember. `iterlab demo` does exactly the same thing.
+
+It passes `__file__` rather than a name, so it works whatever directory you run from and keeps
+working if you rename the pair. And it cannot loop: iterlab loads your module under a name of its
+own, so `__name__` is only `"__main__"` for the copy you launched.
+
+New handlers are added **above** this block, so it stays at the bottom where it reads as the end of
+the file.
+
+Interfaces created before iterlab 1.2.0 do not have it — iterlab only ever adds handlers to your
+file, so it will not retrofit this. Paste it in yourself if you want it.
+
 ## Running from a script
 
 If you would rather launch from Python or an IDE than a shell:
@@ -561,5 +594,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 1.1.1.** Everything above is verified against that release. If a description here
+**Guide version 1.2.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

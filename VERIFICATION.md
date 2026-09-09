@@ -82,6 +82,10 @@ is *there*; only a person can see that the window still looks like the session t
 | 36 | **[!]** Pick a file, close iterlab completely, reopen and click the selector | It opens where you left off, and `ev.fileselect.path` already holds the choice | The point of storing it outside the process. Asserted against a fake dialog; worth seeing survive a genuine restart |
 | 37 | Pick a file, delete it outside iterlab, then look at the interface | `.path` reads as empty and the chooser opens in the folder it was in | The fallback only matters when it happens to a real file on a real disk |
 | 38 | Move the whole project folder somewhere else and open it | The remembered selection is gone and it behaves like a first run - no error, no stale path | A documented consequence of keeping the memory out of the project. Worth confirming it is uneventful rather than confusing |
+| 39 | **[!]** Draw a number box and an axes, wire the box's handler to redraw the plot, then type a value | The plot follows the digits as they are typed, without stutter | The handler firing is asserted; whether following a value *feels* immediate rather than laggy is the whole point and only a person can judge it |
+| 40 | **[!]** Press your IDE's run button on `demo.py` | The interface opens, exactly as `iterlab demo` would | Tests execute the guard with `run` replaced, so no test has ever watched a real IDE launch a real window |
+| 41 | Draw several elements, then open `demo.py` | The `if __name__` block is still at the bottom, with the new handlers above it and one blank line's worth of ordinary spacing | Ordering is asserted; whether the file still reads as something a person wrote is not |
+| 42 | Type into a property field, then click straight onto another element | The value is saved. Repeat a few times with different fields | This broke twice in two releases, in different ways, and both times the automated check passed while a person could see it fail |
 
 ### Being told things
 

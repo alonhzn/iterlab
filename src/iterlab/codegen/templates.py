@@ -27,6 +27,20 @@ def on_startup(ev):
     # Load your data HERE, not at the top of this file. Anything at module level
     # re-runs when iterlab picks up an edit; anything in here does not.
     pass
+
+
+if __name__ == "__main__":
+    # So you can open this interface straight from an IDE's run button, with no
+    # terminal and nothing to remember. `iterlab {name}` does the same thing.
+    #
+    # Passing __file__ rather than a name means it works whatever directory you
+    # run from, and keeps working if you rename the pair.
+    #
+    # This does not re-enter itself: iterlab loads this module under a name of
+    # its own, so __name__ is only "__main__" for the copy you launched.
+    import iterlab
+
+    iterlab.run(__file__)
 '''
 
 _BUTTON_STUB = '''
@@ -50,8 +64,8 @@ def on_clicked_{tag}(ev, event):
 _FILE_SELECT_STUB = '''
 
 def on_clicked_{tag}(ev, event):
-    # Runs after a file is chosen. Cancelling the dialog calls nothing and
-    # changes nothing.
+    # Runs after a file is chosen. Cancelling the dialog calls nothing
+    # and changes nothing.
     #
     # The chosen path is a string on the element, and is still there next time
     # you open this interface - even after a hard reset:
@@ -60,15 +74,15 @@ def on_clicked_{tag}(ev, event):
     #     ev.data = np.loadtxt(ev.{tag}.path) # or just open it
     #
     # It is "" when nothing has been chosen yet, so `if ev.{tag}.path:` is safe.
-    # Delete this function if you don't need it - nothing will break.
+    # Delete this function if you don't need it — nothing will break.
     print(f"{tag}: {{ev.{tag}.path}}")
 '''
 
 _FOLDER_SELECT_STUB = '''
 
 def on_clicked_{tag}(ev, event):
-    # Runs after a folder is chosen. Cancelling the dialog calls nothing and
-    # changes nothing.
+    # Runs after a folder is chosen. Cancelling the dialog calls nothing
+    # and changes nothing.
     #
     # The chosen folder is a string on the element, and is still there next time
     # you open this interface - even after a hard reset:
@@ -80,15 +94,41 @@ def on_clicked_{tag}(ev, event):
     #     ev.files = sorted(Path(ev.{tag}.path).glob("*.csv"))
     #
     # It is "" when nothing has been chosen yet, so `if ev.{tag}.path:` is safe.
-    # Delete this function if you don't need it - nothing will break.
+    # Delete this function if you don't need it — nothing will break.
     print(f"{tag}: {{ev.{tag}.path}}")
 '''
 
-#: No entry for `label`, `text_box` or `number_box`: they are read when
-#: something else happens, so a generated click handler would be dead weight.
+_TEXT_BOX_STUB = '''
+
+def on_key_{tag}(ev, event):
+    # Runs on every keystroke in {tag}, so you can react as someone types —
+    # redrawing a plot from the new value, for instance.
+    #
+    # ev.{tag}.text is what the box holds right now. event.key is the key
+    # that was just pressed.
+    # Delete this function if you don't need it — nothing will break.
+    print(f"{tag}: {{ev.{tag}.text}}")
+'''
+
+_NUMBER_BOX_STUB = '''
+
+def on_key_{tag}(ev, event):
+    # Runs on every keystroke in {tag}, so you can react as someone types —
+    # redrawing a plot from the new value, for instance.
+    #
+    # ev.{tag}.value is the number; ev.{tag}.text is the same thing as a
+    # string. A half-typed box ("", "-", "0.") reads as 0 rather than raising.
+    # Delete this function if you don't need it — nothing will break.
+    print(f"{tag}: {{ev.{tag}.value}}")
+'''
+
+#: No entry for `label`: it is written to rather than interacted with, so a
+#: generated handler would be dead weight in the researcher's file.
 _STUBS = {
     "button": _BUTTON_STUB,
     "axes": _AXES_STUB,
+    "text_box": _TEXT_BOX_STUB,
+    "number_box": _NUMBER_BOX_STUB,
     "file_select": _FILE_SELECT_STUB,
     "folder_select": _FOLDER_SELECT_STUB,
 }

@@ -108,6 +108,18 @@ class PropertiesPanel:
         self._busy = True
         try:
             self._clear_message()
+            # Silence the old fields before they are destroyed. Tk fires
+            # <FocusOut> at a focused widget as it goes, and that event is
+            # *queued*: it arrives after this rebuild has finished and `_busy`
+            # is clear, so the handler would commit whatever the new panel
+            # happens to be showing. Adding more commit points in 1.1.1 made
+            # that reachable often enough to show up as a flaky test.
+            for widget in self._entries.values():
+                try:
+                    widget.unbind("<FocusOut>")
+                except Exception:
+                    # Vars, not widgets, for the checkboxes and the alignment.
+                    pass
             for child in self._body.winfo_children():
                 child.destroy()
             self._entries.clear()

@@ -6,6 +6,74 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.2.0] — 2026-09-09
+
+### Added
+
+- **Text and number boxes now generate an `on_key_<tag>` handler**, firing on
+  every keystroke, and the generated one prints what was typed — `.text` for a
+  text box, `.value` for a number box.
+
+  This reverses the call made in 1.1.0, where boxes got no stub on the reasoning
+  that a box is read when something *else* happens. That covers one use and
+  misses the better one: a plot that follows a value as it is typed, with no
+  button to press. A researcher who wants the click-then-read pattern deletes
+  the handler; one who wants live updating would otherwise have had to know that
+  `on_key_<tag>` exists at all.
+
+  A half-typed number is safe to read: `""`, `"-"` and `"0."` all report `0`
+  rather than raising, so a handler firing mid-keystroke cannot fault the
+  session.
+
+- **The generated file is runnable.** Every new `demo.py` ends with:
+
+  ```python
+  if __name__ == "__main__":
+      import iterlab
+
+      iterlab.run(__file__)
+  ```
+
+  so an IDE's run button opens the interface, with no terminal and nothing to
+  remember. It passes `__file__` rather than a name, so it works from any
+  working directory and survives renaming the pair. It cannot loop: iterlab
+  executes the researcher's module under a name of its own, so `__name__` is
+  only `"__main__"` for the copy they launched — proven by a test that loads the
+  file the way the loader does.
+
+  Interfaces created before this do not get it retrofitted. iterlab adds
+  handlers to a researcher's file and nothing else, and that rule is worth more
+  than the convenience.
+
+### Fixed
+
+- **A typed property could still be silently discarded**, and 1.1.1's fix for
+  that is what made it reachable.
+
+  Rebuilding the properties panel destroys its fields, and Tk fires `<FocusOut>`
+  at a focused widget as it goes. That event is *queued*: it arrives after the
+  rebuild has finished and the panel's busy flag is clear, so the handler
+  commits into whichever element is now selected. 1.1.1 added commit points on
+  selection and on canvas press, which multiplied the rebuilds and turned a
+  latent race into one that fired often. The old fields are now unbound before
+  they are destroyed, so a stale event has nothing to run.
+
+  Found by a test that failed roughly one run in five and could not be
+  reproduced by running its own file — it needed another file to have run first.
+  Confirmed as mine by running the same loop against 1.1.0 in a worktree: twenty
+  clean runs there, three failures in fifteen on the current tree.
+
+### Changed
+
+- **New handler stubs are inserted above the `if __name__` block** rather than
+  appended after it. That block reads as the end of the file, and appending
+  below it would push it further from the bottom with every element drawn. The
+  guard is matched structurally, so `'__main__'`, extra spaces or a reversed
+  comparison all count; only a *trailing* guard qualifies, since one mid-file is
+  not a launcher and inserting above it would drop a stub into the middle of the
+  researcher's code. Any comment directly above it travels with it. A file
+  without a guard is appended to exactly as before.
+
 ## [1.1.1] — 2026-09-09
 
 ### Fixed

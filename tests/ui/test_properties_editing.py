@@ -27,6 +27,23 @@ def editor(mapped, make_app):
 BASIC_FIELDS = {"tag", "label"}
 
 
+def _fire(entry, sequence):
+    """Deliver an event to `entry` and let its handler finish.
+
+    Two things, both needed. `when="now"` delivers immediately instead of
+    queueing, and `update()` - not `update_idletasks()` - drains the queue
+    afterwards, since only the former processes events. Without them an
+    assertion on the next line races the handler it is meant to be testing.
+
+    This is hygiene, not a workaround for a defect: the defect that made these
+    tests flaky was a stale <FocusOut> committing into a rebuilt panel, and that
+    is fixed in `properties.show`.
+    """
+    entry.update()
+    entry.event_generate(sequence, when="now")
+    entry.update()
+
+
 def _type(panel, field, value):
     """Type into a field the way a researcher does: open it, then focus it.
 
@@ -36,11 +53,13 @@ def _type(panel, field, value):
     """
     if field not in BASIC_FIELDS and not panel.advanced_open:
         panel.toggle_advanced()
+    panel.frame.update()
     entry = panel._entries[field]
     entry.focus_set()
     entry.update()
     entry.delete(0, "end")
     entry.insert(0, str(value))
+    entry.update_idletasks()
     return entry
 
 
@@ -61,13 +80,13 @@ def test_there_is_no_apply_button(editor):
 
 def test_enter_commits_the_edit(editor):
     entry = _type(editor.properties, "left", 0.5)
-    entry.event_generate("<Return>")
+    _fire(entry, "<Return>")
     assert editor.layout.elements["go"].position.left == pytest.approx(0.5)
 
 
 def test_losing_focus_commits_the_edit(editor):
     entry = _type(editor.properties, "width", 0.4)
-    entry.event_generate("<FocusOut>")
+    _fire(entry, "<FocusOut>")
     assert editor.layout.elements["go"].position.width == pytest.approx(0.4)
 
 
@@ -75,7 +94,7 @@ def test_committing_is_persisted(editor):
     from iterlab.layout import store
 
     entry = _type(editor.properties, "bottom", 0.6)
-    entry.event_generate("<Return>")
+    _fire(entry, "<Return>")
     saved = store.load(editor.interface.layout_path)
     assert saved.elements["go"].position.bottom == pytest.approx(0.6)
 
@@ -93,7 +112,7 @@ def test_commit_on_focus_loss_does_not_recurse(editor):
     """Applying rebuilds the panel, destroying the focused entry, which makes
     Tk fire another FocusOut. Without a guard the two call each other."""
     entry = _type(editor.properties, "left", 0.45)
-    entry.event_generate("<Return>")
+    _fire(entry, "<Return>")
     editor.app.root.update()
     assert editor.layout.elements["go"].position.left == pytest.approx(0.45)
 
@@ -101,14 +120,14 @@ def test_commit_on_focus_loss_does_not_recurse(editor):
 def test_an_invalid_value_is_rejected_and_reported(editor):
     entry = _type(editor.properties, "left", "not a number")
     before = editor.layout.elements["go"].position
-    entry.event_generate("<Return>")
+    _fire(entry, "<Return>")
     assert editor.layout.elements["go"].position == before
     assert editor.properties._message.cget("text") != ""
 
 
 def test_enter_commits_a_rename(editor):
     entry = _type(editor.properties, "tag", "fit_button")
-    entry.event_generate("<Return>")
+    _fire(entry, "<Return>")
     assert "fit_button" in editor.layout.tags()
 
 
