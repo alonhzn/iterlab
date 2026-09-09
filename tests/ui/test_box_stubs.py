@@ -13,6 +13,8 @@ import pytest
 
 from iterlab.layout.schema import DEFAULT_INTERACTION, Rect
 
+from _helpers import keysym_for
+
 pytestmark = pytest.mark.ui
 
 COUNTER = "def on_changed_{tag}(ev, event):\n    ev.runs = getattr(ev, 'runs', 0) + 1\n"
@@ -100,7 +102,7 @@ def _type(app, tag, text, clear=False):
         widget.delete(0, "end")
     for character in str(text):
         widget.insert("end", character)
-        widget.event_generate("<KeyRelease>", keysym=character, when="now")
+        widget.event_generate("<KeyRelease>", keysym=keysym_for(character), when="now")
     app.root.update()
 
 

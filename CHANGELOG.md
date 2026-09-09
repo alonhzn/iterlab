@@ -6,6 +6,47 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.3.1] — 2026-09-09
+
+Repository only. Nothing here changes the installed package, so 1.3.0 on PyPI is
+not defective and needs no replacement.
+
+### Fixed
+
+- **CI had been red on Linux since 1.2.0, and 1.3.0 was published anyway.**
+
+  The failure was in a test, not in iterlab: it typed a filename by generating
+  key events with the raw character as the keysym, and X11 wants keysym *names*
+  — `.` is `period` there. Windows Tk accepts the character, so the local suite
+  passed on Windows every time while the Linux job failed. Characters now map to
+  the names Tk knows on every platform.
+
+  This is the second defect of exactly this shape. The first was `size_nw_se`,
+  a cursor name Windows accepts and X11 does not, which CI also caught and which
+  is guarded by a test asserting every cursor name is valid on the running
+  platform. There is now a matching test for keysyms, next to it.
+
+  The 1.2.0 run failed for an unrelated reason — `apt-get update` could not
+  fetch its indexes on the runner. Infrastructure, not code, but it meant the
+  first red run was easy to wave away, and the next two were not looked at.
+
+### Added
+
+- **`tools/preflight.py`**, which asks every question that must be answered
+  before publishing: clean tree, commit pushed, **CI green for this exact
+  commit**, artifacts present and matching the declared version with no stale
+  ones beside them, `twine check`, README links resolving anonymously, and a
+  recorded Gate 2 pass. Non-zero exit means do not upload.
+
+  The constitution already said this gate is "absolute rather than advisory".
+  It was advisory in practice because nothing enforced it — the local suite was
+  green each time, and nobody opened the run that tests the platform the
+  developer is not using. A check that depends on someone remembering to look is
+  not a gate.
+
+  Gate 2 is warned about rather than enforced: only a person can perform it, so
+  a tool can ask whether it happened but cannot honestly refuse on its behalf.
+
 ## [1.3.0] — 2026-09-09
 
 ### Changed

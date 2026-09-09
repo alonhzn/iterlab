@@ -245,6 +245,28 @@ def test_every_cursor_name_is_valid_on_this_platform(designer):
     assert not rejected, f"not valid cursor names on this platform: {rejected}"
 
 
+def test_every_keysym_the_tests_use_is_valid_on_this_platform(designer):
+    """The same trap as the cursors above, one layer down.
+
+    X11 wants keysym *names* where Windows Tk accepts the bare character: "."
+    is "period" there. A test typing a filename passed on Windows and failed on
+    Linux with `unknown keysym "."`, and only CI ever saw it. This asserts every
+    name the suite maps to is real wherever the suite runs, so a bad entry fails
+    here rather than inside an unrelated test.
+    """
+    import tkinter
+
+    from _helpers import KEYSYMS
+
+    rejected = []
+    for character, name in KEYSYMS.items():
+        try:
+            designer.canvas.event_generate("<KeyRelease>", keysym=name, when="now")
+        except tkinter.TclError:
+            rejected.append(f"{character!r} -> {name!r}")
+    assert not rejected, f"not valid keysyms on this platform: {rejected}"
+
+
 def test_hovering_reports_what_a_press_would_do(designer):
     from iterlab.ui.designer import CREATE_CURSOR, CURSORS, MOVE_CURSOR
 

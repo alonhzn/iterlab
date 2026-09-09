@@ -62,3 +62,4 @@ def make_app(tk_root, tmp_path, monkeypatch):
             child.destroy()
         except Exception:
             pass
+
