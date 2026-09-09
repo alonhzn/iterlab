@@ -49,6 +49,8 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ## [1.1.0] — 2026-09-09
 
+*Reached GitHub but not PyPI; published as part of 1.1.1.*
+
 ### Added
 
 - **Two new element types: `file_select` and `folder_select`.** Each is a button
