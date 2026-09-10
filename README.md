@@ -62,6 +62,7 @@ sliders are next.
 ## Built on
 
 Tk and matplotlib, both used deliberately: Tk for every control, matplotlib for plots only.
+Built on the basis of my old project "rrGUI" that was never fully functional so it stayed private, and re-implementated using the remarkable framework [Spec Kit](https://github.com/github/spec-kit) and Claude. 
 
 ## License
 
