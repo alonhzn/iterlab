@@ -6,7 +6,7 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [1.4.0] — unreleased
+## [1.4.0] — 2026-09-11
 
 ### Changed
 
@@ -80,6 +80,15 @@ shape, and the command are all consumed directly by researcher-written code.
   simply has no stamp, which already means what it needs to mean.
 
 ### Fixed
+
+- **The release gate could be satisfied by prose.** Gate 2 is the recorded
+  manual pass, and the check that asks whether it happened looked for the
+  version string anywhere in `VERIFICATION.md`. 1.4.0 passed it on the strength
+  of a checklist item reading "open a project made before 1.4.0" — so the one
+  automated question standing between an unverified build and an upload that
+  cannot be withdrawn was answered by a sentence about something else. It now
+  reads the *Recorded results* table, and a near miss such as `1.3.10` does not
+  answer for `1.3.1`.
 
 - **An interface reopened at the default size instead of the size it was left
   at.** The layout has always carried a `window` size and nothing ever wrote to

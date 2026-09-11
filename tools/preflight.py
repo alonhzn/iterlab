@@ -130,6 +130,28 @@ def check_readme_links():
     return PASS, f"all {len(urls)} README links resolve anonymously"
 
 
+def recorded_gate_two(text, version):
+    """Whether the results table holds a row for `version`.
+
+    Reads the table rather than the file. The first version of this asked
+    whether the string appeared anywhere in VERIFICATION.md, and passed 1.4.0
+    on the strength of a checklist item that says "open a project made before
+    1.4.0" - so the one check standing between an unverified build and PyPI
+    was satisfied by prose about something else entirely.
+    """
+    body = text.split("## Recorded results", 1)
+    if len(body) != 2:
+        return False
+    for line in body[1].splitlines():
+        line = line.strip()
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if cells and cells[0] == version:
+            return True
+    return False
+
+
 def check_gate_two():
     """Warned about rather than enforced, and the reason is stated.
 
@@ -139,11 +161,11 @@ def check_gate_two():
     """
     version = declared_version()
     text = (ROOT / "VERIFICATION.md").read_text(encoding="utf-8")
-    if version in text:
-        return PASS, f"VERIFICATION.md mentions {version}"
+    if recorded_gate_two(text, version):
+        return PASS, f"VERIFICATION.md records a pass for {version}"
     return WARN, (
-        f"no recorded Gate 2 pass for {version}. The constitution: "
-        '"A pass that was not recorded did not happen."'
+        f"no recorded Gate 2 pass for {version} in the results table. The "
+        'constitution: "A pass that was not recorded did not happen."'
     )
 
 
