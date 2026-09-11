@@ -10,6 +10,26 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ### Changed
 
+- **A label looks like text rather than a card.** On the editor canvas it is
+  drawn in the canvas's own colour with a black edge; in the running interface
+  it takes the background behind it and has no edge.
+
+  Its editor tint used to be `#e7f2e9` against the file selector's `#e6f0ea` —
+  near enough that a glance could not tell them apart, which is what prompted
+  this. And in the interface a caption sat in a white box, which is exactly what
+  a caption should not look like.
+
+  Drawn in the canvas colour rather than with `fill=""`. Truly unfilled would
+  have been the obvious way to say "transparent", and it would have stopped the
+  label being selectable: an unfilled canvas rectangle is only hit on its
+  outline, so it would have been clickable on the border and dead in the middle.
+  Same colour as the canvas is indistinguishable and stays clickable, and two
+  tests hold that line.
+
+  Tk has no real transparency, so "transparent" in the interface means painting
+  the parent's own colour. A background or edge set by researcher code still
+  wins — this is only the default.
+
 - **Buttons and both selectors now default to the label's height.** All four are
   one line of text, so a row of them lines up without anyone resizing anything.
   Widths still differ, because caption length is what actually varies:

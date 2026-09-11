@@ -123,8 +123,20 @@ class ElementHandle:
         self._apply()
 
     def _apply(self):
-        apply_style(self.widget, self.__dict__["_style"])
+        apply_style(
+            self.widget,
+            self.__dict__["_style"],
+            default_bg=self._default_background(),
+        )
         self._apply_visibility()
+
+    def _default_background(self):
+        """The colour to use when the researcher has not chosen one.
+
+        None means the theme's surface colour. A type overrides this when its
+        natural unstyled appearance is something else.
+        """
+        return None
 
     def _apply_visibility(self):
         if self.__dict__["_style"].visible:
@@ -436,6 +448,19 @@ def build_axes(parent, element, dispatcher, figure=None):
 
 class LabelHandle(_CaptionHandle):
     """Text on screen. Set it from code: `ev.lbl_0.text = "..."`."""
+
+    def _default_background(self):
+        """Match whatever is behind it, so a label is text rather than a card.
+
+        Tk has no real transparency, so "transparent" means painting the parent's
+        own colour. Without this a label is a white rectangle sitting on the
+        interface, which is exactly what a caption should not look like. Setting
+        `ev.lbl_0.background` still wins - this is only the default.
+        """
+        try:
+            return self.widget.master.cget("bg")
+        except Exception:
+            return None
 
 
 def build_label(parent, element, dispatcher):

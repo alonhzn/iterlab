@@ -33,13 +33,20 @@ DANGER = "#c2334d"
 DANGER_SOFT = "#fdecef"
 
 # Element fills on the canvas, kept distinct but quiet.
+#: A label is drawn in the canvas's own colour rather than a tint of its own, so
+#: it reads as bare text the way it will in the running interface. Not `fill=""`:
+#: an unfilled canvas rectangle is only hit on its outline, so a truly
+#: transparent label would stop being selectable or movable. Same colour as the
+#: canvas is indistinguishable and stays clickable.
 ELEMENT_FILL = {
-    "axes": "#dbeafe", "button": "#e9e3fb", "label": "#e7f2e9",
+    "axes": "#dbeafe", "button": "#e9e3fb", "label": SURFACE,
     "text_box": "#fdf0e3", "number_box": "#fce9ee",
     "file_select": "#e6f0ea", "folder_select": "#fdf6de",
 }
+#: Black for the label, since it has no fill to identify it by - and it is what
+#: separates it from the file selector, which was a near-identical green.
 ELEMENT_EDGE = {
-    "axes": "#7ba7f0", "button": "#a48fe0", "label": "#84b795",
+    "axes": "#7ba7f0", "button": "#a48fe0", "label": "#000000",
     "text_box": "#e0a86a", "number_box": "#d98aa3",
     "file_select": "#79b394", "folder_select": "#ddc164",
 }
