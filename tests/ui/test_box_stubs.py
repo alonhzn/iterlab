@@ -167,6 +167,40 @@ def test_the_edited_file_is_the_one_the_dispatcher_loads(typing):
     assert "on_changed_edt_0" in names, detail
 
 
+def test_where_the_commit_is_lost(typing):
+    """TEMPORARY: report which link of the chain drops the commit."""
+    _write(typing, RECORDER.format(tag="edt_0", attr="text"))
+    box = typing.built.handles["edt_0"].widget
+    seen = []
+    box.bind("<Return>", lambda _e: seen.append("return"), add="+")
+    box.bind("<KeyRelease>", lambda _e: seen.append("keyrelease"), add="+")
+    box.bind("<FocusOut>", lambda _e: seen.append("focusout"), add="+")
+
+    dispatcher = typing.built.dispatcher
+    original = dispatcher.invoke
+    invoked = []
+
+    def spy(handler_name, event=None, args=None):
+        invoked.append(handler_name)
+        return original(handler_name, event=event, args=args)
+
+    dispatcher.invoke = spy
+
+    box.focus_set()
+    typing.root.update()
+    box.insert("end", "ab")
+    press_key(box, "b")
+    box.event_generate("<Return>", when="now")
+    typing.root.update()
+
+    detail = (
+        f"bindings={seen} invoked={invoked} value={box.get()!r} "
+        f"focus={typing.root.focus_get()} viewable={box.winfo_viewable()} "
+        f"ev={getattr(typing.built.ev, 'seen', '<unset>')!r}"
+    )
+    assert getattr(typing.built.ev, "seen", None) == "ab", detail
+
+
 def test_enter_commits_it(typing):
     _write(typing, RECORDER.format(tag="edt_0", attr="text"))
     _type(typing, "edt_0", "spectrum.csv")
