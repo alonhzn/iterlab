@@ -113,6 +113,29 @@ def _commit(app, tag, how="<Return>"):
     widget.update()
 
 
+def test_a_box_is_viewable_so_events_reach_it(typing):
+    """What every test below silently depends on.
+
+    Tk delivers a synthesised key event only to a *viewable* widget - one whose
+    every ancestor is mapped - and swallows it otherwise without a word. A box
+    that ends up zero-height is therefore not a box that looks wrong, it is a
+    box no test can type into, and the failures land on the handler instead of
+    on the size that caused them.
+    """
+    typing.root.update()
+    box = typing.built.handles["edt_0"].widget
+
+    def geometry(widget):
+        return f"{widget.winfo_width()}x{widget.winfo_height()}"
+
+    detail = (
+        f"root={geometry(typing.root)} content={geometry(typing.content)} "
+        f"box={geometry(box)} mapped={bool(box.winfo_ismapped())}"
+    )
+    assert box.winfo_viewable(), detail
+    assert box.winfo_height() > 1, detail
+
+
 def test_typing_alone_does_not_reach_the_handler(typing):
     """The whole point: a plot must not redraw once per character."""
     _write(typing, COUNTER.format(tag="edt_0"))
