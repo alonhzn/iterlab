@@ -444,6 +444,19 @@ class Layout:
         """True when there is nothing to use yet — the editor-mode case (FR-001a)."""
         return not self.elements
 
+    def resize(self, width: int, height: int) -> bool:
+        """Record the interface's size. Returns whether it actually changed.
+
+        The size is part of the layout because it describes the interface, and
+        the point of recording it is that reopening an interface gives back the
+        one the researcher was working in rather than the default.
+        """
+        width, height = int(width), int(height)
+        if (self.window.width, self.window.height) == (width, height):
+            return False
+        self.window = Window(width=width, height=height)
+        return True
+
     def tags(self):
         return list(self.elements)
 

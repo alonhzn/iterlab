@@ -8,6 +8,32 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ## [1.4.0] — unreleased
 
+### Fixed
+
+- **An interface reopened at the default size instead of the size it was left
+  at.** The layout has always carried a `window` size and nothing ever wrote to
+  it, so it stayed at 800x450 forever and every launch opened there.
+
+  The editor appeared to remember, which is what made this easy to miss for so
+  long. It does not: it is forced up to a minimum that makes the palette and
+  properties panel fit, and that minimum happened to resemble the size people
+  were working at. Nothing was being remembered anywhere.
+
+  A resize in GUI mode is now written to the layout, debounced by 400 ms —
+  dragging a window edge fires `<Configure>` continuously, and saving per pixel
+  would rewrite the file hundreds of times for one drag. An unchanged size
+  writes nothing, and a minimised window (Tk reports 1x1) is not a size anyone
+  chose.
+
+  **Editor resizes are deliberately not saved.** That window holds the sidebar
+  and has a floor, so it is not the interface's size — saving it would enlarge a
+  deliberately small interface the first time somebody opened the editor on it.
+  There is a test for exactly that.
+
+  Closing also cancels any pending save. One firing into a destroyed root is
+  what printed `invalid command name` on the way out, which I found while
+  testing this rather than after shipping it.
+
 ### Changed
 
 - **A label looks like text rather than a card.** On the editor canvas it is

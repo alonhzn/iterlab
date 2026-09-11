@@ -559,6 +559,18 @@ differ only in how much they throw away.
 It captures your interface only — the top bar with iterlab's own buttons is left out, because it is
 this tool's furniture and not part of what you built.
 
+## The window size
+
+Resize the window while using your interface and that size is remembered. Reopen `demo` and it
+comes back the way you left it.
+
+It is stored in `demo.yaml`, so it travels with the project rather than living on one machine.
+
+Resizing the **editor** is not saved. The editor window also holds the sidebar and is forced up to
+a minimum that makes the palette and properties panel fit, so its size is not your interface's
+size — saving it would quietly enlarge a deliberately small interface the first time you opened the
+editor on it.
+
 ## Positions and sizes
 
 Everything positional is held to **two decimals** — hundredths of the window. Drag something and its

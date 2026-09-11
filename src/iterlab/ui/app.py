@@ -20,6 +20,11 @@ GUI = "gui"
 #: advisory (data-model.md), so the editor may ask for more.
 SIDEBAR_ALLOWANCE = 230
 
+#: How long to wait after a resize before writing it down. Dragging a window
+#: edge fires <Configure> continuously, and saving on every pixel would rewrite
+#: the layout file hundreds of times for one drag.
+RESIZE_SAVE_MS = 400
+
 #: Floors for editor mode, so the palette and every property field fit without
 #: scrolling on a first run. Tk unmaps children that do not fit rather than
 #: clipping them, so an editor that is too small loses controls silently.
@@ -98,6 +103,9 @@ class App:
 
         self._mode_toggle = ModeToggle(self)
 
+        self._resize_save = None
+        self.root.bind("<Configure>", self._on_configure)
+
     # -- mode lifecycle --------------------------------------------------
 
     @property
@@ -113,11 +121,60 @@ class App:
 
         Anything the mode owned — including a GUI-mode `ev` — goes with it.
         """
+        if self._resize_save is not None:
+            # Save now rather than losing a resize made just before a switch.
+            self._cancel_resize_save()
+            self.remember_size()
         if self._built is not None and hasattr(self._built, "teardown"):
             self._built.teardown()
         for child in self._content.winfo_children():
             child.destroy()
         self._built = None
+
+    # -- remembering the size --------------------------------------------
+
+    def _on_configure(self, event):
+        """A resize, possibly one of hundreds in a single drag."""
+        if event.widget is not self.root:
+            # <Configure> bubbles from every child; only the window's own
+            # resize is the researcher changing the size of anything.
+            return
+        if self._resize_save is not None:
+            self.root.after_cancel(self._resize_save)
+        self._resize_save = self.root.after(RESIZE_SAVE_MS, self.remember_size)
+
+    def _cancel_resize_save(self):
+        if self._resize_save is not None:
+            try:
+                self.root.after_cancel(self._resize_save)
+            except Exception:
+                pass
+            self._resize_save = None
+
+    def remember_size(self) -> bool:
+        """Write the current size into the layout, so reopening restores it.
+
+        **GUI mode only.** In editor mode the window also holds the sidebar and
+        is forced up to a minimum that makes the editor usable, so its size is
+        not the interface's size — saving it would quietly enlarge a deliberately
+        small interface the first time someone opened the editor on it.
+        """
+        self._resize_save = None
+        if self.mode != GUI:
+            return False
+        try:
+            width, height = self.root.winfo_width(), self.root.winfo_height()
+        except Exception:
+            # The window is going away. A pending save that fires into a
+            # destroyed root is what printed "invalid command name" on close.
+            return False
+        if width <= 1 or height <= 1:
+            # Not yet mapped, or minimised. Neither is a size anyone chose.
+            return False
+        if not self.interface.layout.resize(width, height):
+            return False
+        self.interface.save_layout()
+        return True
 
     def _size_for(self, mode):
         """Window size for a mode, in pixels.
@@ -273,6 +330,13 @@ class App:
     def close(self) -> None:
         """Tear the mode down, and the window too if this App made it."""
         self.teardown()
+        # Closing resizes things on the way out, which can schedule one more
+        # save. It must not fire into a window that no longer exists.
+        self._cancel_resize_save()
+        try:
+            self.root.unbind("<Configure>")
+        except Exception:
+            pass
         for frame in (self._content, self._chrome):
             if frame is not None:
                 frame.destroy()
