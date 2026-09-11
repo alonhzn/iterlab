@@ -386,9 +386,11 @@ def test_a_clicked_element_is_centred_on_the_click(designer):
     placed = designer.layout.elements["cmd_0"].position
     centre_x = placed.left + placed.width / 2
     centre_y = placed.bottom + placed.height / 2
-    # A centred element can sit up to half a grid step off centre.
+    # A centred element can sit up to half a grid step off centre, on either
+    # axis: positions snap to two decimals, and half of an odd height (0.03/2)
+    # does not land on that grid.
     assert centre_x == pytest.approx(300 / CANVAS_W, abs=6e-3)
-    assert centre_y == pytest.approx(1.0 - 120 / CANVAS_H, abs=1e-3)
+    assert centre_y == pytest.approx(1.0 - 120 / CANVAS_H, abs=6e-3)
 
 
 def test_the_palette_decides_what_a_click_places(designer):

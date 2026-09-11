@@ -119,19 +119,26 @@ def default_text(element_type) -> str:
 #: (width, height) fractions of the window.
 #:
 #: Fractions scale with the window, so no single pair is ideal at every size;
-#: these are chosen so that a maximised window does not produce an absurdly
-#: large control. On 1920x1080 a button lands at roughly 134x38 px, a label at
-#: 154x32 and a plot at 864x432; on the 800x450 default, 56x16, 64x14 and
-#: 360x180.
+#: these are chosen so a maximised window does not produce an absurdly large
+#: control. On 1920x1080 a button lands at 173x32 px and a plot at 864x432; on
+#: the 800x450 default, 72x14 and 360x180.
+#:
+#: Everything that is a single line of text shares one height, so a row of them
+#: lines up without anyone resizing anything. Widths still differ, because a
+#: caption's length is the thing that varies: "Select a Folder" needs more room
+#: than "Click here!".
+LINE_HEIGHT = 0.03
+
 DEFAULT_SIZE = {
     "axes": (0.45, 0.40),
-    "button": (0.09, 0.04),
-    "label": (0.10, 0.03),
+    "button": (0.09, LINE_HEIGHT),
+    "label": (0.10, LINE_HEIGHT),
+    # The boxes are deliberately taller: a field someone types into wants more
+    # room than a caption they only read.
     "text_box": (0.14, 0.04),
     "number_box": (0.07, 0.04),
-    # Wider than a plain button: their captions are longer than "Click here!".
-    "file_select": (0.12, 0.04),
-    "folder_select": (0.13, 0.04),
+    "file_select": (0.12, LINE_HEIGHT),
+    "folder_select": (0.13, LINE_HEIGHT),
 }
 
 #: Style properties, and which element types carry them.

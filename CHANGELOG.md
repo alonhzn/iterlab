@@ -10,6 +10,22 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ### Changed
 
+- **Buttons and both selectors now default to the label's height.** All four are
+  one line of text, so a row of them lines up without anyone resizing anything.
+  Widths still differ, because caption length is what actually varies:
+  "Select a Folder" needs more room than "Click here!". Named `LINE_HEIGHT` and
+  shared, with a test pinning it so the four cannot drift apart again.
+
+  The text boxes are deliberately left taller: a field someone types into wants
+  more room than a caption they only read.
+
+  **One consequence, measured rather than assumed.** At the default 800x450
+  window a caption needs 16 px and 0.03 of the content area gives 12, so a
+  button's text clips there. From roughly 800x720 upward it fits comfortably
+  (20 px and rising). The old 0.04 gave exactly 16 px at the default size, which
+  is why this did not show before. A label has always been 0.03 and has always
+  clipped at that size; this makes buttons match it in both respects.
+
 - **Adding an element is now a deliberate two-step act: pick a type, then place
   it.** The palette starts with nothing armed and returns to that after each
   placement, so one pick puts down one element and the highlight clears.
