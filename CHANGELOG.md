@@ -81,6 +81,16 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ### Fixed
 
+- **The Gate 2 setup tool could not be started.** `tools/verify.py` called
+  `create_element(..., name=...)` several releases after that argument became
+  `tag`, so the manual pass raised `TypeError` before it drew anything. Both its
+  buttons also read "Click here!" once buttons gained a default label, while the
+  checklist says to click **Redraw** and **Break it**. Nothing noticed either,
+  because the only thing that runs this tool is a person about to do a pass —
+  and the results table records that none happened. The tool is now exercised by
+  the suite, including that its button labels are words the checklist actually
+  names.
+
 - **The release gate could be satisfied by prose.** Gate 2 is the recorded
   manual pass, and the check that asks whether it happened looked for the
   version string anywhere in `VERIFICATION.md`. 1.4.0 passed it on the strength

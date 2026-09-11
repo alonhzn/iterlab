@@ -54,19 +54,47 @@ def on_clicked_break_it(ev, event):
 '''
 
 
+#: What the scratch interface holds, in drawing order: type, where, tag, label.
+#: The tags are the names RESEARCH_CODE reaches for and the labels are the words
+#: VERIFICATION.md tells you to click, so all three have to agree. Left to the
+#: defaults, both buttons read "Click here!" and the checklist's "click Redraw"
+#: has nothing to point at.
+ELEMENTS = (
+    ("axes", Rect(0.06, 0.42, 0.88, 0.52), "spectrum", None),
+    ("label", Rect(0.06, 0.33, 0.55, 0.05), "status", ""),
+    ("button", Rect(0.06, 0.16, 0.14, 0.07), "redraw", "Redraw"),
+    ("button", Rect(0.24, 0.16, 0.14, 0.07), "break_it", "Break it"),
+)
+
+
+def build(work, name="verify", _root=None):
+    """Draw the scratch interface and write its research code. Returns the app.
+
+    Separate from `main` so the suite can build it without opening a window.
+    This called `create_element(..., name=...)` for several releases after the
+    argument was renamed to `tag`, so Gate 2 could not be started at all - and
+    nothing noticed, because the only thing that runs this is a person about to
+    do a manual pass.
+    """
+    app = open_interface(str(Path(work) / name), _show=False, _root=_root)
+    designer = app.built
+    for element_type, rect, tag, label in ELEMENTS:
+        designer.create_element(element_type, rect, tag=tag)
+        if label is not None:
+            app.interface.layout.relabel(tag, label)
+    app.interface.save_layout()
+    designer.redraw()
+    (Path(work) / f"{name}.py").write_text(RESEARCH_CODE, encoding="utf-8")
+    designer.select(None)
+    return app
+
+
 def main():
     work = Path(tempfile.mkdtemp(prefix="iterlab_verify_"))
     name = "verify"
     print(f"scratch interface: {work / name}.py\n")
 
-    app = open_interface(str(work / name), _show=False)
-    designer = app.built
-    designer.create_element("axes", Rect(0.06, 0.42, 0.88, 0.52), name="spectrum")
-    designer.create_element("label", Rect(0.06, 0.33, 0.55, 0.05), name="status")
-    designer.create_element("button", Rect(0.06, 0.16, 0.14, 0.07), name="redraw")
-    designer.create_element("button", Rect(0.24, 0.16, 0.14, 0.07), name="break_it")
-    (work / f"{name}.py").write_text(RESEARCH_CODE, encoding="utf-8")
-    designer.select(None)
+    app = build(work, name)
 
     print(__doc__.split("The point is")[0].strip())
     print("\nOpen VERIFICATION.md alongside and work through the checklist.")
