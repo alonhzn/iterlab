@@ -215,7 +215,12 @@ def build_button(parent, element, dispatcher):
     All three use release rather than press, so every mouse button behaves the
     same way: the click counts when it completes on the widget.
     """
-    widget = tk.Button(parent, text=element.label or element.tag, font=base_font())
+    # `element.label`, not `label or tag`: an empty caption means an empty
+    # button. Falling back to the tag made sense when a new element had no
+    # text at all, but every type has a real default now, so the fallback only
+    # ever fired when someone had deliberately cleared the text - which is the
+    # one moment it is certainly not what they wanted.
+    widget = tk.Button(parent, text=element.label, font=base_font())
     tag = element.tag
 
     def fire(kind, **fields):
@@ -438,7 +443,8 @@ def build_label(parent, element, dispatcher):
     interaction is still available if the researcher writes one (FR-017a)."""
     widget = tk.Label(
         parent,
-        text=element.label or element.tag,
+        # Empty means empty. See the note in build_button.
+        text=element.label,
         font=base_font(),
         anchor="w",
         justify="left",
@@ -702,7 +708,12 @@ class FolderSelectHandle(_SelectHandle):
 
 
 def _build_select(parent, element, dispatcher, *, handle_class, interface_path):
-    widget = tk.Button(parent, text=element.label or element.tag, font=base_font())
+    # `element.label`, not `label or tag`: an empty caption means an empty
+    # button. Falling back to the tag made sense when a new element had no
+    # text at all, but every type has a real default now, so the fallback only
+    # ever fired when someone had deliberately cleared the text - which is the
+    # one moment it is certainly not what they wanted.
+    widget = tk.Button(parent, text=element.label, font=base_font())
     tag = element.tag
     handle_box = {}
 

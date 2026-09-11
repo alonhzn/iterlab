@@ -295,6 +295,11 @@ def on_clicked_run_fit(ev, event):
 | `ev.status.text` | the text (`.label` also works) |
 | every style property below | |
 
+Empty means empty. Clear a label's text, in the editor or with
+`ev.status.text = ""`, and it shows nothing — useful for a status line that
+should stay blank until there is something to say. The editor still writes the
+tag on it so you can find it on the canvas; your interface does not.
+
 A label gets no generated handler, because a label is usually read rather than clicked. If you do
 want it clickable, write `on_clicked_<tag>` yourself and it will be wired.
 
@@ -605,5 +610,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 1.3.0.** Everything above is verified against that release. If a description here
+**Guide version 1.3.2.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

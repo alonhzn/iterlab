@@ -6,6 +6,28 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.3.2] — 2026-09-11
+
+### Fixed
+
+- **An element with no text showed its tag instead of nothing.** Clearing a
+  label's text gave a label reading `lbl_0`; the same applied to a button and to
+  the two selectors.
+
+  It was deliberate once. In the first implementation a newly drawn element had
+  no text at all, so without the fallback it was an invisible rectangle. Every
+  type has carried a real default since 1.1.0 — "Information:", "Click here!" —
+  which means the fallback could only fire when somebody had *deliberately*
+  cleared the text, and that is the one moment it is certainly not what they
+  meant. A blank status line that fills in later is an ordinary thing to want.
+
+  **The editor still shows the tag** on an element with no text, and that is not
+  an oversight: there you are working on the elements themselves, and one with
+  nothing in it still has to be findable and clickable on the canvas. The editor
+  labels what you are editing; the interface shows what you wrote.
+
+  Nothing changes about what a new element says.
+
 ## [1.3.1] — 2026-09-09
 
 Repository only. Nothing here changes the installed package, so 1.3.0 on PyPI is
