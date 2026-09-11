@@ -6,6 +6,29 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.5.0] — unreleased
+
+### Added
+
+- **A showcase project, in `examples/`.** Three plots — sines at several
+  frequencies, a scatter cloud, a bar chart with error bars — plus two boxes,
+  three buttons and the labels around them:
+
+  ```console
+  iterlab examples/showcase
+  ```
+
+  It is a sanity harness first: one command, and every element type that draws
+  is on screen doing something. Its `on_startup` builds the data and every
+  handler under it only draws, so editing the file and clicking **Redraw** shows
+  the loop the project exists for.
+
+  The suite opens it, runs its startup and uses its controls, because a curated
+  project is code nobody runs until someone does — which is exactly how
+  `tools/verify.py` came to spend several releases unable to start.
+
+  `examples/` now ships in the source distribution alongside `docs/`.
+
 ## [1.4.0] — 2026-09-11
 
 ### Changed

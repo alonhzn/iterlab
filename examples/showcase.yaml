@@ -1,0 +1,68 @@
+schema_version: 7
+iterlab_version: 1.4.0
+window: {width: 1120, height: 700}
+toolbar_collapsed: false
+elements:
+  lbl_title:
+    type: label
+    position: [0.03, 0.93, 0.55, 0.05]
+    label: Signal explorer
+    style: {font_size: 15, bold: true, align: left}
+  lbl_status:
+    type: label
+    position: [0.6, 0.93, 0.37, 0.05]
+    label: ''
+    style: {text_color: '#5c6470', align: right}
+  ax_waves:
+    type: axes
+    position: [0.03, 0.52, 0.6, 0.39]
+  ax_scatter:
+    type: axes
+    position: [0.66, 0.52, 0.31, 0.39]
+  ax_bars:
+    type: axes
+    position: [0.03, 0.15, 0.6, 0.33]
+  lbl_freq:
+    type: label
+    position: [0.66, 0.44, 0.31, 0.04]
+    label: Frequencies (Hz)
+    style: {align: left}
+  edt_freq:
+    type: text_box
+    position: [0.66, 0.38, 0.31, 0.05]
+    label: 1, 2.5, 4
+  lbl_points:
+    type: label
+    position: [0.66, 0.31, 0.14, 0.04]
+    label: Samples
+    style: {align: left}
+  val_points:
+    type: number_box
+    position: [0.81, 0.31, 0.16, 0.05]
+    label: '240'
+  lbl_noise:
+    type: label
+    position: [0.66, 0.24, 0.14, 0.04]
+    label: Noise
+    style: {align: left}
+  val_noise:
+    type: number_box
+    position: [0.81, 0.24, 0.16, 0.05]
+    label: '0.25'
+  cmd_redraw:
+    type: button
+    position: [0.66, 0.15, 0.15, 0.06]
+    label: Redraw
+  cmd_shuffle:
+    type: button
+    position: [0.82, 0.15, 0.15, 0.06]
+    label: Shuffle
+  cmd_reset:
+    type: button
+    position: [0.03, 0.05, 0.14, 0.06]
+    label: Reset
+  lbl_hint:
+    type: label
+    position: [0.2, 0.05, 0.77, 0.05]
+    label: Edit showcase.py and click Redraw - the data stays loaded
+    style: {text_color: '#5c6470', align: left}
