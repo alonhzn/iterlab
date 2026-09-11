@@ -128,8 +128,16 @@ class Designer:
             side="left", fill="y"
         )
 
-        self.canvas = tk.Canvas(container, bg=theme.SURFACE, highlightthickness=0)
-        self.canvas.pack(side="left", fill="both", expand=True)
+        # A backdrop the canvas sits on. When the window is taller than the
+        # interface - which it is whenever the toolbar needs the room - the
+        # difference shows here, so the edge of the canvas is the edge of the
+        # window the researcher will run in, visibly.
+        self.stage = tk.Frame(container, bg=theme.BG)
+        self.stage.pack(side="left", fill="both", expand=True)
+
+        self.canvas = tk.Canvas(self.stage, bg=theme.SURFACE, highlightthickness=0)
+        self.canvas.place(x=0, y=0, relwidth=1.0, height=1)
+        self.stage.bind("<Configure>", lambda _e: self._fit_canvas())
         self._tag_tip = PointerTip(self.canvas)
         self.canvas.bind("<ButtonPress-1>", self._on_press)
         self.canvas.bind("<B1-Motion>", self._on_drag)
@@ -143,6 +151,7 @@ class Designer:
         self.canvas.focus_set()
 
         self._apply_collapsed()
+        self._fit_canvas()
         self.redraw()
 
     def teardown(self):
@@ -509,6 +518,32 @@ class Designer:
         self.sidebar.bind_wheel_to_children()
         self.redraw()
 
+    def _fit_canvas(self):
+        """Give the canvas exactly the interface's height, filling the width.
+
+        Width comes from the window, so dragging the editor wider makes the
+        interface wider. Height is the interface's own, because the window is
+        kept tall enough for the toolbar and that extra height is the editor's,
+        not the interface's - letting the canvas take it would inflate every
+        short interface the moment someone opened the editor.
+        """
+        from .app import MIN_EDITOR_HEIGHT
+
+        available = self.stage.winfo_height()
+        # The stored size *is* the area, so no arithmetic is needed here.
+        wanted = self.layout.window.height
+
+        if self.app.root.winfo_height() > MIN_EDITOR_HEIGHT:
+            # Taller than the floor, so this height is one the researcher chose
+            # by dragging - the interface follows it.
+            height = available
+        else:
+            # At the floor. The extra height belongs to the toolbar, not to the
+            # interface, so it shows as dead space rather than inflating a short
+            # interface the moment the editor opens.
+            height = min(wanted, available)
+        self.canvas.place_configure(x=0, y=0, relwidth=1.0, height=max(height, 1))
+
     # -- the toolbar -----------------------------------------------------
 
     def _toolbar_header(self, parent):
@@ -547,10 +582,10 @@ class Designer:
         """Show whichever face matches the current state."""
         if self.collapsed:
             self.sidebar.outer.pack_forget()
-            self.strip.pack(side="left", fill="y", before=self.canvas)
+            self.strip.pack(side="left", fill="y", before=self.stage)
         else:
             self.strip.pack_forget()
-            self.sidebar.outer.pack(side="left", fill="y", before=self.canvas)
+            self.sidebar.outer.pack(side="left", fill="y", before=self.stage)
 
     def toggle_toolbar(self) -> bool:
         """Fold the toolbar away, or bring it back.

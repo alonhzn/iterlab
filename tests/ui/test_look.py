@@ -147,11 +147,45 @@ def test_the_editor_is_the_interface_plus_the_toolbar(mapped, make_app):
     which is what made the canvas a different shape from the interface: an
     element drawn square came out stretched when run.
     """
+    from iterlab.ui.app import MIN_EDITOR_HEIGHT
+
     app = make_app()
     app.root.update()
     window = app.interface.layout.window
     assert app.root.winfo_width() == window.width + app.toolbar_allowance()
-    assert app.root.winfo_height() == window.height
+    # Taller than the interface when the interface is short, so the toolbar has
+    # room for its own controls. The canvas does not grow into that space.
+    assert app.root.winfo_height() == max(
+        window.height + app.chrome_height(), MIN_EDITOR_HEIGHT
+    )
+
+
+def test_the_toolbar_always_has_room_for_its_own_controls(mapped, make_app):
+    """Why the editor has a floor at all, stated as a consequence.
+
+    Tk does not scroll or clip a packed column: a child that does not fit is
+    simply never mapped. So an editor sized to a short interface silently loses
+    the bottom of the properties panel - the researcher sees a panel that looks
+    complete, and the controls below the fold are not there. That is how this
+    went red on CI: a suite that edits properties was editing widgets that had
+    fallen off the window.
+    """
+    from iterlab.layout.schema import Rect
+
+    app = make_app()
+    app.interface.layout.resize(800, 200)      # far shorter than the toolbar
+    app.apply_size_for_mode()
+    app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1), tag="go")
+    app.built.select("go")
+    app.root.update()
+    app.root.update_idletasks()
+
+    panel = app.built.properties
+    for name in ("_message", "_danger_zone", "_body"):
+        widget = getattr(panel, name)
+        assert widget.winfo_ismapped(), f"{name} fell off the bottom of the toolbar"
+        bottom = widget.winfo_rooty() + widget.winfo_height()
+        assert bottom <= app.root.winfo_rooty() + app.root.winfo_height(), name
 
 
 def test_the_canvas_is_exactly_the_interface(mapped, make_app):

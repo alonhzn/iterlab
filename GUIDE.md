@@ -591,6 +591,12 @@ while editing comes out square.
 Resize either mode and the other follows. The editor window is your interface plus the toolbar
 beside it, so switching modes changes the window by the toolbar's width and nothing else.
 
+One exception, and it is visible rather than silent. The toolbar needs a certain height for its own
+controls, so the editor window will not go below that even when your interface is shorter. When that
+happens the canvas keeps its own height and the space below it is left blank, rather than the canvas
+stretching to fill it. Blank space is the honest answer: a canvas that grew there would no longer be
+the window you are going to run in.
+
 The size is remembered in `demo.yaml`, so it travels with the project rather than living on one
 machine.
 

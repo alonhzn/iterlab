@@ -20,9 +20,13 @@ shape, and the command are all consumed directly by researcher-written code.
   the forgetting, was the confusing part — the sizes were never comparable in
   the first place.
 
-  The editor's floor is gone, replaced by a floor on the interface itself
-  (320x240). The toolbar scrolls when it does not fit and folds when it is in
-  the way, so the editor no longer needs to be bigger than what it is editing.
+  The editor keeps a floor, but it no longer reaches the interface. The window
+  stays tall enough for the toolbar's own controls; below that height the canvas
+  holds its own size and the leftover shows as blank space under it. Tk does not
+  clip a column that does not fit - it silently leaves the bottom controls
+  unmapped - so without the floor the properties panel loses its lower half and
+  still looks complete. The interface itself now has the only floor that
+  constrains it (320x240).
 
 - **Editor resizes are now saved**, reversing 1.4.0's earlier rule. That rule
   existed because the editor window was not the interface's size; now it is,

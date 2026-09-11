@@ -55,9 +55,10 @@ def test_resize_reports_when_nothing_changed():
 
 
 def test_resizing_in_gui_mode_is_remembered(gui):
+    """The stored size is the interface *area*, not the window around it."""
     _resize(gui, 1240, 680)
     assert gui.remember_size() is True
-    assert gui.interface.layout.window == Window(1240, 680)
+    assert gui.interface.layout.window == Window(1240, 680 - gui.chrome_height())
 
 
 def test_it_reaches_the_file_not_just_memory(gui):
@@ -66,19 +67,25 @@ def test_it_reaches_the_file_not_just_memory(gui):
 
     _resize(gui, 1100, 620)
     gui.remember_size()
-    assert store.load(gui.interface.layout_path).window == Window(1100, 620)
+    assert store.load(gui.interface.layout_path).window == Window(
+        1100, 620 - gui.chrome_height()
+    )
 
 
 def test_reopening_gives_back_that_size(gui, make_app):
     """The reported bug, end to end."""
     _resize(gui, 1240, 680)
     gui.remember_size()
+    area = gui.interface.layout.window
     gui.close()
 
     reopened = make_app()
     reopened.root.update_idletasks()
     assert reopened.mode == "gui", "an interface with elements opens in GUI mode"
-    assert reopened.interface.layout.window == Window(1240, 680)
+    assert reopened.interface.layout.window == area
+    assert (reopened.root.winfo_width(), reopened.root.winfo_height()) == (
+        area.width, area.height + reopened.chrome_height()
+    )
 
 
 def test_an_unchanged_size_does_not_rewrite_the_layout(gui):
@@ -114,27 +121,34 @@ def test_resizing_the_editor_resizes_the_interface(gui):
     the interface's size. Now the window is the interface plus the toolbar and
     nothing else, so the interface size can be read straight back out of it.
     """
+    from iterlab.ui.app import MIN_EDITOR_HEIGHT
+
     gui.toggle()                      # into the editor
-    _resize(gui, 1000 + gui.toolbar_allowance(), 560)
+    # Above the editor's floor, so this is a height the researcher chose by
+    # dragging rather than one the toolbar insisted on.
+    height = MIN_EDITOR_HEIGHT + 120
+    _resize(gui, 1000 + gui.toolbar_allowance(), height)
     assert gui.remember_size() is True
-    assert gui.interface.layout.window == Window(1000, 560)
+    assert gui.interface.layout.window == Window(1000, height - gui.chrome_height())
 
     gui.toggle()                      # and the interface follows
     gui.root.update_idletasks()
-    assert (gui.root.winfo_width(), gui.root.winfo_height()) == (1000, 560)
+    assert gui.content.winfo_width() == 1000
+    assert gui.content.winfo_height() == height - gui.chrome_height()
 
 
 def test_a_small_interface_survives_a_visit_to_the_editor(gui):
     """The editor no longer has a floor, so it cannot inflate a small interface."""
     _resize(gui, 620, 400)
     gui.remember_size()
+    small = gui.interface.layout.window
 
-    gui.toggle()
+    gui.toggle()                       # the editor is taller, for its toolbar
     gui.root.update_idletasks()
     gui.toggle()
     gui.root.update_idletasks()
 
-    assert gui.interface.layout.window == Window(620, 400)
+    assert gui.interface.layout.window == small
 
 
 # -- the timer cannot outlive the window -----------------------------------

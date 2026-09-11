@@ -13,7 +13,7 @@ import pytest
 
 from iterlab.layout.schema import DEFAULT_INTERACTION, Rect
 
-from _helpers import keysym_for
+from _helpers import press_key
 
 pytestmark = pytest.mark.ui
 
@@ -102,7 +102,7 @@ def _type(app, tag, text, clear=False):
         widget.delete(0, "end")
     for character in str(text):
         widget.insert("end", character)
-        widget.event_generate("<KeyRelease>", keysym=keysym_for(character), when="now")
+        press_key(widget, character)
     app.root.update()
 
 

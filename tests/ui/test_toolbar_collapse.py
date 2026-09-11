@@ -113,8 +113,11 @@ def test_the_run_window_is_unaffected(editor):
     app = editor.app
     expected = app.interface.layout.window
     app.toggle()
+    app.root.update()
     app.root.update_idletasks()
-    assert (app.root.winfo_width(), app.root.winfo_height()) == (
+    # The interface *area*, not the window: the run window is that area plus the
+    # mode bar above it, and folding the toolbar must not disturb either.
+    assert (app.content.winfo_width(), app.content.winfo_height()) == (
         expected.width, expected.height
     )
 

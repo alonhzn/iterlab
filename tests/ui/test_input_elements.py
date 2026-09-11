@@ -9,6 +9,7 @@ negative or a decimal.
 import pytest
 
 from iterlab.layout.schema import DEFAULT_TEXT, Rect
+from _helpers import press_key
 
 pytestmark = pytest.mark.ui
 
@@ -239,6 +240,6 @@ def test_a_handler_written_by_hand_is_still_wired(typed_gui):
     # event before that lands it nowhere.
     typed_gui.root.update()
     box.widget.insert(0, "x")
-    box.widget.event_generate("<KeyRelease>", keysym="x")
+    press_key(box.widget, "x")
     typed_gui.root.update()
     assert getattr(typed_gui.built.ev, "typed", None) == "x"

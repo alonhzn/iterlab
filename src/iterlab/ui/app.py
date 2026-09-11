@@ -27,13 +27,22 @@ TOOLBAR_ALLOWANCE = 87
 #: the layout file hundreds of times for one drag.
 RESIZE_SAVE_MS = 400
 
-#: A floor on the interface itself, not on the editor. Small enough that a
-#: compact dialog is still expressible; large enough that the window is not a
-#: sliver nobody can grab. The toolbar scrolls when it does not fit, and
-#: collapses when it is in the way, so the editor no longer needs a floor of its
-#: own - one was what made the editor a different size from the interface.
+#: The hair line under the top bar.
+SEPARATOR_HEIGHT = 1
+
+#: A floor on the interface itself. Small enough that a compact dialog is still
+#: expressible; large enough that the window is not a sliver nobody can grab.
 MIN_INTERFACE_WIDTH = 320
 MIN_INTERFACE_HEIGHT = 240
+
+#: The editor window is never shorter than this, whatever the interface is.
+#:
+#: Not a floor on the *interface* — that is what made the two modes different
+#: shapes before. The canvas stays exactly the interface's size and the leftover
+#: height is dead space below it. Without this, an 800x450 interface gave the
+#: toolbar 402 px for 596 px of controls, and the property fields fell off the
+#: bottom of the window where nothing could reach them.
+MIN_EDITOR_HEIGHT = 660
 
 _TK_MISSING_MESSAGE = """\
 iterlab needs tkinter, which is missing from this Python installation.
@@ -84,12 +93,13 @@ class App:
         from . import icon
 
         icon.apply(self.root)
-        self.root.geometry("{}x{}".format(*self._size_for(start_mode)))
 
         # Chrome lives outside the content frame so it survives every rebuild.
         self._chrome = self.tk.Frame(self.root, bg=theme.BG)
         self._chrome.pack(side="top", fill="x")
-        self.tk.Frame(self.root, bg=theme.BORDER, height=1).pack(side="top", fill="x")
+        self.tk.Frame(
+            self.root, bg=theme.BORDER, height=SEPARATOR_HEIGHT
+        ).pack(side="top", fill="x")
 
         self._content = self.tk.Frame(self.root, bg=theme.BG)
         self._content.pack(side="top", fill="both", expand=True)
@@ -106,6 +116,10 @@ class App:
         from .modetoggle import ModeToggle
 
         self._mode_toggle = ModeToggle(self)
+
+        # Sized only now: the window is the interface area plus this top bar,
+        # so the bar has to exist before its height can be asked for.
+        self.root.geometry("{}x{}".format(*self._size_for(start_mode)))
 
         self._resize_save = None
         #: True while a mode switch is resizing the window itself. A resize we
@@ -169,12 +183,19 @@ class App:
         is the canvas, and the window is that plus the toolbar — so resizing
         either mode describes the same thing, and changing one changes the other.
         """
+        # Both readings are of the area the researcher's elements live in, never
+        # of the window around it. That is what makes the two modes comparable:
+        # the top bar is iterlab's, and is not part of anyone's interface.
         if self.mode == GUI:
-            return self.root.winfo_width(), self.root.winfo_height()
-        return (
-            max(self.root.winfo_width() - self.toolbar_allowance(), 1),
-            self.root.winfo_height(),
-        )
+            return (
+                max(self._content.winfo_width(), 1),
+                max(self._content.winfo_height(), 1),
+            )
+        canvas = getattr(self._built, "canvas", None)
+        if canvas is None:  # pragma: no cover - only between teardown and build
+            window = self.interface.layout.window
+            return window.width, window.height
+        return max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
 
     def remember_size(self) -> bool:
         """Write the current size into the layout, so reopening restores it.
@@ -200,6 +221,16 @@ class App:
         self.interface.save_layout()
         return True
 
+    def chrome_height(self) -> int:
+        """How much of the window the top bar takes, in pixels.
+
+        Asked of the bar itself rather than measured as window-minus-content.
+        A measurement is only true once Tk has laid the window out, and this is
+        needed *while* building one - taking it too early produced a one-pixel
+        canvas and a window that then shrank to its floor.
+        """
+        return self._chrome.winfo_reqheight() + SEPARATOR_HEIGHT
+
     def toolbar_allowance(self) -> int:
         """How much wider the editor window is than the interface."""
         collapsed = getattr(self.interface.layout, "toolbar_collapsed", False)
@@ -219,10 +250,13 @@ class App:
         """
         window = self.interface.layout.window
         width = max(window.width, MIN_INTERFACE_WIDTH)
-        height = max(window.height, MIN_INTERFACE_HEIGHT)
+        height = max(window.height, MIN_INTERFACE_HEIGHT) + self.chrome_height()
         if mode != EDITOR:
             return width, height
-        return width + self.toolbar_allowance(), height
+        # Taller than the interface when the interface is short, so the toolbar
+        # always has room for its own controls. The canvas does not grow into
+        # that - see Designer, which pins it to the interface's own height.
+        return width + self.toolbar_allowance(), max(height, MIN_EDITOR_HEIGHT)
 
     def apply_size_for_mode(self) -> None:
         """Set the window to the size this mode should be.
@@ -232,7 +266,13 @@ class App:
         and the window grows or shrinks by the width of the toolbar.
         """
         self.root.update_idletasks()
-        self.root.geometry("{}x{}".format(*self._size_for(self.mode)))
+        width, height = self._size_for(self.mode)
+        if (self.root.winfo_width(), self.root.winfo_height()) == (width, height):
+            # Already right. Resizing a window that is the correct size costs
+            # nothing visually but can cost the window its focus on X11, and
+            # then nothing typed reaches anything.
+            return
+        self.root.geometry(f"{width}x{height}")
 
     def build(self, mode) -> None:
         """Build `mode` into the content frame, replacing whatever was there."""
