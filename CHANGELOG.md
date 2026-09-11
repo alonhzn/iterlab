@@ -8,6 +8,23 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ## [1.4.0] — unreleased
 
+### Changed
+
+- **Adding an element is now a deliberate two-step act: pick a type, then place
+  it.** The palette starts with nothing armed and returns to that after each
+  placement, so one pick puts down one element and the highlight clears.
+
+  A type used to be armed permanently, defaulting to the first in the list, so
+  *any* click on the canvas background produced an element — including the click
+  a researcher meant as "get out of what I was doing". They then had to find the
+  stray element and delete it, and the most likely place for it to land was
+  underneath something else.
+
+  With nothing armed, a background click does what a background click normally
+  does: commits whatever was being typed, drops the selection, and takes the
+  focus. Existing elements are still selectable, movable and deletable — the
+  canvas is not inert, it just does not manufacture things.
+
 ### Added
 
 - **Hovering an element in the editor names its tag.** A button reading "Click

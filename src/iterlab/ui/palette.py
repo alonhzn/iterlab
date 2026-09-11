@@ -33,6 +33,10 @@ ROW_PAD = 4
 ICON_SIZE = 18
 
 
+#: The value meaning "no type chosen".
+NOTHING = ""
+
+
 class _Card:
     """One clickable type in the palette."""
 
@@ -100,19 +104,25 @@ class Palette:
             font=theme.FONT_SMALL, anchor="w",
         ).pack(fill="x", pady=(0, 6))
 
-        self.selected = tk.StringVar(value=ELEMENT_TYPES[0])
+        #: Empty means "not adding anything". The palette starts that way and
+        #: returns to it after each placement, so drawing an element is always a
+        #: deliberate two-step act: pick a type, then put it somewhere. With a
+        #: type always armed, any stray click on the canvas produced an element
+        #: the researcher then had to find and delete.
+        self.selected = tk.StringVar(value=NOTHING)
         self._on_select = on_select
         self._cards = {}
 
         for element_type in ELEMENT_TYPES:
             self._cards[element_type] = _Card(self.frame, element_type, self._choose)
 
-        tk.Label(
+        self.hint = tk.Label(
             self.frame,
-            text="Drag on the canvas, or click to drop one.",
+            text="",
             bg=theme.BG, fg=theme.TEXT_MUTED, font=theme.FONT_SMALL,
             wraplength=165, justify="left", anchor="w",
-        ).pack(fill="x", pady=(6, 0))
+        )
+        self.hint.pack(fill="x", pady=(6, 0))
 
         # Keep the cards in step with the variable however it is set, so that
         # `palette.selected.set(...)` behaves the same as clicking a card.
@@ -124,11 +134,27 @@ class Palette:
         if self._on_select:
             self._on_select(element_type)
 
+    def clear(self) -> None:
+        """Stop adding. Called after a placement, so one pick places one element."""
+        self.selected.set(NOTHING)
+
     def _refresh(self):
         current = self.selected.get()
         for element_type, card in self._cards.items():
             card.set_selected(element_type == current)
+        # The hint says what the next click will do, which is the thing a person
+        # actually needs to know and the only visible difference between the two
+        # states besides the highlight.
+        self.hint.configure(
+            text=(
+                f"Drag on the canvas to size a {DISPLAY_NAME.get(current, current).lower()}, "
+                "or click to drop one."
+                if current
+                else "Pick a type above, then drag or click on the canvas."
+            )
+        )
 
     @property
-    def element_type(self) -> str:
-        return self.selected.get()
+    def element_type(self):
+        """The type to place next, or None when nothing is armed."""
+        return self.selected.get() or None

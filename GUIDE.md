@@ -55,9 +55,16 @@ demo.py      your code - you own this, iterlab only ever appends to it
 
 ### Draw something
 
-1. Pick a type from **ADD ELEMENT** on the left.
+1. Pick a type from **ADD ELEMENT** on the left. It highlights.
 2. **Drag** on the canvas to size it, or **click** to drop one at a sensible default size.
 3. The **PROPERTIES** panel opens with the tag pre-filled. Type over it if you want a better one.
+
+The highlight clears once you have placed it: **one pick puts down one element.** To add another,
+pick a type again.
+
+With nothing picked, clicking the canvas background does not create anything — it just deselects
+whatever was selected and takes the cursor out of whichever field you were typing in. That is the
+click you use to get out of what you were doing.
 
 Draw an **Axes** and a **Button**. They will be tagged `ax_0` and `cmd_0`.
 

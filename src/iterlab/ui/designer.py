@@ -396,7 +396,17 @@ class Designer:
             }
             return
 
+        # Empty canvas. What happens next depends on whether the researcher has
+        # armed a type in the palette.
         self.select(None)
+        if self.palette.element_type is None:
+            # Nothing armed, so this is not an attempt to draw anything. It is
+            # the ordinary "click the background to get out of what I was
+            # doing": the selection is dropped above, the pending property edit
+            # was committed at the top of this method, and focus has moved to
+            # the canvas. Starting a create drag here is what used to litter the
+            # layout with elements nobody asked for.
+            return
         self._drag = {"mode": "create", "origin": (event.x, event.y), "name": None}
 
     def _on_drag(self, event):
@@ -444,6 +454,10 @@ class Designer:
                 else self._to_fractions(ox, oy, event.x, event.y)
             )
             self.create_element(element_type, rect)
+            # One pick places one element. Leaving the type armed is how a
+            # researcher ends up with three buttons stacked on top of each other
+            # while trying to click somewhere else.
+            self.palette.clear()
             return
 
         name = drag["name"]
