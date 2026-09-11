@@ -8,6 +8,36 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ## [1.4.0] — unreleased
 
+### Added
+
+- **A project records which iterlab last edited it, and is backed up when that
+  changes.** The layout carries an `iterlab_version` stamp; opening it with a
+  different version — newer *or* older — copies both files aside first, as
+  `demo.yaml.v1.3.0.bak` and `demo.py.v1.3.0.bak`. The version in the name is
+  the one that wrote them, since that is what the copy preserves.
+
+  Either direction, deliberately. The downgrade is the dangerous one: an older
+  build meets a key or an element type it has never heard of. An upgrade is
+  safer, because migrations run forward and are tested, but a migration is still
+  a rewrite of the researcher's layout.
+
+  The `.py` is copied and never otherwise touched. If a version change ever went
+  wrong across stub injection or a rename, that is the copy that would matter
+  most — a layout can be redrawn, an algorithm cannot.
+
+  An existing backup is not overwritten: the one already on disk is the older
+  and more original of the two. A folder that cannot be written to does not stop
+  the interface opening, since a folder iterlab cannot write is one it cannot
+  damage either — but it says so rather than failing silently.
+
+  A project made before this has no stamp, and that is the commonest crossing of
+  all, so its copies are named `.vunknown.bak` and it is announced like any
+  other. An early return on "no recorded version" made exactly that case silent,
+  which a test now prevents.
+
+- **Layout schema 5 → 6** for the new key, with a no-op migration. An older file
+  simply has no stamp, which already means what it needs to mean.
+
 ### Fixed
 
 - **An interface reopened at the default size instead of the size it was left

@@ -25,7 +25,7 @@ from .schema import (
 )
 
 _ELEMENT_KEYS = {"type", "position", "label", "style", "extensions"}
-_TOP_KEYS = {"schema_version", "window", "elements"}
+_TOP_KEYS = {"schema_version", "iterlab_version", "window", "elements"}
 _WINDOW_KEYS = {"width", "height"}
 
 
@@ -99,11 +99,23 @@ def _migrate_4_to_5(raw):
     return raw
 
 
+def _migrate_5_to_6(raw):
+    """v6 records which iterlab last wrote the file.
+
+    An older file simply has no stamp, and an absent stamp already means "some
+    build from before this existed" - so there is nothing to fill in. The
+    version moves because a v5 build would reject the new key outright.
+    """
+    raw["schema_version"] = 6
+    return raw
+
+
 MIGRATIONS = {
     1: _migrate_1_to_2,
     2: _migrate_2_to_3,
     3: _migrate_3_to_4,
     4: _migrate_4_to_5,
+    5: _migrate_5_to_6,
 }
 
 
@@ -163,7 +175,13 @@ def load(path) -> Layout:
     if not isinstance(elements_raw, dict):
         raise LayoutInvalid("elements should be a mapping of tag to element")
 
-    layout = Layout(window=window, elements={}, schema_version=SCHEMA_VERSION)
+    stamp = raw.get("iterlab_version") or ""
+    layout = Layout(
+        window=window,
+        elements={},
+        schema_version=SCHEMA_VERSION,
+        iterlab_version=str(stamp),
+    )
     for tag, body in elements_raw.items():
         if not isinstance(body, dict):
             raise LayoutInvalid(f"element {tag!r} should be a mapping")
@@ -201,8 +219,13 @@ def _read_style(raw, element_type) -> Style:
 
 
 def _serialize(layout: Layout) -> str:
+    from .. import __version__
+
     body = {
         "schema_version": SCHEMA_VERSION,
+        # Always the version doing the writing, never what the file said before:
+        # saving *is* this version touching the file.
+        "iterlab_version": __version__,
         "window": {"width": layout.window.width, "height": layout.window.height},
         "elements": {},
     }

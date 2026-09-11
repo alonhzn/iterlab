@@ -13,7 +13,7 @@ from ..errors import NameInUse, NameInvalid
 
 #: Written into every layout file. Bumped only when the format changes in a way
 #: an older build could not read (contracts/layout-schema.md).
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 #: Element types this build knows. A closed set: an unknown type in a file of a
 #: recognized schema version is a defect, not something to skip over.
@@ -438,6 +438,10 @@ class Layout:
     window: Window = field(default_factory=Window)
     elements: dict = field(default_factory=dict)
     schema_version: int = SCHEMA_VERSION
+    #: Which iterlab last wrote this file. Provenance, not layout: it is read
+    #: from the file and never set by hand, because saving always stamps the
+    #: version doing the saving. Empty means a build from before this existed.
+    iterlab_version: str = ""
 
     @property
     def is_empty(self) -> bool:

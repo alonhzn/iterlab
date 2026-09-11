@@ -559,6 +559,29 @@ differ only in how much they throw away.
 It captures your interface only — the top bar with iterlab's own buttons is left out, because it is
 this tool's furniture and not part of what you built.
 
+## Opening a project on a different iterlab
+
+Every `demo.yaml` records which iterlab last wrote it. Open it with a different one — newer **or
+older** — and both files are copied aside before anything touches them:
+
+```
+demo.yaml.v1.3.0.bak
+demo.py.v1.3.0.bak
+```
+
+The version in the name is the one that wrote them, because that is what the copy preserves. A
+project made before iterlab 1.4.0 has no stamp at all, so its copies are named `.vunknown.bak`.
+
+Going **back** to an older iterlab is the case this exists for: an older build meets a layout key or
+an element type it has never heard of. Going forward is safer, since migrations run forward and are
+tested, but a migration still rewrites your layout and a copy costs nothing.
+
+Your `.py` is copied and never otherwise touched by this. A layout can be redrawn; an algorithm
+cannot.
+
+An existing backup is never overwritten — the one already there is the older and more original of
+the two. Delete them whenever you like; iterlab never reads them back.
+
 ## The window size
 
 Resize the window while using your interface and that size is remembered. Reopen `demo` and it
