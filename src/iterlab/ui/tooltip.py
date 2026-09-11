@@ -19,6 +19,11 @@ from . import theme
 #: somewhere else, short enough to feel like an answer rather than a wait.
 DELAY_MS = 450
 
+#: Shorter, for the editor canvas. There the pointer is already on the thing
+#: being asked about and the answer is one word, so the chrome delay reads as a
+#: hesitation. Not zero: it would flicker on every pass across the canvas.
+FAST_DELAY_MS = 200
+
 
 class Tooltip:
     """Attach hover text to one widget."""
@@ -83,6 +88,78 @@ class Tooltip:
         if self._window is not None:
             self._window.destroy()
             self._window = None
+
+    @property
+    def visible(self) -> bool:
+        return self._window is not None
+
+
+class PointerTip:
+    """Hover text for something that is not a widget of its own.
+
+    Canvas items cannot carry `<Enter>` and `<Leave>` the way widgets do, so
+    this is driven from a motion handler instead: it is told what the pointer is
+    over, and shows or hides itself accordingly.
+
+    It does not follow the pointer while visible. Once it has appeared for a
+    target it stays put until the target changes, because a label that chases
+    the cursor is harder to read than one that holds still.
+    """
+
+    def __init__(self, widget, delay_ms=FAST_DELAY_MS):
+        self.widget = widget
+        self.delay_ms = delay_ms
+        self.text = ""
+        self._after_id = None
+        self._window = None
+        self._at = (0, 0)
+
+    def show_for(self, text, x_root, y_root) -> None:
+        """Point at something. Repeated calls for the same text do nothing."""
+        if text == self.text and (self._window is not None or self._after_id is not None):
+            return
+        self._cancel()
+        self.text = text
+        self._at = (x_root, y_root)
+        self._after_id = self.widget.after(self.delay_ms, self._pop)
+
+    def hide(self) -> None:
+        self._cancel()
+        self.text = ""
+
+    # -- internals -------------------------------------------------------
+
+    def _cancel(self):
+        if self._after_id is not None:
+            try:
+                self.widget.after_cancel(self._after_id)
+            except Exception:
+                pass
+            self._after_id = None
+        if self._window is not None:
+            self._window.destroy()
+            self._window = None
+
+    def _pop(self):
+        self._after_id = None
+        if not self.text:
+            return
+        x, y = self._at
+        window = tk.Toplevel(self.widget)
+        window.wm_overrideredirect(True)
+        window.wm_geometry(f"+{int(x)}+{int(y)}")
+        tk.Label(
+            window,
+            text=self.text,
+            bg=theme.TOOLTIP_BG,
+            fg=theme.TOOLTIP_TEXT,
+            font=theme.FONT_SMALL,
+            padx=6,
+            pady=3,
+            relief="solid",
+            borderwidth=1,
+        ).pack()
+        self._window = window
 
     @property
     def visible(self) -> bool:

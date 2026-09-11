@@ -416,6 +416,10 @@ reopening it each time.
 
 The canvas previews your choices, so you can judge them without switching modes.
 
+**Hover an element to see its tag.** A button showing "Click here!" does not tell you whether it is
+`cmd_0` or `run_fit`, and that is the name your code uses — so hovering it names it. An axes is left
+out, because its tag is already drawn on it.
+
 ---
 
 ## Changing an element's tag
@@ -610,5 +614,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 1.3.2.** Everything above is verified against that release. If a description here
+**Guide version 1.4.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

@@ -6,7 +6,28 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [1.3.2] — 2026-09-11
+## [1.4.0] — unreleased
+
+### Added
+
+- **Hovering an element in the editor names its tag.** A button reading "Click
+  here!" gives no clue whether it is `cmd_0` or `run_fit`, and that name is what
+  the researcher's code uses — so the tooltip answers where the question is
+  asked, rather than making them select the element and read the properties
+  panel.
+
+  Shown for everything that displays text, including the two selectors. An axes
+  is left out on purpose: it already has its tag drawn on it, so a tooltip would
+  only repeat what is there.
+
+  Faster than the top-bar tooltips (200 ms against 450 ms), because the pointer
+  is already on the thing being asked about and the answer is one word. Not
+  instant: zero delay would flicker across the canvas on any movement. It holds
+  still once shown rather than following the pointer, and gets out of the way on
+  a press or a drag.
+
+  Canvas items cannot carry `<Enter>` and `<Leave>` the way widgets can, so this
+  is driven from the motion handler that already reports what a press would do.
 
 ### Fixed
 

@@ -36,6 +36,7 @@ from ..layout.schema import (
 )
 from . import theme
 from .palette import Palette
+from .tooltip import PointerTip
 from .scroll import ScrollableColumn
 from .properties import PropertiesPanel
 
@@ -110,10 +111,12 @@ class Designer:
 
         self.canvas = tk.Canvas(container, bg=theme.SURFACE, highlightthickness=0)
         self.canvas.pack(side="left", fill="both", expand=True)
+        self._tag_tip = PointerTip(self.canvas)
         self.canvas.bind("<ButtonPress-1>", self._on_press)
         self.canvas.bind("<B1-Motion>", self._on_drag)
         self.canvas.bind("<ButtonRelease-1>", self._on_release)
         self.canvas.bind("<Motion>", self._on_hover)
+        self.canvas.bind("<Leave>", lambda _e: self._tag_tip.hide())
         self.canvas.bind("<Configure>", lambda _e: self.redraw())
         self.canvas.bind("<Escape>", lambda _e: self.select(None))
         self.canvas.bind("<Delete>", lambda _e: self.delete_selected())
@@ -315,14 +318,38 @@ class Designer:
     def _on_hover(self, event):
         """Say what a press would do here, before it happens."""
         if self._drag:
+            self._tag_tip.hide()
             return
         handle = self._handle_at(event.x, event.y)
+        tag = self._element_at(event.x, event.y)
         if handle:
             self._set_cursor(CURSORS[handle])
-        elif self._element_at(event.x, event.y):
+        elif tag:
             self._set_cursor(MOVE_CURSOR)
         else:
             self._set_cursor(CREATE_CURSOR)
+        self._show_tag_tip(tag, event)
+
+    def _show_tag_tip(self, tag, event):
+        """Name the element under the pointer, for the ones that hide their tag.
+
+        An element showing text shows the *text*, so while designing there is no
+        way to tell which `ev.<tag>` it is without selecting it and reading the
+        properties panel. An axes is left out deliberately: it already has its
+        tag drawn on it, so a tooltip would only repeat what is there.
+        """
+        element = self.layout.elements.get(tag) if tag else None
+        if element is None or not element.displays_text:
+            self._tag_tip.hide()
+            return
+        # x_root is absent from a synthesised event; derive it from the canvas
+        # so this works whether the motion came from Tk or from a test.
+        x_root = getattr(event, "x_root", None)
+        y_root = getattr(event, "y_root", None)
+        if x_root is None or y_root is None:
+            x_root = self.canvas.winfo_rootx() + event.x
+            y_root = self.canvas.winfo_rooty() + event.y
+        self._tag_tip.show_for(f"tag: {tag}", x_root + 14, y_root + 20)
 
     # -- selection, move, resize, creation --------------------------------
 
@@ -333,6 +360,7 @@ class Designer:
         return None
 
     def _on_press(self, event):
+        self._tag_tip.hide()
         # Before anything: a value typed into the properties panel and not yet
         # committed would otherwise be lost the moment this rebuilds the panel.
         # focus_set() below cannot do it - Tk delivers the resulting FocusOut on
