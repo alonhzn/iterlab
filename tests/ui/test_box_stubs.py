@@ -143,6 +143,30 @@ def test_typing_alone_does_not_reach_the_handler(typing):
     assert getattr(typing.built.ev, "runs", 0) == 0
 
 
+def test_the_edited_file_is_the_one_the_dispatcher_loads(typing):
+    """Between the edit and the handler there are three places to lose it.
+
+    The file can be written somewhere the loader is not watching; the loader can
+    decide nothing changed; the name can be missing from what it loaded. All
+    three end the same way - a silent no-op - so this says which.
+    """
+    from iterlab.runtime.loader import stamp as file_stamp
+
+    _write(typing, RECORDER.format(tag="edt_0", attr="text"))
+    loader = typing.built.loader
+    on_disk = typing.interface.code_path
+
+    assert str(loader.path) == str(on_disk), f"{loader.path} != {on_disk}"
+    assert loader.refresh(), f"load failed: {loader.load_error}"
+    names = [n for n in dir(loader.module) if n.startswith("on_")]
+    detail = (
+        f"state={loader.state} stamp={loader.stamp} disk={file_stamp(on_disk)} "
+        f"names={names} source={on_disk.read_text(encoding='utf-8')!r}"
+    )
+    assert loader.resolve("on_changed_edt_0") is not None, detail
+    assert "on_changed_edt_0" in names, detail
+
+
 def test_enter_commits_it(typing):
     _write(typing, RECORDER.format(tag="edt_0", attr="text"))
     _type(typing, "edt_0", "spectrum.csv")
