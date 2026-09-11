@@ -15,21 +15,25 @@ from __future__ import annotations
 EDITOR = "editor"
 GUI = "gui"
 
-#: Room the editor needs beyond the interface itself: the sidebar and its
-#: separator. The layout's own window size describes the *interface*, and is
-#: advisory (data-model.md), so the editor may ask for more.
-SIDEBAR_ALLOWANCE = 230
+#: Room the editor needs beyond the interface itself: the toolbar and the hair
+#: line beside it. Added to the interface size rather than eating into it, so
+#: the canvas is *exactly* the window the researcher will run in - the same
+#: pixels, not merely the same proportions.
+SIDEBAR_ALLOWANCE = 211
+TOOLBAR_ALLOWANCE = 87
 
 #: How long to wait after a resize before writing it down. Dragging a window
 #: edge fires <Configure> continuously, and saving on every pixel would rewrite
 #: the layout file hundreds of times for one drag.
 RESIZE_SAVE_MS = 400
 
-#: Floors for editor mode, so the palette and every property field fit without
-#: scrolling on a first run. Tk unmaps children that do not fit rather than
-#: clipping them, so an editor that is too small loses controls silently.
-MIN_EDITOR_WIDTH = 1080
-MIN_EDITOR_HEIGHT = 760
+#: A floor on the interface itself, not on the editor. Small enough that a
+#: compact dialog is still expressible; large enough that the window is not a
+#: sliver nobody can grab. The toolbar scrolls when it does not fit, and
+#: collapses when it is in the way, so the editor no longer needs a floor of its
+#: own - one was what made the editor a different size from the interface.
+MIN_INTERFACE_WIDTH = 320
+MIN_INTERFACE_HEIGHT = 240
 
 _TK_MISSING_MESSAGE = """\
 iterlab needs tkinter, which is missing from this Python installation.
@@ -104,6 +108,11 @@ class App:
         self._mode_toggle = ModeToggle(self)
 
         self._resize_save = None
+        #: True while a mode switch is resizing the window itself. A resize we
+        #: performed is not the researcher choosing a size, and a debounced save
+        #: firing in the gap between changing mode and Tk applying the new
+        #: geometry would record the *other* mode's width as the interface size.
+        self._switching = False
         self.root.bind("<Configure>", self._on_configure)
 
     # -- mode lifecycle --------------------------------------------------
@@ -135,6 +144,8 @@ class App:
 
     def _on_configure(self, event):
         """A resize, possibly one of hundreds in a single drag."""
+        if self._switching:
+            return
         if event.widget is not self.root:
             # <Configure> bubbles from every child; only the window's own
             # resize is the researcher changing the size of anything.
@@ -151,19 +162,32 @@ class App:
                 pass
             self._resize_save = None
 
+    def interface_size(self):
+        """The interface's size in pixels, whichever mode is showing.
+
+        In GUI mode the window *is* the interface. In editor mode the interface
+        is the canvas, and the window is that plus the toolbar — so resizing
+        either mode describes the same thing, and changing one changes the other.
+        """
+        if self.mode == GUI:
+            return self.root.winfo_width(), self.root.winfo_height()
+        return (
+            max(self.root.winfo_width() - self.toolbar_allowance(), 1),
+            self.root.winfo_height(),
+        )
+
     def remember_size(self) -> bool:
         """Write the current size into the layout, so reopening restores it.
 
-        **GUI mode only.** In editor mode the window also holds the sidebar and
-        is forced up to a minimum that makes the editor usable, so its size is
-        not the interface's size — saving it would quietly enlarge a deliberately
-        small interface the first time someone opened the editor on it.
+        Saved from **either** mode now. They describe one number between them,
+        which is the whole point: resize the editor and the interface follows,
+        resize the interface and the editor follows.
         """
         self._resize_save = None
-        if self.mode != GUI:
+        if self._switching:
             return False
         try:
-            width, height = self.root.winfo_width(), self.root.winfo_height()
+            width, height = self.interface_size()
         except Exception:
             # The window is going away. A pending save that fires into a
             # destroyed root is what printed "invalid command name" on close.
@@ -176,41 +200,54 @@ class App:
         self.interface.save_layout()
         return True
 
+    def toolbar_allowance(self) -> int:
+        """How much wider the editor window is than the interface."""
+        collapsed = getattr(self.interface.layout, "toolbar_collapsed", False)
+        return TOOLBAR_ALLOWANCE if collapsed else SIDEBAR_ALLOWANCE
+
     def _size_for(self, mode):
         """Window size for a mode, in pixels.
 
-        GUI mode uses the interface's own size. Editor mode adds the sidebar
-        and applies a floor, because the editor has controls of its own to fit
-        and the interface may have been designed small.
+        One number describes both: the interface's own size. GUI mode is exactly
+        that; editor mode is that plus the toolbar beside it, so the canvas comes
+        out the same pixel size as the window the researcher will run in.
+
+        The editor used to add the toolbar *and* apply a floor of its own, which
+        is what made the two modes different shapes - an element drawn square
+        came out stretched, because the canvas and the interface were not the
+        same rectangle.
         """
         window = self.interface.layout.window
+        width = max(window.width, MIN_INTERFACE_WIDTH)
+        height = max(window.height, MIN_INTERFACE_HEIGHT)
         if mode != EDITOR:
-            return window.width, window.height
-        return (
-            max(window.width + SIDEBAR_ALLOWANCE, MIN_EDITOR_WIDTH),
-            max(window.height, MIN_EDITOR_HEIGHT),
-        )
+            return width, height
+        return width + self.toolbar_allowance(), height
 
-    def _grow_for_editor(self) -> None:
-        """Enlarge the window if it is too small to edit in — never shrink it.
+    def apply_size_for_mode(self) -> None:
+        """Set the window to the size this mode should be.
 
-        Shrinking would discard a size the researcher chose deliberately, and
-        switching modes should not rearrange their desktop.
+        Both modes are derived from one remembered number, so switching is not
+        a resize the researcher has to think about: the canvas keeps its pixels
+        and the window grows or shrinks by the width of the toolbar.
         """
         self.root.update_idletasks()
-        width, height = self._size_for(EDITOR)
-        current_w = max(self.root.winfo_width(), 1)
-        current_h = max(self.root.winfo_height(), 1)
-        if current_w < width or current_h < height:
-            self.root.geometry(f"{max(current_w, width)}x{max(current_h, height)}")
+        self.root.geometry("{}x{}".format(*self._size_for(self.mode)))
 
     def build(self, mode) -> None:
         """Build `mode` into the content frame, replacing whatever was there."""
         self.teardown()
-        self.mode = mode
-        if mode == EDITOR:
-            self._grow_for_editor()
-        self._built = self._construct(mode)
+        self._switching = True
+        try:
+            self.mode = mode
+            self.apply_size_for_mode()
+            self._built = self._construct(mode)
+            # Let Tk apply the geometry before listening again, or the first
+            # Configure we hear is the window still at its old width.
+            self.root.update_idletasks()
+        finally:
+            self._switching = False
+            self._cancel_resize_save()
 
     def restart_session(self) -> None:
         """Throw the session away and start again in GUI mode.

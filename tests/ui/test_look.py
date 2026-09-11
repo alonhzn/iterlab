@@ -140,14 +140,32 @@ def test_palette_rows_stay_compact_as_types_are_added(mapped, make_app):
         assert height <= 34, f"{element_type} row is {height}px, too tall to scale"
 
 
-def test_the_editor_opens_large_enough_for_its_own_controls(mapped, make_app):
-    """Editor mode adds a sidebar the interface size knows nothing about."""
-    from iterlab.ui.app import MIN_EDITOR_HEIGHT, MIN_EDITOR_WIDTH
+def test_the_editor_is_the_interface_plus_the_toolbar(mapped, make_app):
+    """One remembered number describes both modes.
 
+    The editor used to apply a floor of its own on top of adding the sidebar,
+    which is what made the canvas a different shape from the interface: an
+    element drawn square came out stretched when run.
+    """
     app = make_app()
     app.root.update()
-    assert app.root.winfo_width() >= MIN_EDITOR_WIDTH - 1
-    assert app.root.winfo_height() >= MIN_EDITOR_HEIGHT - 1
+    window = app.interface.layout.window
+    assert app.root.winfo_width() == window.width + app.toolbar_allowance()
+    assert app.root.winfo_height() == window.height
+
+
+def test_the_canvas_is_exactly_the_interface(mapped, make_app):
+    """What you draw on is the window you will run in, to the pixel."""
+    from iterlab.layout.schema import Rect
+
+    app = make_app()
+    app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1), tag="go")
+    app.root.update_idletasks()
+    canvas = (app.built.canvas.winfo_width(), app.built.canvas.winfo_height())
+
+    app.toggle()
+    app.root.update_idletasks()
+    assert (app.content.winfo_width(), app.content.winfo_height()) == canvas
 
 
 def test_switching_to_the_editor_never_shrinks_the_window(mapped, make_app):

@@ -25,7 +25,9 @@ from .schema import (
 )
 
 _ELEMENT_KEYS = {"type", "position", "label", "style", "extensions"}
-_TOP_KEYS = {"schema_version", "iterlab_version", "window", "elements"}
+_TOP_KEYS = {
+    "schema_version", "iterlab_version", "window", "elements", "toolbar_collapsed",
+}
 _WINDOW_KEYS = {"width", "height"}
 
 
@@ -110,12 +112,23 @@ def _migrate_5_to_6(raw):
     return raw
 
 
+def _migrate_6_to_7(raw):
+    """v7 records whether the editor's toolbar is collapsed.
+
+    Absent means expanded, which is what every older file means. The version
+    moves because a v6 build rejects the new key outright.
+    """
+    raw["schema_version"] = 7
+    return raw
+
+
 MIGRATIONS = {
     1: _migrate_1_to_2,
     2: _migrate_2_to_3,
     3: _migrate_3_to_4,
     4: _migrate_4_to_5,
     5: _migrate_5_to_6,
+    6: _migrate_6_to_7,
 }
 
 
@@ -181,6 +194,7 @@ def load(path) -> Layout:
         elements={},
         schema_version=SCHEMA_VERSION,
         iterlab_version=str(stamp),
+        toolbar_collapsed=bool(raw.get("toolbar_collapsed", False)),
     )
     for tag, body in elements_raw.items():
         if not isinstance(body, dict):
@@ -227,6 +241,7 @@ def _serialize(layout: Layout) -> str:
         # saving *is* this version touching the file.
         "iterlab_version": __version__,
         "window": {"width": layout.window.width, "height": layout.window.height},
+        "toolbar_collapsed": layout.toolbar_collapsed,
         "elements": {},
     }
     for tag, element in layout.elements.items():

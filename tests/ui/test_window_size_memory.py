@@ -106,30 +106,33 @@ def test_a_minimised_window_is_not_recorded(gui, monkeypatch):
 # -- but not from the editor -----------------------------------------------
 
 
-def test_the_editor_size_is_not_saved(gui):
-    """It holds the sidebar and has a floor, so it is not the interface's size.
+def test_resizing_the_editor_resizes_the_interface(gui):
+    """The two describe one number between them.
 
-    Saving it would enlarge a deliberately small interface the first time
-    somebody opened the editor on it.
+    This is the reverse of what it used to be. The editor's window was ignored
+    because it held the sidebar *and* a floor of its own, so its size was not
+    the interface's size. Now the window is the interface plus the toolbar and
+    nothing else, so the interface size can be read straight back out of it.
     """
-    _resize(gui, 1000, 560)
-    gui.remember_size()
-    small = gui.interface.layout.window
+    gui.toggle()                      # into the editor
+    _resize(gui, 1000 + gui.toolbar_allowance(), 560)
+    assert gui.remember_size() is True
+    assert gui.interface.layout.window == Window(1000, 560)
 
-    gui.toggle()                      # into the editor, which grows the window
-    _resize(gui, 1400, 900)
-    assert gui.remember_size() is False
-    assert gui.interface.layout.window == small
+    gui.toggle()                      # and the interface follows
+    gui.root.update_idletasks()
+    assert (gui.root.winfo_width(), gui.root.winfo_height()) == (1000, 560)
 
 
-def test_a_small_interface_survives_a_visit_to_the_editor(gui, make_app):
-    """The case that made GUI-only saving the right rule."""
+def test_a_small_interface_survives_a_visit_to_the_editor(gui):
+    """The editor no longer has a floor, so it cannot inflate a small interface."""
     _resize(gui, 620, 400)
     gui.remember_size()
 
-    gui.toggle()                      # the editor forces itself much larger
+    gui.toggle()
     gui.root.update_idletasks()
     gui.toggle()
+    gui.root.update_idletasks()
 
     assert gui.interface.layout.window == Window(620, 400)
 

@@ -41,6 +41,15 @@ from .scroll import ScrollableColumn
 from .properties import PropertiesPanel
 
 SIDEBAR_WIDTH = 210
+
+#: Collapsed, the toolbar keeps just enough width to say what it is. A bare
+#: arrow would be cheaper in pixels and worse to meet: "Toolbar" tells you what
+#: expanding gets you, where a chevron on an empty strip does not.
+TOOLBAR_WIDTH = 86
+
+#: The hair line between the toolbar and the canvas. Named because the window
+#: allowances in `app` are these widths plus this, and a test holds them in step.
+SEPARATOR_WIDTH = 1
 FILL = theme.ELEMENT_FILL
 OUTLINE = theme.ELEMENT_EDGE
 SELECTED_OUTLINE = theme.ACCENT
@@ -98,8 +107,11 @@ class Designer:
 
         # Scrollable: Tk stops *mapping* children that no longer fit rather
         # than clipping them, so an overflowing sidebar loses widgets silently.
+        self.collapsed = bool(getattr(self.layout, "toolbar_collapsed", False))
+
         self.sidebar = ScrollableColumn(container, SIDEBAR_WIDTH)
         self.sidebar.outer.pack(side="left", fill="y")
+        self._toolbar_header(self.sidebar.inner)
         self.palette = Palette(self.sidebar.inner, on_select=None)
         self.properties = PropertiesPanel(self.sidebar.inner, self)
         # Traced rather than hooked through the palette's own callback, so a
@@ -107,7 +119,14 @@ class Designer:
         self.palette.selected.trace_add("write", self._on_palette_change)
         self.sidebar.bind_wheel_to_children()
 
-        tk.Frame(container, bg=theme.BORDER, width=1).pack(side="left", fill="y")
+        # The collapsed face, packed in the sidebar's place when it is folded.
+        self.strip = tk.Frame(container, width=TOOLBAR_WIDTH, bg=theme.BG)
+        self.strip.pack_propagate(False)
+        self._strip_face(self.strip)
+
+        tk.Frame(container, bg=theme.BORDER, width=SEPARATOR_WIDTH).pack(
+            side="left", fill="y"
+        )
 
         self.canvas = tk.Canvas(container, bg=theme.SURFACE, highlightthickness=0)
         self.canvas.pack(side="left", fill="both", expand=True)
@@ -123,6 +142,7 @@ class Designer:
         self.canvas.bind("<BackSpace>", lambda _e: self.delete_selected())
         self.canvas.focus_set()
 
+        self._apply_collapsed()
         self.redraw()
 
     def teardown(self):
@@ -488,6 +508,65 @@ class Designer:
         self.sidebar._on_inner_resize()
         self.sidebar.bind_wheel_to_children()
         self.redraw()
+
+    # -- the toolbar -----------------------------------------------------
+
+    def _toolbar_header(self, parent):
+        """The row that folds the toolbar away."""
+        row = tk.Frame(parent, bg=theme.BG, cursor="hand2")
+        row.pack(fill="x", padx=10, pady=(10, 0))
+        arrow = tk.Canvas(row, width=12, height=12, bg=theme.BG, highlightthickness=0)
+        arrow.pack(side="left")
+        # Drawn, not a glyph: a chevron character depends on the platform font
+        # having it, and renders as a hollow box when it does not.
+        arrow.create_polygon(9, 2, 9, 10, 3, 6, fill=theme.TEXT_MUTED, outline="")
+        label = tk.Label(
+            row, text="Toolbar", bg=theme.BG, fg=theme.TEXT_MUTED,
+            font=theme.FONT_SMALL, anchor="w",
+        )
+        label.pack(side="left", padx=(5, 0))
+        for widget in (row, arrow, label):
+            widget.bind("<Button-1>", lambda _e: self.toggle_toolbar())
+
+    def _strip_face(self, parent):
+        """What is left when it is folded: the word, and the way back."""
+        row = tk.Frame(parent, bg=theme.BG, cursor="hand2")
+        row.pack(side="top", fill="x", padx=8, pady=10)
+        arrow = tk.Canvas(row, width=12, height=12, bg=theme.BG, highlightthickness=0)
+        arrow.pack(side="left")
+        arrow.create_polygon(3, 2, 3, 10, 9, 6, fill=theme.TEXT_MUTED, outline="")
+        label = tk.Label(
+            row, text="Toolbar", bg=theme.BG, fg=theme.TEXT_MUTED,
+            font=theme.FONT_SMALL, anchor="w",
+        )
+        label.pack(side="left", padx=(4, 0))
+        for widget in (row, arrow, label):
+            widget.bind("<Button-1>", lambda _e: self.toggle_toolbar())
+
+    def _apply_collapsed(self):
+        """Show whichever face matches the current state."""
+        if self.collapsed:
+            self.sidebar.outer.pack_forget()
+            self.strip.pack(side="left", fill="y", before=self.canvas)
+        else:
+            self.strip.pack_forget()
+            self.sidebar.outer.pack(side="left", fill="y", before=self.canvas)
+
+    def toggle_toolbar(self) -> bool:
+        """Fold the toolbar away, or bring it back.
+
+        The window changes width by the difference, so the canvas keeps exactly
+        the pixels it had: folding the toolbar gives you room on the desk, not a
+        different interface.
+        """
+        self.collapsed = not self.collapsed
+        self.layout.toolbar_collapsed = self.collapsed
+        self._apply_collapsed()
+        self.interface.save_layout()
+        self.app.apply_size_for_mode()
+        self.app.root.update_idletasks()
+        self.redraw()
+        return self.collapsed
 
     def _on_palette_change(self, *_args):
         """Choosing a different element type is also "focus went elsewhere"."""

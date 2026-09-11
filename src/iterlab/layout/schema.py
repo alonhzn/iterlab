@@ -13,7 +13,7 @@ from ..errors import NameInUse, NameInvalid
 
 #: Written into every layout file. Bumped only when the format changes in a way
 #: an older build could not read (contracts/layout-schema.md).
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 #: Element types this build knows. A closed set: an unknown type in a file of a
 #: recognized schema version is a defect, not something to skip over.
@@ -442,6 +442,9 @@ class Layout:
     #: from the file and never set by hand, because saving always stamps the
     #: version doing the saving. Empty means a build from before this existed.
     iterlab_version: str = ""
+    #: Whether the editor's toolbar is collapsed to its strip. Kept with the
+    #: layout so it travels with the project, which is what was asked for.
+    toolbar_collapsed: bool = False
 
     @property
     def is_empty(self) -> bool:

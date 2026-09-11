@@ -8,7 +8,44 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ## [1.4.0] — unreleased
 
+### Changed
+
+- **One size describes both modes, and the canvas is the run window.** The
+  editor canvas is now exactly the interface's pixels, and the editor window is
+  that plus the toolbar beside it. Resize either and the other follows.
+
+  The old model added the toolbar *and* applied a floor of its own (1080x760) to
+  the editor, so the two modes were different **shapes**. Positions are
+  fractions, so an element drawn square came out stretched when run. That, not
+  the forgetting, was the confusing part — the sizes were never comparable in
+  the first place.
+
+  The editor's floor is gone, replaced by a floor on the interface itself
+  (320x240). The toolbar scrolls when it does not fit and folds when it is in
+  the way, so the editor no longer needs to be bigger than what it is editing.
+
+- **Editor resizes are now saved**, reversing 1.4.0's earlier rule. That rule
+  existed because the editor window was not the interface's size; now it is,
+  minus a known allowance, so it can be read straight back out.
+
 ### Added
+
+- **The toolbar folds to a strip.** Click **Toolbar** to fold it away and again
+  to bring it back. The window narrows by the difference, so the canvas keeps
+  exactly the pixels it had — folding tidies the desk without resizing the
+  interface. Called "Toolbar" rather than left as a bare chevron, because a
+  chevron on an empty strip does not say what expanding would get you.
+
+  Kept in the layout, so it travels with the project. Selecting an element while
+  folded does not open it: nothing moves unless the researcher moves it.
+
+- **Layout schema 6 → 7** for the folded state, no-op migration; absent means
+  expanded, which is what every older file means.
+
+- A test holds the two window allowances in step with the two panel widths they
+  stand for. They live in different modules, and if they drift the canvas
+  silently stops being the run window — which would go unnoticed, because
+  nothing would look broken.
 
 - **A project records which iterlab last edited it, and is backed up when that
   changes.** The layout carries an `iterlab_version` stamp; opening it with a

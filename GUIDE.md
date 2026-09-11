@@ -584,15 +584,24 @@ the two. Delete them whenever you like; iterlab never reads them back.
 
 ## The window size
 
-Resize the window while using your interface and that size is remembered. Reopen `demo` and it
-comes back the way you left it.
+**There is one size, and it is your interface's.** The canvas you draw on is exactly the window you
+will run in — the same pixels, not merely the same proportions — so an element that looks square
+while editing comes out square.
 
-It is stored in `demo.yaml`, so it travels with the project rather than living on one machine.
+Resize either mode and the other follows. The editor window is your interface plus the toolbar
+beside it, so switching modes changes the window by the toolbar's width and nothing else.
 
-Resizing the **editor** is not saved. The editor window also holds the sidebar and is forced up to
-a minimum that makes the palette and properties panel fit, so its size is not your interface's
-size — saving it would quietly enlarge a deliberately small interface the first time you opened the
-editor on it.
+The size is remembered in `demo.yaml`, so it travels with the project rather than living on one
+machine.
+
+### The toolbar
+
+Click **Toolbar** at the top of the panel to fold it away to a strip, and click it again to bring it
+back. The window narrows and widens by the difference, so **the canvas keeps exactly the pixels it
+had**: tidying your desk never resizes your interface.
+
+Folding is remembered with the project too. Selecting an element while folded does not pop the panel
+open — nothing moves unless you move it.
 
 ## Positions and sizes
 
