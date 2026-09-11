@@ -151,6 +151,7 @@ One row per release. An empty table means nothing has been released.
 | Version | Date | Platform | Outcome | Defects found |
 |---|---|---|---|---|
 | 0.1.0-dev | 2026-09-07 | Windows 11 | Not a release — development walkthrough only | 1 (see below) |
+| 1.4.0 | 2026-09-11 | Windows 11 | Pass — reported by the maintainer | 0 |
 
 ### 2026-09-07 — development walkthrough
 
@@ -168,3 +169,12 @@ Fixed by reading and writing the researcher's file with newline translation
 disabled, and matching the file's own line endings when appending. Two
 regression tests now cover it, so this belongs to Gate 1 from here on and is
 deliberately **not** added to the checklist above.
+### 2026-09-11 — 1.4.0
+
+The first recorded release pass. `tools/verify.py` had been raising `TypeError`
+on its first element since `create_element`'s `name` argument became `tag`, so
+until this release the pass could not be started at all — which is why every
+row above this one is absent. Fixed, and the suite now runs the tool.
+
+Worked through on Windows 11 by the maintainer, who reported everything
+working. Nothing recorded as found.
