@@ -9,7 +9,7 @@ negative or a decimal.
 import pytest
 
 from iterlab.layout.schema import DEFAULT_TEXT, Rect
-from _helpers import press_key
+from _helpers import give_focus, press_key
 
 pytestmark = pytest.mark.ui
 
@@ -235,9 +235,9 @@ def test_a_handler_written_by_hand_is_still_wired(typed_gui):
         "def on_key_edt_0(ev, event):\n    ev.typed = ev.edt_0.text\n", encoding="utf-8"
     )
     box = typed_gui.built.handles["edt_0"]
-    box.widget.focus_set()
-    # Focus is granted on the next pass through the event loop; generating a key
-    # event before that lands it nowhere.
+    # Focus is what a key event is routed by, and asking for it is not enough
+    # where no window manager exists to grant it. See `give_focus`.
+    give_focus(box.widget)
     typed_gui.root.update()
     box.widget.insert(0, "x")
     press_key(box.widget, "x")

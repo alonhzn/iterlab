@@ -38,3 +38,21 @@ def press_key(widget, character):
     except tkinter.TclError:
         widget.event_generate(f"<KeyRelease-{character}>", when="now")
         return False
+
+
+def give_focus(widget):
+    """Put the keyboard on `widget`, with no window manager to ask.
+
+    Tk routes a key event to whichever widget holds focus and drops it when no
+    window of the application does - so a key generated on an unfocused box
+    never reaches its bindings, and the test fails several steps later on a
+    handler that was never called.
+
+    `focus_set()` only *requests* focus: it asks the window manager to give the
+    toplevel the keyboard first. Under Xvfb there is no window manager to ask,
+    so the request is never granted and every synthesised keystroke is
+    discarded. `focus_force()` takes the keyboard directly, which is rude of a
+    real application and exactly right for a test.
+    """
+    widget.focus_force()
+    widget.update()

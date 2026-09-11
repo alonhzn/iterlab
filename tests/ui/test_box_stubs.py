@@ -13,7 +13,7 @@ import pytest
 
 from iterlab.layout.schema import DEFAULT_INTERACTION, Rect
 
-from _helpers import press_key
+from _helpers import give_focus, press_key
 
 pytestmark = pytest.mark.ui
 
@@ -96,7 +96,7 @@ def _write(app, source):
 def _type(app, tag, text, clear=False):
     """Type, without committing. Nothing here should reach a `changed` handler."""
     widget = app.built.handles[tag].widget
-    widget.focus_set()
+    give_focus(widget)
     app.root.update()
     if clear:
         widget.delete(0, "end")
@@ -113,27 +113,27 @@ def _commit(app, tag, how="<Return>"):
     widget.update()
 
 
-def test_a_box_is_viewable_so_events_reach_it(typing):
+def test_a_generated_keystroke_actually_reaches_the_box(typing):
     """What every test below silently depends on.
 
-    Tk delivers a synthesised key event only to a *viewable* widget - one whose
-    every ancestor is mapped - and swallows it otherwise without a word. A box
-    that ends up zero-height is therefore not a box that looks wrong, it is a
-    box no test can type into, and the failures land on the handler instead of
-    on the size that caused them.
+    Tk hands a key event to whichever widget holds focus and quietly drops it
+    when no window of the application holds any - which is the normal state
+    under a bare X server, where there is no window manager to grant focus to
+    anyone. The keystroke then never happens, and the failure surfaces as a
+    handler that did not run, several steps from the cause. So check the
+    keystroke itself first.
     """
-    typing.root.update()
     box = typing.built.handles["edt_0"].widget
+    arrived = []
+    box.bind("<Return>", lambda _e: arrived.append("return"), add="+")
+    give_focus(box)
+    box.event_generate("<Return>", when="now")
+    typing.root.update()
 
-    def geometry(widget):
-        return f"{widget.winfo_width()}x{widget.winfo_height()}"
-
-    detail = (
-        f"root={geometry(typing.root)} content={geometry(typing.content)} "
-        f"box={geometry(box)} mapped={bool(box.winfo_ismapped())}"
+    assert arrived, (
+        f"the box never saw the key: focus={typing.root.focus_get()} "
+        f"viewable={box.winfo_viewable()} mapped={bool(box.winfo_ismapped())}"
     )
-    assert box.winfo_viewable(), detail
-    assert box.winfo_height() > 1, detail
 
 
 def test_typing_alone_does_not_reach_the_handler(typing):
@@ -165,40 +165,6 @@ def test_the_edited_file_is_the_one_the_dispatcher_loads(typing):
     )
     assert loader.resolve("on_changed_edt_0") is not None, detail
     assert "on_changed_edt_0" in names, detail
-
-
-def test_where_the_commit_is_lost(typing):
-    """TEMPORARY: report which link of the chain drops the commit."""
-    _write(typing, RECORDER.format(tag="edt_0", attr="text"))
-    box = typing.built.handles["edt_0"].widget
-    seen = []
-    box.bind("<Return>", lambda _e: seen.append("return"), add="+")
-    box.bind("<KeyRelease>", lambda _e: seen.append("keyrelease"), add="+")
-    box.bind("<FocusOut>", lambda _e: seen.append("focusout"), add="+")
-
-    dispatcher = typing.built.dispatcher
-    original = dispatcher.invoke
-    invoked = []
-
-    def spy(handler_name, event=None, args=None):
-        invoked.append(handler_name)
-        return original(handler_name, event=event, args=args)
-
-    dispatcher.invoke = spy
-
-    box.focus_set()
-    typing.root.update()
-    box.insert("end", "ab")
-    press_key(box, "b")
-    box.event_generate("<Return>", when="now")
-    typing.root.update()
-
-    detail = (
-        f"bindings={seen} invoked={invoked} value={box.get()!r} "
-        f"focus={typing.root.focus_get()} viewable={box.winfo_viewable()} "
-        f"ev={getattr(typing.built.ev, 'seen', '<unset>')!r}"
-    )
-    assert getattr(typing.built.ev, "seen", None) == "ab", detail
 
 
 def test_enter_commits_it(typing):
