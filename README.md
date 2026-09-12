@@ -1,21 +1,20 @@
 <h1><img src="https://raw.githubusercontent.com/alonhzn/iterlab/main/docs/logo.png" alt="" width="40" height="40"> iterlab</h1>
 
-<p style="text-align: center;">
-And Now for Something Completely Different - A different Python paradigm that is.</p>
+<p align="center">And Now for Something Completely Different - A different Python paradigm that is.</p>
 
 You are a **scientist**, not a software developer, **focus on what matters to you!**
-Science and research are iterative processes and they require a lot of graphs, plots and inputs, data processing and algorithm revisions. IterLab is the tool that lets you focus on your work, not on the visualization and GUI code - those are made for you seamlessly. 
+Science and research are iterative processes and they require a lot of graphs, plots and inputs, data processing and algorithm revisions. IterLab is the tool that lets you focus on your work, not on the visualization and GUI code - those are made for you seamlessly.
 
-Joggle beween your Code, GUI and Editor - **no restart** needed and **no re-running** your Python script. Changes to the code and GUI take effect immediately. 
+Juggle between your Code, GUI and Editor - **no restart** needed and **no re-running** your Python script. Changes to the code and GUI take effect immediately.
 
 ![The same interface running, being drawn in the editor, and the code behind it - each one changing the others](https://raw.githubusercontent.com/alonhzn/iterlab/main/docs/iterlab.jpg)
 
 ## What this means in practice
 
 - **Layout is drawn, never programmed.** Drag, drop, resize. No GUI code, ever.
-- **Add code? Change layout? No problem!** — We know science is iterative and constantly changes. Start with one plot and go from there. The magic happens because we create two separate files, a  `.yaml` and a `.py` sharing a name. Rearranging the interface cannot disturb your code, and editing your code cannot disturb the interface. The only link between them is an element's **tag**.
-- **No need to re-run the script when you change code!** Yes you heard correctly, change your algorithm, add axis labels, no need to re-run the app, no need to reload from scratch! save hours and hours without losing anything already in memory — loaded data, computed results, and plots already drawn all survive.
-- **Made a bug? Just fix it without re-running heavy code** Code bugs and typos are part of life, that doesn’t mean you should waste time re-running heavy code. Everything survives and stays in memory until you fix the code and continue from where you left off. Restarting is the cost the tool exists to remove.
+- **Add code? Change layout? No problem!** — We know science is iterative and constantly changes. Start with one plot and go from there. The magic happens because we create two separate files, a `.yaml` and a `.py` sharing a name. Rearranging the interface cannot disturb your code, and editing your code cannot disturb the interface. The only link between them is an element's **tag**.
+- **No need to re-run the script when you change code!** Yes you heard correctly, change your algorithm, add axis labels, no need to re-run the app, no need to reload from scratch! Save hours and hours without losing anything already in memory — loaded data, computed results, and plots already drawn all survive.
+- **Made a bug? Just fix it without re-running heavy code.** Code bugs and typos are part of life, that doesn’t mean you should waste time re-running heavy code. Everything survives and stays in memory until you fix the code and continue from where you left off. Restarting is the cost the tool exists to remove.
 
 
 ## Usage
@@ -60,14 +59,14 @@ code API for every element.
 
 ## Status
 
-Early, and honest about it. The end-to-end loop is implemented and tested, with five element types:
-**axes, button, label, text box, number box**. Checkboxes, radio buttons, dropdowns, lists and
+Early, and honest about it. The end-to-end loop is implemented and tested, with seven element types:
+**axes, button, label, text box, number box, file selector, folder selector**. Checkboxes, radio buttons, dropdowns, lists and
 sliders are next.
 
 ## Built on
 
 Tk and matplotlib, both used deliberately: Tk for every control, matplotlib for plots only.
-Built on the basis of my old project "rrGUI" that was never fully functional so it stayed private, and re-implementated using the remarkable framework [Spec Kit](https://github.com/github/spec-kit) and Claude. 
+Built on the basis of my old project "rrGUI" that was never fully functional so it stayed private, and reimplemented using the remarkable framework [Spec Kit](https://github.com/github/spec-kit) and Claude.
 
 ## License
 
