@@ -6,7 +6,7 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [1.5.0] — unreleased
+## [1.5.0] — 2026-09-12
 
 ### Added
 
@@ -28,6 +28,17 @@ shape, and the command are all consumed directly by researcher-written code.
   `tools/verify.py` came to spend several releases unable to start.
 
   `examples/` now ships in the source distribution alongside `docs/`.
+
+### Changed
+
+- **The README shows the loop rather than describing it.** A screenshot of the
+  showcase project in both modes, with the code between them, under the opening
+  paragraph. It lives in `docs/` beside the logo, so it ships in the source
+  distribution and not in every wheel.
+
+  The description on PyPI is frozen into each release at upload time and is
+  never re-read from the repository, so a README edit reaches that page only
+  when a version is published. This is the release that carries it.
 
 ## [1.4.0] — 2026-09-11
 
