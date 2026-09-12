@@ -273,6 +273,30 @@ class App:
             # then nothing typed reaches anything.
             return
         self.root.geometry(f"{width}x{height}")
+        # Wait for the new size to be real before returning, so whatever is
+        # built next is built at that size and not at the old one.
+        #
+        # `geometry` only asks. Tk applies the change on a later pass, and
+        # `update_idletasks` is not that pass - measured, not assumed: with it
+        # the plots still rendered at the old width first. Only `update` lands
+        # the resize, which costs every plot on screen an extra full render on
+        # every mode switch. Three plots went from six renders to nine.
+        #
+        # `update` runs pending event handlers, so a click on the top bar can
+        # arrive in the middle of a rebuild. `busy` is what refuses it.
+        self.root.update()
+
+    @property
+    def busy(self) -> bool:
+        """True while a mode switch is part-built.
+
+        Between teardown and the new mode being constructed there is no
+        interface: `self._built` is stale and the widgets it names are gone.
+        Resizing the window mid-switch runs the event loop, so a second click
+        on the top bar really can arrive in that window - and a rebuild
+        starting inside a rebuild tears down what the outer one is holding.
+        """
+        return self._switching
 
     def build(self, mode) -> None:
         """Build `mode` into the content frame, replacing whatever was there."""
@@ -295,6 +319,8 @@ class App:
         The one way to re-run `on_startup`, now that toggling preserves the
         session instead of discarding it.
         """
+        if self.busy:
+            return
         self.session.restart()
         self.build(GUI)
         self._mode_toggle.refresh()
@@ -309,6 +335,8 @@ class App:
         """
         from . import screenshot as screenshot_mod
 
+        if self.busy:
+            return None
         try:
             path = screenshot_mod.save(
                 self._content, self.interface.dir, self.interface.name
@@ -333,6 +361,8 @@ class App:
         Delegates to GUI mode, which owns the dispatcher. Meaningless in the
         editor, where nothing is running.
         """
+        if self.busy:
+            return False
         rerun = getattr(self._built, "rerun_startup", None)
         return False if rerun is None else bool(rerun())
 
@@ -358,6 +388,8 @@ class App:
         """
         from ..runtime import loader as loader_mod
 
+        if self.busy:
+            return
         self.teardown()
         loader_mod.forget(self.interface.code_path)
         self.session.restart()
@@ -382,6 +414,11 @@ class App:
 
     def toggle(self) -> str:
         """Switch modes. The whole of FR-015 is this method."""
+        if self.busy:
+            # A second click arriving inside the first switch. Ignored rather
+            # than queued: the researcher asked to be in the other mode, and
+            # they are about to be.
+            return self.mode
         self.build(GUI if self.mode == EDITOR else EDITOR)
         self._mode_toggle.refresh()
         return self.mode

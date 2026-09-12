@@ -6,6 +6,42 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.5.1] — unreleased
+
+### Fixed
+
+- **Switching back to the interface got slower, and it was the plots redrawing
+  twice.** Both modes come from one remembered size, so every switch now
+  resizes the window by the toolbar's width. `geometry` only *asks* for a size —
+  Tk applies it on a later pass — so the new mode was built at the old width and
+  every plot on screen rendered again when the resize finally landed.
+
+  Measured on three plots, per switch:
+
+  | | canvas renders | in rendering | switch |
+  |---|---|---|---|
+  | before the toolbar change | 6 | 78 ms | 133 ms |
+  | after it | 9 | 115 ms | 161 ms |
+  | now | 6 | 70 ms | 114 ms |
+
+  It is one extra render of every plot, so it costs whatever your plots cost:
+  barely visible on two small ones, a wait on a screenful.
+
+  The window is now sized and the resize allowed to land *before* the new mode
+  is built. That means running the event loop mid-switch, so a click on the top
+  bar can arrive between teardown and the new interface existing — `App.busy`
+  refuses one while a switch is part-built, rather than letting a rebuild start
+  inside a rebuild and tear down what the outer one is holding.
+
+  Held by a test that counts renders rather than timing them, because a timing
+  budget on a shared runner is a flake and the count is what changed.
+
+- **The shipped example announced a version crossing to everyone who opened
+  it.** `examples/showcase.yaml` was stamped 1.4.0 and shipped in 1.5.0, so
+  iterlab correctly decided the file came from another version, said so, and
+  left two `.bak` files beside it. It now records the current version, and a
+  test keeps it there — it goes stale on every release by nature.
+
 ## [1.5.0] — 2026-09-12
 
 ### Added

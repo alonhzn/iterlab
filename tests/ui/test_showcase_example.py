@@ -164,3 +164,20 @@ def test_every_handler_it_declares_matches_an_element(showcase):
         for prefix in ("on_clicked_", "on_changed_"):
             if node.name.startswith(prefix):
                 assert node.name[len(prefix):] in tags, node.name
+
+
+def test_the_shipped_layout_records_the_current_version():
+    """Otherwise every researcher who opens it is told it is from elsewhere.
+
+    A layout carries the version that last wrote it, and opening one written by
+    a different iterlab copies both files aside first. The example shipped with
+    1.5.0 stamped 1.4.0, so the first thing it did for anybody was announce a
+    version crossing and leave two `.bak` files beside itself.
+
+    It goes stale on every release, which is exactly why a test holds it.
+    """
+    import iterlab
+    from iterlab.layout import store
+
+    layout = store.load(EXAMPLES / "showcase.yaml")
+    assert layout.iterlab_version == iterlab.__version__
