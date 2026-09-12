@@ -1,8 +1,12 @@
 <h1><img src="https://raw.githubusercontent.com/alonhzn/iterlab/main/docs/logo.png" alt="" width="40" height="40"> iterlab</h1>
 
+<p style="text-align: center;">
+And Now for Something Completely Different - A different Python paradigm that is.</p>
 
 You are a **scientist**, not a software developer, **focus on what matters to you!**
 Science and research are iterative processes and they require a lot of graphs, plots and inputs, data processing and algorithm revisions. IterLab is the tool that lets you focus on your work, not on the visualization and GUI code - those are made for you seamlessly. 
+
+Joggle beween your Code, GUI and Editor - **no restart** needed and **no re-running** your Python script. Changes to the code and GUI take effect immediately. 
 
 ![The same interface running, being drawn in the editor, and the code behind it - each one changing the others](https://raw.githubusercontent.com/alonhzn/iterlab/main/docs/iterlab.jpg)
 
