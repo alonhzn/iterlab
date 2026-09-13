@@ -153,6 +153,7 @@ One row per release. An empty table means nothing has been released.
 | 0.1.0-dev | 2026-09-07 | Windows 11 | Not a release — development walkthrough only | 1 (see below) |
 | 1.4.0 | 2026-09-11 | Windows 11 | Pass — reported by the maintainer | 0 |
 | 1.5.0 | 2026-09-12 | Windows 11 | Pass — reported by the maintainer | 0 |
+| 1.6.0 | 2026-09-13 | Windows 11 | Pass — reported by the maintainer | 0 |
 
 ### 2026-09-07 — development walkthrough
 
@@ -184,3 +185,14 @@ working. Nothing recorded as found.
 
 Worked through on Windows 11 by the maintainer, who reported everything
 working. Nothing recorded as found.
+
+### 2026-09-13 — 1.6.0
+
+The release where Gate 2 carried the most weight so far: the editor canvas
+became a scaled picture of the run window rather than the window itself, the
+backdrop behind it is new, folding the toolbar does something different, and a
+new project opens at half the screen. Counting pixels and renders cannot say
+whether any of that is comfortable to draw on.
+
+Worked through on Windows 11 by the maintainer, who reported it passing.
+Nothing recorded as found.
