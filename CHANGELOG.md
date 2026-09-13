@@ -36,6 +36,27 @@ shape, and the command are all consumed directly by researcher-written code.
   This is the half that touches nothing you wrote. Completions on `ev.<tag>`
   itself need a type for `ev`, which is a separate change.
 
+- **Your editor can complete `ev.`** iterlab writes `demo_ev.py` beside your
+  pair, declaring each element and what it is, and rewrites it whenever you
+  draw, rename or delete one. Generated handlers say `ev: "Ev"`, so inside one
+  your editor offers the elements you drew — and `ev.ax_0.` offers matplotlib's
+  own methods and signatures, because an axes *is* an `Axes`.
+
+  Ordinary typing rather than an editor plugin, so it works wherever you work.
+  Verified by running a type checker over a project iterlab generated:
+  `ev.spectrum.plot` resolves to matplotlib's signature, `.value` to `float`,
+  `.text` to `str`, `.background` to `str | None`, and your own `ev.my_cache`
+  to `Any` with no error.
+
+  The generated module is read by type checkers and never at run time. Delete
+  it and everything still works.
+
+  **iterlab will not add the import to a file it did not write.** Everything it
+  puts in your file is appended, leaving what you wrote as an exact prefix, and
+  an import goes at the top - that guarantee is worth more than a completion.
+  So a file without the import gets plain stubs, as before, and the guide has
+  the two lines that opt in.
+
 ### Fixed
 
 - **The pan and zoom toolbar was missing under most plots.** It existed under

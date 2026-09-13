@@ -28,11 +28,20 @@ def code(tmp_path):
 
 
 def _top_level(source):
-    return [
-        node.name if hasattr(node, "name") else "if __name__"
-        for node in ast.parse(source).body
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.If))
-    ]
+    """Definitions and the launcher, in file order.
+
+    The launcher is identified by what it tests, not by being an `if`: the
+    starter file also opens with `if TYPE_CHECKING:`, the block that lets an
+    editor see what `ev` holds, and calling that one the launcher would make
+    this read as though the guard were no longer last.
+    """
+    names = []
+    for node in ast.parse(source).body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            names.append(node.name)
+        elif isinstance(node, ast.If):
+            names.append("if __name__" if inject._is_main_guard(node) else "if other")
+    return [name for name in names if name != "if other"]
 
 
 # -- the starter file ------------------------------------------------------

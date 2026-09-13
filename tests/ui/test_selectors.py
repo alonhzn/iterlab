@@ -283,7 +283,12 @@ def test_a_deleted_file_still_offers_its_folder(gui, chooser, tmp_path):
 
 
 def test_nothing_is_written_into_the_project_folder(gui, chooser, tmp_path):
-    """The interface stays the two files it has always been."""
+    """Choosing a file writes nothing into the project.
+
+    The pair is two files plus the generated `demo_ev.py`, which is iterlab's
+    own and exists so an editor can see what `ev` holds. Nothing else may
+    appear - least of all a copy of whatever was just chosen.
+    """
     # Somewhere other than the interface's own folder, or the file being chosen
     # would itself be what the assertion trips over.
     elsewhere = tmp_path / "elsewhere"
@@ -293,7 +298,7 @@ def test_nothing_is_written_into_the_project_folder(gui, chooser, tmp_path):
     _pick(gui, "fileselect", chooser, target)
 
     names = sorted(p.name for p in gui.interface.dir.iterdir() if p.is_file())
-    assert names == ["demo.py", "demo.yaml"], names
+    assert names == ["demo.py", "demo.yaml", "demo_ev.py"], names
 
 
 # -- it is a button in every other respect ---------------------------------
@@ -310,6 +315,6 @@ def test_a_selector_carries_the_full_style_set(gui):
 def test_the_generated_stub_shows_how_to_read_the_path(gui):
     """Where a researcher actually finds out the attribute is called `.path`."""
     source = gui.interface.code_path.read_text(encoding="utf-8")
-    assert "def on_clicked_fileselect(ev, event):" in source
+    assert 'def on_clicked_fileselect(ev: "Ev", event):' in source
     assert "ev.lbl_0.text = ev.fileselect.path" in source
-    assert "def on_clicked_folderselect(ev, event):" in source
+    assert 'def on_clicked_folderselect(ev: "Ev", event):' in source

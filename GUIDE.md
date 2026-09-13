@@ -647,6 +647,50 @@ Finer than a hundredth is below what you can place by hand and below what you ca
 `demo.yaml` into a wall of digits whose diffs mean nothing. If you type `0.333` into a position
 field, you will get `0.33`.
 
+## Completions in your editor
+
+Type `ev.` inside a handler and your editor offers the elements you drew, with their own properties.
+Type `ev.ax_0.` and you get matplotlib's own methods, signatures and documentation, because an
+iterlab axes **is** a matplotlib `Axes` rather than a wrapper around one.
+
+Nothing to install and nothing editor-specific: it is ordinary Python typing, so VS Code, PyCharm and
+anything else that reads types all work the same way.
+
+Two things make it happen. iterlab writes `demo_ev.py` beside your pair, listing the elements and
+what each one is, and rewrites it whenever you draw, rename or delete something. And your handlers
+say what they take:
+
+```python
+def on_clicked_run_fit(ev: "Ev", event):
+    ev.spectrum.plot(ev.x, ev.y)     # matplotlib's plot, with its own signature
+    ev.status.text = "done"          # str
+    ev.threshold.value               # float
+```
+
+`demo_ev.py` is read by your editor and never at run time. Delete it and everything still works; you
+lose the completions until the next time you change an element.
+
+### Adding it to an interface you already have
+
+A file iterlab wrote has the import already. An older one does not, and iterlab will not add it:
+everything it puts in your file is **appended**, leaving what you wrote as an exact prefix, and an
+import has to go at the top. Two lines, once, at the top of your `.py`:
+
+```python
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from demo_ev import Ev
+```
+
+Use your own file's name. From then on, new stubs are annotated for you, and annotating your existing
+handlers is a matter of writing `ev: "Ev"` where you want the completions.
+
+`ev` is still yours to fill. `ev.my_cached_fit = ...` is not an error, and reading it back gives you
+whatever you put there.
+
+---
+
 ## Running it from your IDE
 
 `demo.py` ends with this, and it is there from the moment the file is created:

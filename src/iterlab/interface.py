@@ -70,3 +70,22 @@ class Interface:
 
     def save_layout(self) -> None:
         store.save(self.layout, self.layout_path)
+        self.write_ev_types()
+
+    def write_ev_types(self) -> None:
+        """Keep the generated type module level with the elements.
+
+        Here because this is the one place every element change passes through -
+        drawing, renaming, deleting - so the module cannot fall behind what is
+        on the canvas. It rewrites nothing when the text has not changed, so a
+        drag that only moves an element touches no file but the layout.
+
+        Never fatal: completions are a convenience, and a convenience that can
+        stop someone saving their layout is not one.
+        """
+        from .codegen import evtypes
+
+        try:
+            evtypes.write(self.code_path, self.layout)
+        except OSError:
+            pass

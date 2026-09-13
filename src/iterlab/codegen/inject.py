@@ -93,6 +93,29 @@ def has_handler(code_path, handler_name: str) -> bool:
     return handler_name in top_level_function_names(source, code_path)
 
 
+def has_ev_import(source: str, code_path) -> bool:
+    """Whether `Ev` is importable in this file, so a stub may be annotated.
+
+    iterlab does not add the import to a file it did not write. Everything it
+    puts into the researcher's file is *appended* - existing content stays a
+    prefix of the new file, byte for byte - and an import has to go at the top,
+    which would break that guarantee for a completion.
+
+    A file iterlab created has the import already. One written before this
+    existed does not, and its stubs are generated unannotated rather than
+    referring to a name that is not there. Two lines in the guide add it.
+    """
+    module = f"{Path(code_path).stem}_ev"
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return False
+    return any(
+        isinstance(node, ast.ImportFrom) and node.module == module
+        for node in ast.walk(tree)
+    )
+
+
 def append_stub(code_path, element, stub_text: str) -> bool:
     """Append `stub_text` unless the handler already exists.
 
@@ -116,6 +139,9 @@ def append_stub(code_path, element, stub_text: str) -> bool:
     # Match the file's own line endings. Normalizing them would rewrite every
     # line of a Windows-authored file just to add one stub (Principle V).
     newline = detect_newline(source)
+    if not has_ev_import(source.replace(CRLF, LF), path):
+        # No `Ev` in this file, so do not write a name that is not there.
+        stub_text = stub_text.replace('ev: "Ev"', "ev")
     addition = stub_text.replace(LF, newline)
 
     guard = main_guard_line(source.replace(CRLF, LF), path)

@@ -18,10 +18,18 @@ Open it:  iterlab {name}
 Switch between editing and using it with the toggle in the top-left corner.
 """
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
+if TYPE_CHECKING:
+    # Only your editor reads this - it never runs, and costs nothing at launch.
+    # It is what makes `ev.` complete to the elements you drew, with matplotlib's
+    # own signatures on a plot. Delete it and everything still works.
+    from {name}_ev import Ev
 
-def on_startup(ev):
+
+def on_startup(ev: "Ev"):
     # Runs once when the interface opens, before anything else.
     #
     # Load your data HERE, not at the top of this file. Anything at module level
@@ -45,7 +53,7 @@ if __name__ == "__main__":
 
 _BUTTON_STUB = '''
 
-def on_clicked_{tag}(ev, event):
+def on_clicked_{tag}(ev: "Ev", event):
     # Runs when you click {tag}.
     # Delete this function if you don't need it — nothing will break.
     print(f"{tag} clicked with the {{event.button}} button")
@@ -53,7 +61,7 @@ def on_clicked_{tag}(ev, event):
 
 _AXES_STUB = '''
 
-def on_clicked_{tag}(ev, event):
+def on_clicked_{tag}(ev: "Ev", event):
     # Runs when you click inside {tag}, with any mouse button.
     # event.x and event.y are in the plot's own data coordinates, not pixels.
     # event.button is "left", "middle" or "right".
@@ -63,7 +71,7 @@ def on_clicked_{tag}(ev, event):
 
 _FILE_SELECT_STUB = '''
 
-def on_clicked_{tag}(ev, event):
+def on_clicked_{tag}(ev: "Ev", event):
     # Runs after a file is chosen. Cancelling the dialog calls nothing
     # and changes nothing.
     #
@@ -80,7 +88,7 @@ def on_clicked_{tag}(ev, event):
 
 _FOLDER_SELECT_STUB = '''
 
-def on_clicked_{tag}(ev, event):
+def on_clicked_{tag}(ev: "Ev", event):
     # Runs after a folder is chosen. Cancelling the dialog calls nothing
     # and changes nothing.
     #
@@ -100,7 +108,7 @@ def on_clicked_{tag}(ev, event):
 
 _TEXT_BOX_STUB = '''
 
-def on_changed_{tag}(ev, event):
+def on_changed_{tag}(ev: "Ev", event):
     # Runs when you finish entering a value in {tag}: press Enter, or click
     # away after changing it. Not on every keystroke - so you can redraw a plot
     # here without it happening once per character.
@@ -112,7 +120,7 @@ def on_changed_{tag}(ev, event):
 
 _NUMBER_BOX_STUB = '''
 
-def on_changed_{tag}(ev, event):
+def on_changed_{tag}(ev: "Ev", event):
     # Runs when you finish entering a value in {tag}: press Enter, or click
     # away after changing it. Not on every keystroke - so you can redraw a plot
     # here without it happening once per character.

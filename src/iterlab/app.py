@@ -62,6 +62,9 @@ def open_interface(name: str, _show=True, _root=None):
     created = interface.ensure_files()
     interface.load_layout()
     guard_version(interface)
+    # An interface drawn before this existed has no type module yet, and one
+    # whose layout was edited by hand may have a stale one.
+    interface.write_ev_types()
 
     from .ui.app import App
 

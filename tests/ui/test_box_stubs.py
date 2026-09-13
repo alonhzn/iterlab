@@ -34,12 +34,12 @@ def editor(make_app):
 
 def test_a_text_box_gets_a_changed_handler(editor):
     source = editor.interface.code_path.read_text(encoding="utf-8")
-    assert "def on_changed_edt_0(ev, event):" in source
+    assert 'def on_changed_edt_0(ev: "Ev", event):' in source
 
 
 def test_a_number_box_gets_a_changed_handler(editor):
     source = editor.interface.code_path.read_text(encoding="utf-8")
-    assert "def on_changed_val_0(ev, event):" in source
+    assert 'def on_changed_val_0(ev: "Ev", event):' in source
 
 
 def test_the_text_box_stub_prints_the_text(editor):
