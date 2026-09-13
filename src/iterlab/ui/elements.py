@@ -407,12 +407,20 @@ def build_axes(parent, element, dispatcher, figure=None):
         figure = new_figure()
     axes = figure.axes[0]
     canvas = FigureCanvasTkAgg(figure, master=frame)
-    canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
 
     # The standard pan/zoom toolbar, available with no handler written (FR-017e).
+    #
+    # Packed BEFORE the canvas, and that order is the whole of it. Tk's packer
+    # hands out the cavity in the order things are packed, and a canvas packed
+    # first with expand=True takes all of it - leaving the toolbar with nothing
+    # and Tk dropping it without a word. The symptom was a toolbar that
+    # appeared under a tall plot and not under a shorter one, which reads like
+    # a bug in the plot rather than in an order of two lines.
     toolbar = NavigationToolbar2Tk(canvas, frame, pack_toolbar=False)
     toolbar.update()
     toolbar.pack(side="bottom", fill="x")
+
+    canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
 
     tag = element.tag
 

@@ -6,6 +6,23 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.7.1] — unreleased
+
+### Fixed
+
+- **The pan and zoom toolbar was missing under most plots.** It existed under
+  every one of them and was visible under almost none: Tk hands out a frame's
+  space in the order things are packed, and the canvas was packed first with
+  `expand=True`, so it took the lot and the toolbar was never mapped. Whether
+  one showed came down to whether that particular plot happened to be tall
+  enough, which is why it looked like the *second* axes was special.
+
+  Packed before the canvas now, which is the whole fix.
+
+  The tests that covered this asked whether the toolbar widget existed. It did.
+  They now ask whether it is on screen, for plots of three different heights and
+  across a mode switch, and the old order fails all four.
+
 ## [1.7.0] — 2026-09-13
 
 ### Changed
