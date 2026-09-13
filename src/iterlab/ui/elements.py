@@ -109,7 +109,7 @@ class ElementHandle:
         self.__dict__["_style"] = element.style
 
     @property
-    def tag(self):
+    def tag(self) -> str:
         return self.element.tag
 
     @property
@@ -180,6 +180,25 @@ class _TextHandle(ElementHandle):
 
     STYLE_PROPERTIES = STYLE_PROPERTY_NAMES
 
+    # Declared so an editor can offer them. They are *reached* through
+    # `__getattr__`/`__setattr__` above, which no type checker can see into - so
+    # without these lines `ev.lbl_0.background` completes to nothing and is
+    # reported as an unknown attribute. Annotations only: assigning a value here
+    # would put a class attribute in front of the descriptor protocol and break
+    # the live restyle. `test_style_declarations` keeps this list honest against
+    # STYLE_PROPERTY_NAMES.
+    background: str | None
+    text_color: str | None
+    edge: str | None
+    edge_width: int
+    font: str | None
+    font_size: int | None
+    bold: bool
+    italic: bool
+    align: str
+    enabled: bool
+    visible: bool
+
     def __getattr__(self, name):
         if name in STYLE_PROPERTY_NAMES:
             return getattr(self.__dict__["_style"], name)
@@ -200,11 +219,11 @@ class _CaptionHandle(_TextHandle):
     """Text held in the widget's own `-text` option: buttons and labels."""
 
     @property
-    def text(self):
+    def text(self) -> str:
         return self.widget.cget("text")
 
     @text.setter
-    def text(self, value):
+    def text(self, value) -> None:
         self.widget.configure(text=str(value))
 
     #: The layout calls it `label`; both names work.
@@ -278,6 +297,9 @@ class AxesHandle(Axes):
     #: how a plot *looks*, so visibility is the only one that is ours.
     STYLE_PROPERTIES = ("visible",)
 
+    #: Declared for the editor's benefit; see `_TextHandle` for why.
+    visible: bool
+
     # Class-level defaults: matplotlib constructs this, so an instance exists
     # before iterlab has bound anything to it.
     _iterlab_element = None
@@ -316,7 +338,7 @@ class AxesHandle(Axes):
         return None if figure is None else figure.canvas
 
     @property
-    def visible(self):
+    def visible(self) -> bool:
         """Whether the *element* is shown, uniform with buttons and labels.
 
         Deliberately not matplotlib's `set_visible`, which hides the axes while
@@ -534,11 +556,11 @@ class _BoxHandle(_TextHandle):
         self.__dict__["variable"] = variable
 
     @property
-    def text(self):
+    def text(self) -> str:
         return self.variable.get()
 
     @text.setter
-    def text(self, value):
+    def text(self, value) -> None:
         self.variable.set("" if value is None else str(value))
 
     #: The layout calls it `label`; both names work.
@@ -559,7 +581,7 @@ class NumberBoxHandle(_BoxHandle):
     """
 
     @property
-    def value(self):
+    def value(self) -> float:
         """The contents as a number, or 0 when the box is empty.
 
         Empty rather than an error: a researcher clearing the box to retype it

@@ -78,6 +78,10 @@ def test_iterlab_additions_do_not_shadow_matplotlib(gui):
     intended = {
         "name", "tag", "element", "widget", "canvas", "visible",
         "disconnect", "STYLE_PROPERTIES", "__doc__", "__module__",
+        # `visible` is declared as well as defined, so that an editor can offer
+        # it. Declaring anything puts __annotations__ in the class dict - a
+        # dunder, so not a name that could ever shadow matplotlib's.
+        "__annotations__",
         # The element-handle contract every type implements, so that a mode
         # switch can put back what the running interface changed.
         "_presentation", "_restore",

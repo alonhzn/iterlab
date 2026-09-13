@@ -8,6 +8,34 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ## [1.7.1] — unreleased
 
+### Added
+
+- **Your editor can see what an element offers.** `ev.lbl_0.background` used to
+  complete to nothing and read as an unknown attribute to anything strict
+  enough to look: style properties are reached through `__setattr__` against a
+  tuple of names, which works perfectly at run time and is invisible to a type
+  checker. They are now declared as annotations without values, so an editor
+  can offer them while the runtime path is untouched.
+
+  `.text`, `.value`, `.path` and `.visible` gained return types, which turns
+  them from `Any` into `str`, `float`, `str` and `bool`.
+
+  The package also carries a `py.typed` marker now (PEP 561). Without it a
+  checker ignores everything above.
+
+  Checked with a real type checker against the built wheel rather than by
+  reasoning about it:
+
+  | expression | before | now |
+  |---|---|---|
+  | `label.background` | unknown attribute | `str \| None` |
+  | `label.text` | `Any` | `str` |
+  | `box.value` | `Any` | `float` |
+  | `plot.plot` | matplotlib's signature | unchanged |
+
+  This is the half that touches nothing you wrote. Completions on `ev.<tag>`
+  itself need a type for `ev`, which is a separate change.
+
 ### Fixed
 
 - **The pan and zoom toolbar was missing under most plots.** It existed under
