@@ -79,6 +79,33 @@ class ScrollableColumn:
             self.scrollbar.pack_forget()
             self._scrollbar_shown = False
 
+    def reveal(self, widget):
+        """Scroll so `widget` is inside the viewport, if it is not already.
+
+        A field below the fold is not merely hard to see: Tk unmaps a canvas
+        window that is scrolled out of view, and an unmapped widget cannot take
+        focus, so typing into it goes nowhere at all. Opening a drawer in a
+        short window used to put its fields exactly there.
+
+        Does nothing when there is no scrolling to do, so it cannot jitter a
+        column that already fits.
+        """
+        content = self.inner.winfo_reqheight()
+        viewport = self.canvas.winfo_height()
+        if content <= viewport or not widget.winfo_exists():
+            return
+        top = widget.winfo_rooty() - self.inner.winfo_rooty()
+        height = max(widget.winfo_height(), widget.winfo_reqheight())
+        showing = self.canvas.canvasy(0)
+
+        if height >= viewport or top < showing:
+            # Taller than the viewport, or above it: show its top. Chasing the
+            # bottom of something too tall to fit scrolls straight past the
+            # start of it, which is the half anyone wants to see first.
+            self.canvas.yview_moveto(top / content)
+        elif top + height > showing + viewport:
+            self.canvas.yview_moveto((top + height - viewport) / content)
+
     def _on_wheel(self, event):
         if self.inner.winfo_reqheight() <= self.canvas.winfo_height():
             return

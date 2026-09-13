@@ -50,8 +50,11 @@ LABELS = {
 
 
 class PropertiesPanel:
-    def __init__(self, parent, designer):
+    def __init__(self, parent, designer, column=None):
         self.designer = designer
+        #: The scrolling column this panel lives in, so a field can ask to be
+        #: brought into view. None in tests that build the panel standalone.
+        self.column = column
         self.frame = tk.Frame(parent, bg=theme.BG)
         self.frame.pack(side="top", fill="both", expand=True, padx=10, pady=(10, 10))
 
@@ -208,6 +211,11 @@ class PropertiesPanel:
         self.commit_pending()
         self.advanced_open = not self.advanced_open
         self._render_drawer()
+        if self.advanced_open:
+            # In a short toolbar the drawer opens below the fold, so opening it
+            # would otherwise appear to do nothing at all.
+            self.frame.update_idletasks()
+            self.reveal(self._advanced)
         return self.advanced_open
 
     def _geometry_grid(self, rect):
@@ -232,6 +240,14 @@ class PropertiesPanel:
         entry.bind("<KP_Enter>", self._commit)
         entry.bind("<FocusOut>", self._commit)
         entry.bind("<Escape>", lambda _e: self.show(self._current_element()))
+        # Tabbing to a field below the fold would otherwise leave you typing
+        # into something you cannot see.
+        entry.bind("<FocusIn>", lambda _e, w=entry: self.reveal(w), add="+")
+
+    def reveal(self, widget):
+        """Scroll the toolbar so `widget` can be seen, if it can scroll."""
+        if self.column is not None:
+            self.column.reveal(widget)
 
     def _style_section(self, element):
         """Editors for whatever style properties this element type has.

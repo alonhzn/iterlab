@@ -113,7 +113,7 @@ class Designer:
         self.sidebar.outer.pack(side="left", fill="y")
         self._toolbar_header(self.sidebar.inner)
         self.palette = Palette(self.sidebar.inner, on_select=None)
-        self.properties = PropertiesPanel(self.sidebar.inner, self)
+        self.properties = PropertiesPanel(self.sidebar.inner, self, column=self.sidebar)
         # Traced rather than hooked through the palette's own callback, so a
         # type chosen programmatically counts exactly as a clicked card does.
         self.palette.selected.trace_add("write", self._on_palette_change)

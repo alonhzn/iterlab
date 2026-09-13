@@ -181,3 +181,40 @@ def test_nothing_is_refused_when_no_switch_is_running(plots):
     """The guard must not leave the top bar dead the rest of the time."""
     assert plots.busy is False
     assert plots.save_screenshot() is not None
+
+
+# -- and it does not leave Tk resources behind -----------------------------
+
+
+#: What one plot's pan/zoom toolbar costs in Tk images. Measured, and the unit
+#: this is stated in: leaking less than a single toolbar over many switches is
+#: the difference between a session that survives and one that does not.
+IMAGES_PER_TOOLBAR = 15
+
+
+def test_switching_does_not_pile_up_tk_images(plots):
+    """A long session of toggling used to fill the Tcl interpreter.
+
+    Destroying the widgets frees none of these: the objects that own them are
+    in reference cycles, so the images stay until a full collection happens to
+    run. Ten round trips over three plots left 135 images behind, and enough of
+    them take Tk down with an access violation somewhere else entirely - which
+    is how this was found, three times, in this suite.
+    """
+    root = plots.root
+
+    def images():
+        return len(root.tk.call("image", "names"))
+
+    _switch(plots)                      # settle at the editor first
+    _switch(plots)
+    before = images()
+    for _ in range(6):
+        _switch(plots)                  # to the editor
+        _switch(plots)                  # and back
+    growth = images() - before
+
+    assert growth < IMAGES_PER_TOOLBAR, (
+        f"{growth} Tk images left after 6 round trips over 3 plots - more than "
+        f"a whole toolbar's worth, so they are not being released"
+    )

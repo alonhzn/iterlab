@@ -39,6 +39,27 @@ shape, and the command are all consumed directly by researcher-written code.
   picture of the run window and its edge has to be findable; against the
   sidebar's own colour, a white canvas had almost no edge at all.
 
+### Fixed
+
+- **Toggling modes filled the Tcl interpreter with images.** Each plot's
+  pan/zoom toolbar holds fifteen Tk images, and destroying the widgets released
+  none of them: the objects owning them sit in reference cycles, so they stayed
+  until a full garbage collection happened to run. Ten round trips over three
+  plots left 135 behind. Enough of them and Tk dies with an access violation
+  while building something unrelated — which is how this was found, in a test
+  suite that kept falling over in a file that had nothing to do with it.
+
+  Released on teardown now, where the canvas's event connections were already
+  being released for the same reason. Growth over ten round trips: 135 images
+  before, 6 after.
+
+- **A property field below the fold could not be typed into.** Tk unmaps a
+  canvas window that is scrolled out of view, and an unmapped widget takes no
+  focus — so in a toolbar too short to show everything, the keys went nowhere
+  and the value was silently never committed. Fields are now scrolled into view
+  when they take focus, and opening the **More** drawer brings the drawer with
+  it rather than opening it somewhere you cannot see.
+
 ## [1.5.1] — 2026-09-12
 
 ### Fixed

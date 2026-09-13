@@ -352,11 +352,21 @@ class AxesHandle(Axes):
             self.visible = state["visible"]
 
     def disconnect(self):
-        """Drop this canvas's event connections.
+        """Drop this canvas's event connections and its toolbar's images.
 
         The figure outlives the canvas, and so does its callback registry, so
-        these must be released explicitly or they accumulate one set per mode
-        switch and every click fires that many times.
+        the connections must be released explicitly or they accumulate one set
+        per mode switch and every click fires that many times.
+
+        The toolbar leaks in the same shape. It holds a Tk image per button -
+        fifteen per plot - and destroying the widgets releases none of them: the
+        objects owning them sit in reference cycles, so the images stay in the
+        Tcl interpreter until a full collection happens to run. Ten mode
+        switches over three plots left 135 images behind, and enough of those
+        take Tk down with an access violation while building something
+        unrelated. Dropping the toolbar's own references to its buttons frees
+        fourteen of the fifteen immediately, which is measured rather than
+        assumed.
         """
         canvas = self.canvas
         for cid in self._iterlab_cids:
@@ -365,6 +375,15 @@ class AxesHandle(Axes):
             except Exception:
                 pass
         self._iterlab_cids = ()
+
+        buttons = getattr(getattr(canvas, "toolbar", None), "_buttons", None)
+        if buttons is not None:
+            # Called on the way to destroying these widgets, so emptying the
+            # index costs nothing that is still wanted.
+            try:
+                buttons.clear()
+            except Exception:
+                pass
 
 
 register_projection(AxesHandle)
