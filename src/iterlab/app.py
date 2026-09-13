@@ -59,13 +59,17 @@ def guard_version(interface) -> list:
 
 def open_interface(name: str, _show=True, _root=None):
     interface = Interface.resolve(name)
-    interface.ensure_files()
+    created = interface.ensure_files()
     interface.load_layout()
     guard_version(interface)
 
     from .ui.app import App
 
     app = App(interface, start_mode=choose_start_mode(interface.layout), root=_root)
+    if created:
+        # Only now: the size comes from the screen, and nothing below the UI
+        # layer is allowed to know there is one.
+        app.use_default_window_size()
     app.build(app.mode)
     if _show:  # pragma: no cover - the event loop is display-dependent
         app.run()

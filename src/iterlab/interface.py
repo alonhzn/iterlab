@@ -46,16 +46,23 @@ class Interface:
 
     # -- creation --------------------------------------------------------
 
-    def ensure_files(self) -> None:
+    def ensure_files(self) -> bool:
         """Create whatever half of the pair is missing.
 
         Opening a name that does not exist creates it rather than failing
         (FR-002). An existing code file is never touched.
+
+        Returns whether the *layout* was one of the things created, because a
+        brand-new project gets its window size chosen for it and an existing one
+        must never have its size touched. The size cannot be decided here: it
+        comes from the screen, and this module knows nothing about screens.
         """
-        if not self.layout_path.exists():
+        created = not self.layout_path.exists()
+        if created:
             store.create_empty(self.layout_path)
         if not self.code_path.exists():
             templates.write_starter_file(self.code_path, self.name)
+        return created
 
     def load_layout(self):
         self.layout = store.load(self.layout_path)

@@ -3,7 +3,7 @@
 <p align="center">And Now for Something Completely Different - A different Python paradigm that is.</p>
 
 You are a **scientist**, not a software developer, **focus on what matters to you!**
-Science and research are iterative processes and they require a lot of graphs, plots and inputs, data processing and algorithm revisions. IterLab is the tool that lets you focus on your work, not on the visualization and GUI code - those are made for you seamlessly.
+Science and research are **iterative** processes and they require a lot of graphs, plots and inputs, data processing and algorithm revisions. IterLab offers a paradigm where the GUI accelerates your research by sparing you from hard-coding variables and restarting the script, instead of being a burden that costs you coding time and energy.
 
 Juggle between your Code, GUI and Editor - **no restart** needed and **no re-running** your Python script. Changes to the code and GUI take effect immediately.
 

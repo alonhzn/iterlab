@@ -599,6 +599,10 @@ The grey around the canvas is the room the toolbar borrowed. The white rectangle
 If the window is short, the toolbar is short too, and it scrolls — the panel is a scrolling column
 for that reason. Nothing is lost off the bottom.
 
+A new project opens at **half your screen**, which is a starting point rather than a suggestion —
+resize it and that is the size from then on. An existing project always opens at the size you left
+it, never at the default.
+
 The size is remembered in `demo.yaml`, so it travels with the project rather than living on one
 machine.
 

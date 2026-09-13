@@ -35,6 +35,13 @@ shape, and the command are all consumed directly by researcher-written code.
   gives up goes to the canvas, at the same proportions. Folding is now a way to
   see your layout bigger.
 
+- **A new project opens at half your screen**, rather than a fixed 800x450.
+  That size is a dialog on an ordinary monitor and a postage stamp on a large
+  one, and no fixed number can be right for both a laptop and a 4K display.
+
+  Only at creation. An existing project opens at the size it was left at, and
+  nothing re-decides that for you.
+
 - **The editor backdrop is a shade darker than the sidebar.** The canvas is a
   picture of the run window and its edge has to be findable; against the
   sidebar's own colour, a white canvas had almost no edge at all.

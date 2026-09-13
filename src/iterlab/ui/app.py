@@ -236,6 +236,32 @@ class App:
             max(window.height, MIN_INTERFACE_HEIGHT) + self.chrome_height(),
         )
 
+    def use_default_window_size(self) -> bool:
+        """Size a brand-new project to half the screen, and write it down.
+
+        Only for a project being created. A fixed default cannot be right for
+        both a laptop and a 4K monitor, and the old one - 800x450 - was small
+        enough on most screens to look like a dialog rather than a workspace.
+
+        Half the *window*, so half of what the researcher sees, which means the
+        interface underneath it is half the screen less iterlab's own top bar.
+        """
+        # The top bar has to have been measured before it can be subtracted.
+        # Asked too early it reports its unpacked height, two pixels, and the
+        # window comes out that much taller than half the screen.
+        self.root.update_idletasks()
+
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        width = max(screen_width // 2, MIN_INTERFACE_WIDTH)
+        height = max(screen_height // 2 - self.chrome_height(), MIN_INTERFACE_HEIGHT)
+
+        if not self.interface.layout.resize(width, height):
+            return False
+        self.interface.save_layout()
+        self.apply_size_for_mode()
+        return True
+
     def apply_size_for_mode(self) -> None:
         """Set the window to the size this mode should be.
 
