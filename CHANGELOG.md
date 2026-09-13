@@ -6,7 +6,7 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [2.0.0] — unreleased
+## [2.0.0] — 2026-09-14
 
 ### Changed
 
@@ -46,7 +46,11 @@ shape, and the command are all consumed directly by researcher-written code.
   Schema 8 is the first version of this format. The migration machinery stays
   for the next real change.
 
-## [1.7.1] — unreleased
+## [1.7.1] — never published
+
+Prepared and gated, then overtaken by 2.0.0 before it was uploaded. Everything
+below ships in 2.0.0; the section stays because the work and its reasoning did
+not change, only the number it went out under.
 
 ### Added
 

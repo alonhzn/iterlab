@@ -155,6 +155,7 @@ One row per release. An empty table means nothing has been released.
 | 1.4.0 | 2026-09-11 | Windows 11 | Pass — reported by the maintainer | 0 |
 | 1.5.0 | 2026-09-12 | Windows 11 | Pass — reported by the maintainer | 0 |
 | 1.6.0 | 2026-09-13 | Windows 11 | Pass — reported by the maintainer | 0 |
+| 2.0.0 | 2026-09-14 | Windows 11 | Pass — reported by the maintainer | 0 |
 
 ### 2026-09-07 — development walkthrough
 
@@ -197,3 +198,15 @@ whether any of that is comfortable to draw on.
 
 Worked through on Windows 11 by the maintainer, who reported it passing.
 Nothing recorded as found.
+
+### 2026-09-14 — 2.0.0
+
+The file every project depends on changed shape: the layout left YAML for
+`demo_layout.py`, which now carries the `Ev` class as well. Files written by
+1.x do not open, deliberately and with no migration.
+
+Worked through on Windows 11 by the maintainer, who reported it passing.
+Nothing recorded as found.
+
+1.7.0 was the last version published. 1.7.1 was prepared and gated but
+overtaken before upload; its changes ship here.
