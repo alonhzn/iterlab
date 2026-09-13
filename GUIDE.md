@@ -3,8 +3,14 @@
 
 The GUI as a place to *develop* an algorithm, not a wrapper you bolt on afterwards.
 
-You draw the interface. You write the algorithm. iterlab keeps the two in separate files and gets
-out of the way — including staying alive while you edit, so you stop paying to restart.
+You are a **scientist**, not a software developer.
+
+Every hour spent building an interface is an hour not spent on the science, so the parameters end up
+hard-coded and every change means restarting the script and waiting for the data all over again.
+
+iterlab makes the two halves feed each other. Drag a box onto the canvas and it is a parameter you
+can turn; rewrite a function and the open window uses the new code. **No restart, nothing reloaded,
+nothing recomputed that you did not ask for.**
 
 > This guide grows with the tool. It documents what works **today**, in the version named at the
 > bottom. If something here does not behave as described, that is a bug — please say so.

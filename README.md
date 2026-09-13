@@ -2,10 +2,17 @@
 
 <p align="center">And Now for Something Completely Different - A different Python paradigm that is.</p>
 
-You are a **scientist**, not a software developer, **focus on what matters to you!**
-Science and research are **iterative** processes and they require a lot of graphs, plots and inputs, data processing and algorithm revisions. IterLab offers a paradigm where the GUI accelerates your research by sparing you from hard-coding variables and restarting the script, instead of being a burden that costs you coding time and energy.
+You are a **scientist**, not a software developer.
 
-Juggle between your Code, GUI and Editor - **no restart** needed and **no re-running** your Python script. Changes to the code and GUI take effect immediately.
+Research runs in a loop: load the data, plot it, change something, plot it again. An interface ought
+to make that loop faster, but building one usually costs more than it saves, so the parameters end
+up hard-coded and the loop turns into *edit the file, restart, wait for the data to load again*.
+
+iterlab stops the interface and the code competing for your time and has them feed each other
+instead. **The interface is drawn, not programmed**, so a box you drag onto the canvas is a
+parameter you can turn while the program runs. **The code is live**, so a function you rewrite takes
+effect in the window already open in front of you. **Python never restarts** — your data stays
+loaded, your plots stay drawn, and you carry on from exactly where you were.
 
 ![The same interface running, being drawn in the editor, and the code behind it - each one changing the others](https://raw.githubusercontent.com/alonhzn/iterlab/main/docs/iterlab.jpg)
 
