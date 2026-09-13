@@ -6,6 +6,46 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [2.0.0] — unreleased
+
+### Changed
+
+- **An interface is two files again: `demo.py` and `demo_layout.py`.** The
+  layout moved out of YAML and into a Python module, where it sits beside the
+  `Ev` class your editor reads. One write produces both, so what you drew and
+  what your editor offers cannot drift apart.
+
+  ```python
+  LAYOUT = {
+      'schema_version': 8,
+      'window': {'width': 960, 'height': 540},
+      'elements': {
+          'spectrum': {'type': 'axes', 'position': [0.05, 0.5, 0.9, 0.4]},
+      },
+  }
+
+
+  class Ev:
+      spectrum: "Axes"
+  ```
+
+  **iterlab never imports it.** The layout is lifted out of the parse tree and
+  evaluated as literals only, so opening somebody else's interface is as safe
+  as opening a data file — an `import` here would have made every shared
+  project arbitrary code execution. A computed value in `LAYOUT` is refused
+  rather than evaluated, which is the price of that guarantee and worth it.
+
+  PyYAML is no longer a dependency.
+
+- **Files written by 1.x do not open, and there is no migration.** Deliberate:
+  the library is new enough to have no users, so nobody has a layout to lose,
+  and a migration written for files that do not exist is a cost with no payer.
+  A `demo.yaml` left in the folder is not read, not deleted, and not ignored
+  either — iterlab says what happened and opens a new interface beside it.
+
+  Schema 8 is the first version of this format. The migration machinery stays
+  for the next real change.
+
 ## [1.7.1] — unreleased
 
 ### Added

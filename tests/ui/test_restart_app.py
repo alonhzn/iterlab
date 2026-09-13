@@ -82,17 +82,21 @@ def test_it_re_reads_a_layout_edited_on_disk(gui):
     before = set(gui.interface.layout.tags())
     assert before == {"go"}
 
-    # Another element, written straight to the file - as a hand edit would be.
-    text = gui.interface.layout_path.read_text(encoding="utf-8")
+    # A second element, written straight to the file the way a person would -
+    # the whole file, typed out, rather than the exact bytes iterlab emits.
+    from iterlab.layout.schema import SCHEMA_VERSION
+
     gui.interface.layout_path.write_text(
-        text.replace(
-            "elements:",
-            "elements:\n"
-            "  added_by_hand:\n"
-            "    type: label\n"
-            "    position: [0.5, 0.5, 0.2, 0.1]\n"
-            "    label: 'hi'\n",
-        ),
+        "LAYOUT = {\n"
+        f"    'schema_version': {SCHEMA_VERSION},\n"
+        "    'window': {'width': 800, 'height': 450},\n"
+        "    'elements': {\n"
+        "        'go': {'type': 'button', 'position': [0.1, 0.1, 0.2, 0.1], "
+        "'label': 'Go'},\n"
+        "        'added_by_hand': {'type': 'label', "
+        "'position': [0.5, 0.5, 0.2, 0.1], 'label': 'hi'},\n"
+        "    },\n"
+        "}\n",
         encoding="utf-8",
     )
 

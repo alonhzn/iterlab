@@ -136,28 +136,50 @@ elements:
 """
 
 
-def test_a_version_1_layout_still_opens(tmp_path):
-    """The first real migration. FR-036c said to write one when it was needed."""
+def test_a_1x_yaml_layout_is_not_read(tmp_path):
+    """2.0.0 changed the format and shipped no migration, on purpose.
+
+    The library had no users, so nobody has a layout to lose - and a migration
+    written for files that do not exist is a maintenance cost with no payer.
+    What matters is that it fails as a file this build cannot read, rather than
+    half-reading it.
+    """
     path = tmp_path / "old.yaml"
     path.write_text(V1_FILE, encoding="utf-8")
-
-    layout = store.load(path)
-    assert layout.tags() == ["run_fit"]
-    assert layout.elements["run_fit"].label == "Run fit"
-    assert layout.elements["run_fit"].style == Style(), "absent style means defaults"
+    with pytest.raises(LayoutInvalid):
+        store.load(path)
 
 
-def test_loading_a_v1_file_does_not_rewrite_it(tmp_path):
-    """Migration happens in memory; the file changes only when saved."""
+def test_the_old_file_is_left_exactly_as_it_was(tmp_path):
+    """Refusing to read it must not be the same as damaging it."""
     path = tmp_path / "old.yaml"
     path.write_text(V1_FILE, encoding="utf-8")
     before = path.read_bytes()
-    store.load(path)
+    with pytest.raises(LayoutInvalid):
+        store.load(path)
     assert path.read_bytes() == before
 
 
-def test_saving_a_migrated_layout_writes_the_current_version(tmp_path):
-    path = tmp_path / "old.yaml"
-    path.write_text(V1_FILE, encoding="utf-8")
-    store.save(store.load(path), path)
-    assert f"schema_version: {SCHEMA_VERSION}" in path.read_text(encoding="utf-8")
+def test_opening_a_1x_project_says_what_happened(tmp_path, monkeypatch, capsys):
+    """Otherwise it looks like opening a new interface and losing the old one."""
+    from iterlab.app import _warn_about_a_1x_project
+    from iterlab.interface import Interface
+
+    (tmp_path / "demo.yaml").write_text(V1_FILE, encoding="utf-8")
+    (tmp_path / "demo.py").write_text("def on_startup(ev):\n    pass\n", encoding="utf-8")
+
+    interface = Interface(name="demo", directory=tmp_path)
+    assert _warn_about_a_1x_project(interface) is True
+
+    printed = capsys.readouterr().out
+    assert "demo.yaml" in printed
+    assert "1.x" in printed
+    assert "has not been touched" in printed
+    assert (tmp_path / "demo.yaml").read_text(encoding="utf-8") == V1_FILE
+
+
+def test_nothing_is_said_when_there_is_no_old_file(tmp_path):
+    from iterlab.app import _warn_about_a_1x_project
+    from iterlab.interface import Interface
+
+    assert _warn_about_a_1x_project(Interface(name="demo", directory=tmp_path)) is False

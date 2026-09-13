@@ -38,8 +38,8 @@ def opened(tk_root, tmp_path_factory):
     A copy, so no test can ever write to the project that ships.
     """
     work = tmp_path_factory.mktemp("showcase")
-    for suffix in (".yaml", ".py"):
-        shutil.copy2(EXAMPLES / f"showcase{suffix}", work / f"showcase{suffix}")
+    for name in ("showcase.py", "showcase_layout.py"):
+        shutil.copy2(EXAMPLES / name, work / name)
 
     tk_root.deiconify()
     app = open_interface(str(work / "showcase"), _show=False, _root=tk_root)
@@ -179,5 +179,5 @@ def test_the_shipped_layout_records_the_current_version():
     import iterlab
     from iterlab.layout import store
 
-    layout = store.load(EXAMPLES / "showcase.yaml")
+    layout = store.load(EXAMPLES / "showcase_layout.py")
     assert layout.iterlab_version == iterlab.__version__

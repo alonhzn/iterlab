@@ -10,7 +10,7 @@ def test_bare_name_resolves_to_cwd_pair(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     i = Interface.resolve("demo")
     assert i.name == "demo"
-    assert i.layout_path == tmp_path.resolve() / "demo.yaml"
+    assert i.layout_path == tmp_path.resolve() / "demo_layout.py"
     assert i.code_path == tmp_path.resolve() / "demo.py"
 
 
@@ -18,21 +18,21 @@ def test_relative_path_resolves(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "work").mkdir()
     i = Interface.resolve("work/demo")
-    assert i.layout_path == tmp_path.resolve() / "work" / "demo.yaml"
+    assert i.layout_path == tmp_path.resolve() / "work" / "demo_layout.py"
 
 
 def test_absolute_path_resolves(tmp_path):
     i = Interface.resolve(str(tmp_path / "demo"))
-    assert i.layout_path == tmp_path.resolve() / "demo.yaml"
+    assert i.layout_path == tmp_path.resolve() / "demo_layout.py"
 
 
-@pytest.mark.parametrize("given", ["demo.yaml", "demo.py", "demo.yml"])
+@pytest.mark.parametrize("given", ["demo", "demo.py", "demo_layout.py", "demo_layout"])
 def test_either_file_of_the_pair_may_be_named(tmp_path, monkeypatch, given):
     """A researcher with the file open in an editor will tab-complete one."""
     monkeypatch.chdir(tmp_path)
     i = Interface.resolve(given)
     assert i.name == "demo"
-    assert i.layout_path.name == "demo.yaml"
+    assert i.layout_path.name == "demo_layout.py"
     assert i.code_path.name == "demo.py"
 
 
@@ -89,7 +89,9 @@ def test_newer_layout_version_exits_one(tmp_path, monkeypatch, capsys):
     from iterlab.cli import EXIT_CANNOT_START
 
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "demo.yaml").write_text("schema_version: 99\nelements: {}\n", encoding="utf-8")
+    (tmp_path / "demo_layout.py").write_text(
+        "LAYOUT = {'schema_version': 99, 'elements': {}}\n", encoding="utf-8"
+    )
     (tmp_path / "demo.py").write_text("", encoding="utf-8")
     assert main(["demo"]) == EXIT_CANNOT_START
     assert "newer version" in capsys.readouterr().err

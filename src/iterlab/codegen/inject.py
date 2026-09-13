@@ -105,7 +105,7 @@ def has_ev_import(source: str, code_path) -> bool:
     existed does not, and its stubs are generated unannotated rather than
     referring to a name that is not there. Two lines in the guide add it.
     """
-    module = f"{Path(code_path).stem}_ev"
+    module = f"{Path(code_path).stem}_layout"
     try:
         tree = ast.parse(source)
     except SyntaxError:

@@ -31,7 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
         "name",
         help=(
             "The interface name. A bare name, a path, or either file of the "
-            "pair (demo, work/demo, demo.yaml, demo.py)."
+            "pair (demo, work/demo, demo.py, demo_layout.py)."
         ),
     )
     return parser

@@ -25,7 +25,7 @@ def _element(tag="cmd_0", kind="button"):
 WITH_IMPORT = '''from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from demo_ev import Ev
+    from demo_layout import Ev
 
 
 def on_startup(ev: "Ev"):
@@ -84,7 +84,7 @@ def test_the_import_is_only_read_by_a_checker(tmp_path):
     templates.write_starter_file(path, "demo")
     compiled = compile(path.read_text(encoding="utf-8"), str(path), "exec")
     namespace = {"__name__": "not_main"}
-    exec(compiled, namespace)        # no demo_ev.py anywhere: must not raise
+    exec(compiled, namespace)        # no demo_layout.py anywhere: must not raise
     assert "on_startup" in namespace
 
 
@@ -98,4 +98,4 @@ def test_a_broken_file_reads_as_having_no_import(tmp_path):
 def test_the_import_name_follows_the_file(tmp_path, name):
     path = tmp_path / f"{name}.py"
     templates.write_starter_file(path, name)
-    assert f"from {name}_ev import Ev" in path.read_text(encoding="utf-8")
+    assert f"from {name}_layout import Ev" in path.read_text(encoding="utf-8")

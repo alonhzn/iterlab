@@ -57,14 +57,36 @@ def guard_version(interface) -> list:
     return written
 
 
+def _warn_about_a_1x_project(interface) -> bool:
+    """Say so when a `.yaml` from 1.x is sitting there, and carry on.
+
+    2.0.0 replaced the YAML layout with a Python module and shipped no
+    migration. Without this, opening a 1.x interface looks like opening a brand
+    new one - the old file is not read, not deleted, and not mentioned, and the
+    researcher is left wondering where their layout went. It is still on disk;
+    they just cannot open it with this version.
+    """
+    from .interface import LEGACY_SUFFIX
+
+    legacy = interface.dir / f"{interface.name}{LEGACY_SUFFIX}"
+    if not legacy.exists() or interface.layout_path.exists():
+        return False
+    print(
+        f"iterlab: {legacy.name} was written by iterlab 1.x, which kept the layout"
+        f" in YAML.\n"
+        f"    2.0.0 keeps it in {interface.layout_path.name} instead, and cannot"
+        f" read the old format.\n"
+        f"    Your file has not been touched. This opens as a new interface."
+    )
+    return True
+
+
 def open_interface(name: str, _show=True, _root=None):
     interface = Interface.resolve(name)
+    _warn_about_a_1x_project(interface)
     created = interface.ensure_files()
     interface.load_layout()
     guard_version(interface)
-    # An interface drawn before this existed has no type module yet, and one
-    # whose layout was edited by hand may have a stale one.
-    interface.write_ev_types()
 
     from .ui.app import App
 

@@ -9,7 +9,7 @@ library the researcher passed it to, a long way from anything iterlab wrote.
 import pytest
 from matplotlib.axes import Axes
 
-from iterlab.layout.schema import Rect
+from iterlab.layout.schema import SCHEMA_VERSION, Rect
 
 pytestmark = pytest.mark.ui
 
@@ -17,6 +17,17 @@ CODE = """
 def on_startup(ev):
     ev.ax_0.plot([0, 1, 2], [0, 1, 4])
     ev.ax_0.set_title("drawn")
+"""
+
+#: A layout as somebody would type it, rather than as iterlab writes it.
+HAND_WRITTEN = """\
+LAYOUT = {{
+    'schema_version': {version},
+    'window': {{'width': 800, 'height': 450}},
+    'elements': {{
+        'spectrum': {{'type': 'axes', 'position': [0.1, 0.1, 0.8, 0.8]}},
+    }},
+}}
 """
 
 
@@ -124,18 +135,21 @@ def test_the_canvas_follows_the_figure_across_a_switch(gui):
     assert after.canvas is after.figure.canvas
 
 
-def test_a_layout_written_before_the_rename_still_opens(gui):
-    """Migration 2 -> 3, through the real file rather than the function."""
+def test_a_layout_edited_by_hand_still_opens(gui):
+    """The file is a Python module now, and a person can still edit it.
+
+    `plot_area` was renamed to `axes` back in schema 3, and the migration that
+    carried old files across went with the YAML format in 2.0.0 - there were no
+    users to carry. What has to keep working is the thing that migration was
+    protecting: an element written into the file by hand arrives as a real
+    matplotlib Axes.
+    """
     gui.interface.layout_path.write_text(
-        "schema_version: 2\n"
-        "window: {width: 800, height: 450}\n"
-        "elements:\n"
-        "  spectrum:\n"
-        "    type: plot_area\n"
-        "    position: [0.1, 0.1, 0.8, 0.8]\n",
-        encoding="utf-8",
+        HAND_WRITTEN.format(version=SCHEMA_VERSION), encoding="utf-8"
     )
     gui.restart_app()
     gui.root.update()
     assert gui.interface.layout.elements["spectrum"].type == "axes"
-    assert isinstance(gui.built.ev.spectrum, Axes), "the migrated element is a real Axes"
+    assert isinstance(gui.built.ev.spectrum, Axes), "a hand-written element is a real Axes"
+
+

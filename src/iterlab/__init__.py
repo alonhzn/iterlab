@@ -11,7 +11,7 @@ from .app import open_interface as _open_interface
 
 #: Single source of truth for the version. `pyproject.toml` reads it from here,
 #: so the two can never disagree.
-__version__ = "1.7.1"
+__version__ = "2.0.0"
 
 __all__ = ["run", "__version__"]
 

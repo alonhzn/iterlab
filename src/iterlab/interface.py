@@ -1,4 +1,4 @@
-"""An interface: a `.yaml` and a `.py` sharing a basename in one directory.
+"""An interface: `demo.py` and `demo_layout.py` in one directory.
 
 The entire configuration story is "what is it called" (constitution Principle I).
 Everything resolves relative to the pair's own directory, never to the working
@@ -16,6 +16,16 @@ from .codegen import templates
 from .layout import store
 
 
+#: What the layout file's name adds to the interface's own. It is a Python
+#: module, so this has to be importable: a handler says `from demo_layout
+#: import Ev`.
+LAYOUT_SUFFIX = "_layout"
+
+#: What 1.x called the layout. Looked for only to say something useful when one
+#: turns up - 2.0.0 changed the format and does not read them.
+LEGACY_SUFFIX = ".yaml"
+
+
 class Interface:
     def __init__(self, name: str, directory: Path):
         self.name = name
@@ -28,14 +38,19 @@ class Interface:
     def resolve(cls, given: str) -> "Interface":
         """Accept a bare name, a path, or either file of the pair."""
         path = Path(given).expanduser()
-        if path.suffix in (".yaml", ".yml", ".py"):
+        if path.suffix in (".py", ".yaml", ".yml"):
             path = path.with_suffix("")
+        # `demo_layout` and `demo_layout.py` both mean the interface `demo`:
+        # the layout file is one of the pair, and naming either half should
+        # open the same thing.
+        if path.name.endswith(LAYOUT_SUFFIX):
+            path = path.with_name(path.name[: -len(LAYOUT_SUFFIX)])
         directory = path.parent if str(path.parent) != "" else Path(".")
         return cls(name=path.name, directory=directory.resolve())
 
     @property
     def layout_path(self) -> Path:
-        return self.dir / f"{self.name}.yaml"
+        return self.dir / f"{self.name}{LAYOUT_SUFFIX}.py"
 
     @property
     def code_path(self) -> Path:
@@ -70,22 +85,4 @@ class Interface:
 
     def save_layout(self) -> None:
         store.save(self.layout, self.layout_path)
-        self.write_ev_types()
 
-    def write_ev_types(self) -> None:
-        """Keep the generated type module level with the elements.
-
-        Here because this is the one place every element change passes through -
-        drawing, renaming, deleting - so the module cannot fall behind what is
-        on the canvas. It rewrites nothing when the text has not changed, so a
-        drag that only moves an element touches no file but the layout.
-
-        Never fatal: completions are a convenience, and a convenience that can
-        stop someone saving their layout is not one.
-        """
-        from .codegen import evtypes
-
-        try:
-            evtypes.write(self.code_path, self.layout)
-        except OSError:
-            pass

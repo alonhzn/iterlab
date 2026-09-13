@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     # Only your editor reads this - it never runs, and costs nothing at launch.
     # It is what makes `ev.` complete to the elements you drew, with matplotlib's
     # own signatures on a plot. Delete it and everything still works.
-    from {name}_ev import Ev
+    from {name}_layout import Ev
 
 
 def on_startup(ev: "Ev"):

@@ -37,7 +37,7 @@ def interface(tmp_path):
 def _stamp_as(interface, version):
     """Rewrite the file as though `version` had been the one to save it."""
     text = interface.layout_path.read_text(encoding="utf-8")
-    text = text.replace(f"iterlab_version: {iterlab.__version__}", f"iterlab_version: {version}")
+    text = text.replace(f"'iterlab_version': {iterlab.__version__!r}", f"'iterlab_version': {version!r}")
     interface.layout_path.write_text(text, encoding="utf-8")
     interface.load_layout()
 
@@ -68,19 +68,22 @@ def test_an_unstamped_file_needs_one():
 
 
 def test_the_name_matches_the_requested_shape(tmp_path):
-    assert backup_path(tmp_path / "demo.yaml", "1.2.0").name == "demo.yaml.v1.2.0.bak"
+    assert (
+        backup_path(tmp_path / "demo_layout.py", "1.2.0").name
+        == "demo_layout.py.v1.2.0.bak"
+    )
     assert backup_path(tmp_path / "demo.py", "1.2.0").name == "demo.py.v1.2.0.bak"
 
 
 def test_the_name_carries_the_version_that_wrote_it(tmp_path):
     """Not the version opening it: the copy is of what *that* version left."""
-    assert "v1.2.0" in backup_path(tmp_path / "demo.yaml", "1.2.0").name
+    assert "v1.2.0" in backup_path(tmp_path / "demo_layout.py", "1.2.0").name
 
 
 def test_an_unstamped_file_is_not_given_a_fake_version(tmp_path):
-    name = backup_path(tmp_path / "demo.yaml", "").name
+    name = backup_path(tmp_path / "demo_layout.py", "").name
     assert UNKNOWN in name
-    assert name == f"demo.yaml.v{UNKNOWN}.bak"
+    assert name == f"demo_layout.py.v{UNKNOWN}.bak"
 
 
 # -- what actually happens on open -----------------------------------------
@@ -94,14 +97,14 @@ def test_nothing_is_copied_when_the_version_matches(interface):
 def test_both_files_are_copied_on_a_difference(interface):
     _stamp_as(interface, "1.2.0")
     guard_version(interface)
-    assert _backups(interface) == ["demo.py.v1.2.0.bak", "demo.yaml.v1.2.0.bak"]
+    assert _backups(interface) == ["demo.py.v1.2.0.bak", "demo_layout.py.v1.2.0.bak"]
 
 
 def test_a_downgrade_is_copied_too(interface):
     """The dangerous direction, and the reason this is not a "newer than" test."""
     _stamp_as(interface, "9.9.9")
     guard_version(interface)
-    assert _backups(interface) == ["demo.py.v9.9.9.bak", "demo.yaml.v9.9.9.bak"]
+    assert _backups(interface) == ["demo.py.v9.9.9.bak", "demo_layout.py.v9.9.9.bak"]
 
 
 def test_the_copy_holds_what_that_version_left(interface):
@@ -113,7 +116,7 @@ def test_the_copy_holds_what_that_version_left(interface):
     guard_version(interface)
     interface.save_layout()          # the rewrite the backup exists to survive
 
-    copy = interface.dir / "demo.yaml.v1.2.0.bak"
+    copy = interface.dir / "demo_layout.py.v1.2.0.bak"
     assert copy.read_bytes() == before
     assert copy.read_bytes() != interface.layout_path.read_bytes()
     assert original_layout != before  # the fixture really did change the stamp
@@ -140,10 +143,12 @@ def test_an_existing_backup_is_not_overwritten(interface):
     """
     _stamp_as(interface, "1.2.0")
     guard_version(interface)
-    copy = interface.dir / "demo.yaml.v1.2.0.bak"
+    copy = interface.dir / "demo_layout.py.v1.2.0.bak"
     first = copy.read_bytes()
 
-    interface.layout_path.write_text("schema_version: 6\nelements: {}\n", encoding="utf-8")
+    interface.layout_path.write_text(
+        "LAYOUT = {'schema_version': 8, 'elements': {}}\n", encoding="utf-8"
+    )
     _stamp_as(interface, "1.2.0")
     guard_version(interface)
     assert copy.read_bytes() == first
@@ -189,7 +194,7 @@ def test_the_researcher_is_told(interface, capsys):
     printed = capsys.readouterr().out
     assert "1.2.0" in printed
     assert iterlab.__version__ in printed
-    assert "demo.yaml.v1.2.0.bak" in printed
+    assert "demo_layout.py.v1.2.0.bak" in printed
 
 
 def test_an_unstamped_project_is_announced_too(interface, capsys):
@@ -200,16 +205,16 @@ def test_an_unstamped_project_is_announced_too(interface, capsys):
     nobody was told about.
     """
     text = interface.layout_path.read_text(encoding="utf-8")
-    kept = [l for l in text.splitlines() if not l.startswith("iterlab_version:")]
+    kept = [line for line in text.splitlines() if "'iterlab_version'" not in line]
     interface.layout_path.write_text("\n".join(kept) + "\n", encoding="utf-8")
     interface.load_layout()
 
     guard_version(interface)
     printed = capsys.readouterr().out
-    assert f"demo.yaml.v{UNKNOWN}.bak" in printed
+    assert f"demo_layout.py.v{UNKNOWN}.bak" in printed
     assert "older than" in printed
     assert _backups(interface) == [
-        f"demo.py.v{UNKNOWN}.bak", f"demo.yaml.v{UNKNOWN}.bak"
+        f"demo.py.v{UNKNOWN}.bak", f"demo_layout.py.v{UNKNOWN}.bak"
     ]
 
 

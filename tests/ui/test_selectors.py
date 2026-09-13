@@ -285,9 +285,9 @@ def test_a_deleted_file_still_offers_its_folder(gui, chooser, tmp_path):
 def test_nothing_is_written_into_the_project_folder(gui, chooser, tmp_path):
     """Choosing a file writes nothing into the project.
 
-    The pair is two files plus the generated `demo_ev.py`, which is iterlab's
-    own and exists so an editor can see what `ev` holds. Nothing else may
-    appear - least of all a copy of whatever was just chosen.
+    The pair is two files: the researcher's `demo.py` and iterlab's
+    `demo_layout.py`. Nothing else may appear - least of all a copy of
+    whatever was just chosen.
     """
     # Somewhere other than the interface's own folder, or the file being chosen
     # would itself be what the assertion trips over.
@@ -298,7 +298,7 @@ def test_nothing_is_written_into_the_project_folder(gui, chooser, tmp_path):
     _pick(gui, "fileselect", chooser, target)
 
     names = sorted(p.name for p in gui.interface.dir.iterdir() if p.is_file())
-    assert names == ["demo.py", "demo.yaml", "demo_ev.py"], names
+    assert names == ["demo.py", "demo_layout.py"], names
 
 
 # -- it is a button in every other respect ---------------------------------

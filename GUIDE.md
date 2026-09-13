@@ -55,7 +55,8 @@ Because `demo` does not exist yet, iterlab creates two files beside each other a
 **editor**:
 
 ```
-demo.yaml    the layout - iterlab owns this, you never hand-edit it
+demo_layout.py   what you drew, and what your editor reads to complete `ev.`
+             iterlab owns this one and rewrites it as you work
 demo.py      your code - you own this, iterlab only ever appends to it
 ```
 
@@ -407,7 +408,7 @@ if not ev.go.enabled:
 
 **The editor sets the starting appearance. Code overrides it for the session.**
 
-Assigning a style in code changes the live element and is **never written back to `demo.yaml`**. It
+Assigning a style in code changes the live element and is **never written back to `demo_layout.py`**. It
 survives mode switches, because that is the same session — but close the window, or press **Hard
 reset**, and you are back to what the editor says. That is deliberate: your layout file stays a
 description of the interface, not a log of what happened to it.
@@ -559,7 +560,7 @@ Dismissing does not mark the edit as accepted: change `on_startup` again and the
 **Hard reset** sits next to the toggle, in both modes. It is the big hammer, and it does what
 re-launching `iterlab demo` would do without closing the window:
 
-- your layout is re-read **from the file**, so a hand edit to `demo.yaml` is picked up
+- your layout is re-read **from the file**, so a hand edit to `demo_layout.py` is picked up
 - your code is loaded fresh
 - `ev` is emptied and `on_startup` runs again
 
@@ -576,18 +577,18 @@ differ only in how much they throw away.
 
 ## Saving a picture
 
-**Screenshot** in the top bar writes a PNG next to your `.py` and `.yaml`, named `demo-<date>-<time>.png`.
+**Screenshot** in the top bar writes a PNG next to your two files, named `demo-<date>-<time>.png`.
 
 It captures your interface only — the top bar with iterlab's own buttons is left out, because it is
 this tool's furniture and not part of what you built.
 
 ## Opening a project on a different iterlab
 
-Every `demo.yaml` records which iterlab last wrote it. Open it with a different one — newer **or
+Every `demo_layout.py` records which iterlab last wrote it. Open it with a different one — newer **or
 older** — and both files are copied aside before anything touches them:
 
 ```
-demo.yaml.v1.3.0.bak
+demo_layout.py.v1.3.0.bak
 demo.py.v1.3.0.bak
 ```
 
@@ -625,7 +626,7 @@ A new project opens at **half your screen**, which is a starting point rather th
 resize it and that is the size from then on. An existing project always opens at the size you left
 it, never at the default.
 
-The size is remembered in `demo.yaml`, so it travels with the project rather than living on one
+The size is remembered in `demo_layout.py`, so it travels with the project rather than living on one
 machine.
 
 ### The toolbar
@@ -644,7 +645,7 @@ Everything positional is held to **two decimals** — hundredths of the window. 
 position lands on that grid, in the editor and in the file alike.
 
 Finer than a hundredth is below what you can place by hand and below what you can see, and it turns
-`demo.yaml` into a wall of digits whose diffs mean nothing. If you type `0.333` into a position
+`demo_layout.py` into a wall of digits whose diffs mean nothing. If you type `0.333` into a position
 field, you will get `0.33`.
 
 ## Completions in your editor
@@ -656,9 +657,9 @@ iterlab axes **is** a matplotlib `Axes` rather than a wrapper around one.
 Nothing to install and nothing editor-specific: it is ordinary Python typing, so VS Code, PyCharm and
 anything else that reads types all work the same way.
 
-Two things make it happen. iterlab writes `demo_ev.py` beside your pair, listing the elements and
-what each one is, and rewrites it whenever you draw, rename or delete something. And your handlers
-say what they take:
+Two things make it happen. `demo_layout.py` holds your elements and what each one is, alongside the
+layout itself, and iterlab rewrites it whenever you draw, rename or delete something. And your
+handlers say what they take:
 
 ```python
 def on_clicked_run_fit(ev: "Ev", event):
@@ -667,8 +668,9 @@ def on_clicked_run_fit(ev: "Ev", event):
     ev.threshold.value               # float
 ```
 
-`demo_ev.py` is read by your editor and never at run time. Delete it and everything still works; you
-lose the completions until the next time you change an element.
+The `Ev` class in it is read by your editor and never at run time. The layout beside it is read by
+iterlab, which **never imports the file** - it is parsed and only literal values are taken out, so
+opening somebody else's interface can never run their code.
 
 ### Adding it to an interface you already have
 
@@ -680,7 +682,7 @@ import has to go at the top. Two lines, once, at the top of your `.py`:
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from demo_ev import Ev
+    from demo_layout import Ev
 ```
 
 Use your own file's name. From then on, new stubs are annotated for you, and annotating your existing
@@ -740,7 +742,7 @@ Worth knowing before they surprise you.
   built yet.
 - **Modules you import are assumed not to change** while the session runs. Editing a helper module
   of your own has no effect until you press **Hard reset**.
-- **Editing `demo.yaml` by hand** is possible but not the intended path; the editor is.
+- **Editing `demo_layout.py` by hand** is possible but not the intended path; the editor is.
 
 ---
 
