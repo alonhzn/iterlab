@@ -6,7 +6,7 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [1.6.0] — unreleased
+## [1.6.0] — 2026-09-13
 
 ### Changed
 
