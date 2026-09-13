@@ -132,11 +132,13 @@ class Designer:
         # interface - which it is whenever the toolbar needs the room - the
         # difference shows here, so the edge of the canvas is the edge of the
         # window the researcher will run in, visibly.
-        self.stage = tk.Frame(container, bg=theme.BG)
+        self.stage = tk.Frame(container, bg=theme.STAGE)
         self.stage.pack(side="left", fill="both", expand=True)
 
         self.canvas = tk.Canvas(self.stage, bg=theme.SURFACE, highlightthickness=0)
-        self.canvas.place(x=0, y=0, relwidth=1.0, height=1)
+        # Placed in absolute pixels, never relative: `_fit_canvas` sizes it, and
+        # a leftover `relwidth` would be *added* to that rather than replaced.
+        self.canvas.place(x=0, y=0, width=1, height=1)
         self.stage.bind("<Configure>", lambda _e: self._fit_canvas())
         self._tag_tip = PointerTip(self.canvas)
         self.canvas.bind("<ButtonPress-1>", self._on_press)
@@ -519,30 +521,38 @@ class Designer:
         self.redraw()
 
     def _fit_canvas(self):
-        """Give the canvas exactly the interface's height, filling the width.
+        """Fit a scale picture of the run window into the room beside the toolbar.
 
-        Width comes from the window, so dragging the editor wider makes the
-        interface wider. Height is the interface's own, because the window is
-        kept tall enough for the toolbar and that extra height is the editor's,
-        not the interface's - letting the canvas take it would inflate every
-        short interface the moment someone opened the editor.
+        Both modes are one window size now, so the toolbar has to take its room
+        from inside the window rather than being added on beside it. That leaves
+        the canvas a different *shape* from the interface - and an element drawn
+        on a canvas of the wrong shape comes out stretched when it runs, because
+        every position is a fraction.
+
+        So the canvas keeps the interface's proportions and gives up size
+        instead: the largest rectangle of that shape that fits the space left,
+        centred, with the backdrop showing around it. Everything on it is
+        smaller than it will run, and in the right place relative to everything
+        else, which is what a layout is.
         """
-        from .app import MIN_EDITOR_HEIGHT
+        available_width = max(self.stage.winfo_width(), 1)
+        available_height = max(self.stage.winfo_height(), 1)
 
-        available = self.stage.winfo_height()
-        # The stored size *is* the area, so no arithmetic is needed here.
-        wanted = self.layout.window.height
+        # The shape to preserve is the interface the researcher will run in:
+        # this window, less iterlab's own top bar.
+        area_width, area_height = self.app.interface_size()
+        scale = min(available_width / area_width, available_height / area_height)
 
-        if self.app.root.winfo_height() > MIN_EDITOR_HEIGHT:
-            # Taller than the floor, so this height is one the researcher chose
-            # by dragging - the interface follows it.
-            height = available
-        else:
-            # At the floor. The extra height belongs to the toolbar, not to the
-            # interface, so it shows as dead space rather than inflating a short
-            # interface the moment the editor opens.
-            height = min(wanted, available)
-        self.canvas.place_configure(x=0, y=0, relwidth=1.0, height=max(height, 1))
+        width = max(int(area_width * scale), 1)
+        height = max(int(area_height * scale), 1)
+        self.canvas.place_configure(
+            x=(available_width - width) // 2,
+            y=(available_height - height) // 2,
+            width=width,
+            height=height,
+            relwidth=0,
+            relheight=0,
+        )
 
     # -- the toolbar -----------------------------------------------------
 
@@ -579,27 +589,33 @@ class Designer:
             widget.bind("<Button-1>", lambda _e: self.toggle_toolbar())
 
     def _apply_collapsed(self):
-        """Show whichever face matches the current state."""
+        """Show whichever face matches the current state.
+
+        The window does not change. Folding gives its width to the stage, and
+        the canvas grows into it - so folding is now a way to see the layout
+        bigger rather than a way to make the window narrower.
+        """
         if self.collapsed:
             self.sidebar.outer.pack_forget()
             self.strip.pack(side="left", fill="y", before=self.stage)
         else:
             self.strip.pack_forget()
             self.sidebar.outer.pack(side="left", fill="y", before=self.stage)
+        self._fit_canvas()
 
     def toggle_toolbar(self) -> bool:
         """Fold the toolbar away, or bring it back.
 
-        The window changes width by the difference, so the canvas keeps exactly
-        the pixels it had: folding the toolbar gives you room on the desk, not a
-        different interface.
+        The window does not move. The room the toolbar gives up goes to the
+        canvas, which grows into it at the same proportions - so folding shows
+        you the same layout bigger, and never changes the interface itself.
         """
         self.collapsed = not self.collapsed
         self.layout.toolbar_collapsed = self.collapsed
         self._apply_collapsed()
         self.interface.save_layout()
-        self.app.apply_size_for_mode()
         self.app.root.update_idletasks()
+        self._fit_canvas()
         self.redraw()
         return self.collapsed
 

@@ -140,66 +140,116 @@ def test_palette_rows_stay_compact_as_types_are_added(mapped, make_app):
         assert height <= 34, f"{element_type} row is {height}px, too tall to scale"
 
 
-def test_the_editor_is_the_interface_plus_the_toolbar(mapped, make_app):
-    """One remembered number describes both modes.
+def test_both_modes_are_the_same_window(mapped, make_app):
+    """One remembered number, one window. Switching resizes nothing.
 
-    The editor used to apply a floor of its own on top of adding the sidebar,
-    which is what made the canvas a different shape from the interface: an
-    element drawn square came out stretched when run.
+    The editor used to be the interface *plus* the toolbar beside it, so every
+    switch changed the window width - and every plot on screen re-rendered for
+    it. The toolbar now takes its room from inside the window instead.
     """
-    from iterlab.ui.app import MIN_EDITOR_HEIGHT
+    app = make_app()
+    app.root.update()
+    in_editor = (app.root.winfo_width(), app.root.winfo_height())
 
+    app.toggle()
+    app.root.update()
+    assert (app.root.winfo_width(), app.root.winfo_height()) == in_editor
+
+    app.toggle()
+    app.root.update()
+    assert (app.root.winfo_width(), app.root.winfo_height()) == in_editor
+
+
+def test_the_window_is_the_interface_plus_the_top_bar(mapped, make_app):
     app = make_app()
     app.root.update()
     window = app.interface.layout.window
-    assert app.root.winfo_width() == window.width + app.toolbar_allowance()
-    # Taller than the interface when the interface is short, so the toolbar has
-    # room for its own controls. The canvas does not grow into that space.
-    assert app.root.winfo_height() == max(
-        window.height + app.chrome_height(), MIN_EDITOR_HEIGHT
-    )
+    assert app.root.winfo_width() == window.width
+    assert app.root.winfo_height() == window.height + app.chrome_height()
 
 
-def test_the_toolbar_always_has_room_for_its_own_controls(mapped, make_app):
-    """Why the editor has a floor at all, stated as a consequence.
+def test_the_sidebar_scrolls_rather_than_losing_its_lower_half(mapped, make_app):
+    """Both windows are one size, so a short one leaves the toolbar short too.
 
-    Tk does not scroll or clip a packed column: a child that does not fit is
-    simply never mapped. So an editor sized to a short interface silently loses
-    the bottom of the properties panel - the researcher sees a panel that looks
-    complete, and the controls below the fold are not there. That is how this
-    went red on CI: a suite that edits properties was editing widgets that had
-    fallen off the window.
+    Tk does not clip a packed column - it stops mapping the children that do
+    not fit, and they are gone with no error anywhere. The sidebar is a
+    scrolling column for exactly that reason, and this is the test that says
+    so: at a window too short for it, every control is still there and the
+    scrollbar can reach them.
     """
     from iterlab.layout.schema import Rect
 
     app = make_app()
-    app.interface.layout.resize(800, 200)      # far shorter than the toolbar
-    app.apply_size_for_mode()
     app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1), tag="go")
     app.built.select("go")
+    app.root.geometry("700x320")
     app.root.update()
     app.root.update_idletasks()
 
+    sidebar = app.built.sidebar
+    assert sidebar.inner.winfo_reqheight() > sidebar.canvas.winfo_height(), (
+        "this test is meaningless unless the toolbar really is too tall here"
+    )
+    first, last = sidebar.canvas.yview()
+    assert last < 1.0, "the column is not scrollable, so the rest is unreachable"
+
     panel = app.built.properties
     for name in ("_message", "_danger_zone", "_body"):
-        widget = getattr(panel, name)
-        assert widget.winfo_ismapped(), f"{name} fell off the bottom of the toolbar"
-        bottom = widget.winfo_rooty() + widget.winfo_height()
-        assert bottom <= app.root.winfo_rooty() + app.root.winfo_height(), name
+        assert getattr(panel, name).winfo_ismapped(), f"{name} was dropped, not scrolled"
 
 
-def test_the_canvas_is_exactly_the_interface(mapped, make_app):
-    """What you draw on is the window you will run in, to the pixel."""
+def test_the_canvas_has_the_interface_s_proportions(mapped, make_app):
+    """Not its pixels any more - its shape.
+
+    Positions are fractions, so what has to survive the trip from canvas to
+    window is the *ratio*. An element drawn square on a canvas of a different
+    shape would come out stretched when it ran, which is the whole reason the
+    canvas is not simply given whatever room is left.
+    """
     from iterlab.layout.schema import Rect
 
     app = make_app()
     app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1), tag="go")
+    app.root.update()
     app.root.update_idletasks()
-    canvas = (app.built.canvas.winfo_width(), app.built.canvas.winfo_height())
 
-    app.toggle()
+    canvas = app.built.canvas
+    area_width, area_height = app.interface_size()
+    drawn = canvas.winfo_width() / canvas.winfo_height()
+    interface = area_width / area_height
+    assert abs(drawn - interface) < 0.02, f"canvas {drawn:.3f} vs interface {interface:.3f}"
+
+
+def test_the_canvas_fits_inside_the_room_beside_the_toolbar(mapped, make_app):
+    app = make_app()
+    app.root.update()
     app.root.update_idletasks()
-    assert (app.content.winfo_width(), app.content.winfo_height()) == canvas
+    canvas, stage = app.built.canvas, app.built.stage
+    assert canvas.winfo_width() <= stage.winfo_width()
+    assert canvas.winfo_height() <= stage.winfo_height()
+
+
+def test_the_canvas_is_centred_in_that_room(mapped, make_app):
+    """The leftover shows as backdrop on both sides, not all on one."""
+    app = make_app()
+    app.root.update()
+    app.root.update_idletasks()
+    canvas, stage = app.built.canvas, app.built.stage
+    left = canvas.winfo_x()
+    right = stage.winfo_width() - (left + canvas.winfo_width())
+    top = canvas.winfo_y()
+    bottom = stage.winfo_height() - (top + canvas.winfo_height())
+    assert abs(left - right) <= 1, f"{left} left, {right} right"
+    assert abs(top - bottom) <= 1, f"{top} top, {bottom} bottom"
+
+
+def test_the_backdrop_is_not_the_canvas_colour(mapped, make_app):
+    """The canvas is a picture of the run window; its edge has to be findable."""
+    from iterlab.ui import theme
+
+    app = make_app()
+    assert app.built.stage.cget("bg") != app.built.canvas.cget("bg")
+    assert app.built.stage.cget("bg") == theme.STAGE
 
 
 def test_switching_to_the_editor_never_shrinks_the_window(mapped, make_app):

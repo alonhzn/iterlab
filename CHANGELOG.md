@@ -6,6 +6,39 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.6.0] — unreleased
+
+### Changed
+
+- **One window, and switching modes no longer moves it.** The editor and the
+  running interface are now exactly the same size at all times. The toolbar
+  takes its room from inside the window instead of being added beside it.
+
+  That leaves the canvas a different *shape* from the interface, and positions
+  are fractions — an element drawn on a canvas of the wrong shape comes out
+  stretched when it runs. So the canvas keeps the interface's proportions and
+  gives up size: the largest rectangle of that shape which fits beside the
+  toolbar, centred, with the backdrop showing around it. The white rectangle is
+  the window you will run in; the grey is the room the toolbar borrowed.
+
+  What this replaces: the editor window was the interface *plus* the toolbar,
+  which meant every mode switch resized the window — and every plot on screen
+  re-rendered for it. Switching now resizes nothing, so that cost is gone for
+  good rather than merely reduced.
+
+  The editor's height floor is gone with it. A short window makes for a short
+  toolbar, and the toolbar scrolls; it has been a scrolling column since 0.13.0
+  for exactly this reason.
+
+- **Folding the toolbar grows the canvas** instead of narrowing the window. The
+  window cannot move — it is the interface's size — so the room the toolbar
+  gives up goes to the canvas, at the same proportions. Folding is now a way to
+  see your layout bigger.
+
+- **The editor backdrop is a shade darker than the sidebar.** The canvas is a
+  picture of the run window and its edge has to be findable; against the
+  sidebar's own colour, a white canvas had almost no edge at all.
+
 ## [1.5.1] — 2026-09-12
 
 ### Fixed

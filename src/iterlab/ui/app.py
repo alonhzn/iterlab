@@ -17,11 +17,8 @@ GUI = "gui"
 
 #: Room the editor needs beyond the interface itself: the toolbar and the hair
 #: line beside it. Added to the interface size rather than eating into it, so
-#: the canvas is *exactly* the window the researcher will run in - the same
-#: pixels, not merely the same proportions.
-SIDEBAR_ALLOWANCE = 211
-TOOLBAR_ALLOWANCE = 87
-
+#: the editor canvas shows those same proportions, scaled to whatever room is
+#: left beside the toolbar.
 #: How long to wait after a resize before writing it down. Dragging a window
 #: edge fires <Configure> continuously, and saving on every pixel would rewrite
 #: the layout file hundreds of times for one drag.
@@ -34,15 +31,6 @@ SEPARATOR_HEIGHT = 1
 #: expressible; large enough that the window is not a sliver nobody can grab.
 MIN_INTERFACE_WIDTH = 320
 MIN_INTERFACE_HEIGHT = 240
-
-#: The editor window is never shorter than this, whatever the interface is.
-#:
-#: Not a floor on the *interface* — that is what made the two modes different
-#: shapes before. The canvas stays exactly the interface's size and the leftover
-#: height is dead space below it. Without this, an 800x450 interface gave the
-#: toolbar 402 px for 596 px of controls, and the property fields fell off the
-#: bottom of the window where nothing could reach them.
-MIN_EDITOR_HEIGHT = 660
 
 _TK_MISSING_MESSAGE = """\
 iterlab needs tkinter, which is missing from this Python installation.
@@ -179,23 +167,22 @@ class App:
     def interface_size(self):
         """The interface's size in pixels, whichever mode is showing.
 
-        In GUI mode the window *is* the interface. In editor mode the interface
-        is the canvas, and the window is that plus the toolbar — so resizing
-        either mode describes the same thing, and changing one changes the other.
+        The window minus iterlab's own top bar, in both modes. In GUI mode that
+        is the content frame and can be read straight off it.
+
+        In the editor it is *not* the canvas. The canvas is a scaled picture of
+        the interface fitted beside the toolbar, so reading it back would shrink
+        the interface a little every time the editor was opened.
         """
-        # Both readings are of the area the researcher's elements live in, never
-        # of the window around it. That is what makes the two modes comparable:
-        # the top bar is iterlab's, and is not part of anyone's interface.
         if self.mode == GUI:
             return (
                 max(self._content.winfo_width(), 1),
                 max(self._content.winfo_height(), 1),
             )
-        canvas = getattr(self._built, "canvas", None)
-        if canvas is None:  # pragma: no cover - only between teardown and build
-            window = self.interface.layout.window
-            return window.width, window.height
-        return max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
+        return (
+            max(self.root.winfo_width(), 1),
+            max(self.root.winfo_height() - self.chrome_height(), 1),
+        )
 
     def remember_size(self) -> bool:
         """Write the current size into the layout, so reopening restores it.
@@ -231,32 +218,23 @@ class App:
         """
         return self._chrome.winfo_reqheight() + SEPARATOR_HEIGHT
 
-    def toolbar_allowance(self) -> int:
-        """How much wider the editor window is than the interface."""
-        collapsed = getattr(self.interface.layout, "toolbar_collapsed", False)
-        return TOOLBAR_ALLOWANCE if collapsed else SIDEBAR_ALLOWANCE
-
     def _size_for(self, mode):
-        """Window size for a mode, in pixels.
+        """Window size for a mode, in pixels. The same for both of them.
 
-        One number describes both: the interface's own size. GUI mode is exactly
-        that; editor mode is that plus the toolbar beside it, so the canvas comes
-        out the same pixel size as the window the researcher will run in.
+        One remembered number describes the window, and the interface is that
+        window minus iterlab's own top bar. Switching mode therefore changes no
+        size at all - which is the whole point, and also means a switch no
+        longer costs every plot a re-render.
 
-        The editor used to add the toolbar *and* apply a floor of its own, which
-        is what made the two modes different shapes - an element drawn square
-        came out stretched, because the canvas and the interface were not the
-        same rectangle.
+        The toolbar is not added on. It takes its room from inside the window,
+        and the canvas shows the interface's proportions scaled into what is
+        left - see `Designer._fit_canvas`.
         """
         window = self.interface.layout.window
-        width = max(window.width, MIN_INTERFACE_WIDTH)
-        height = max(window.height, MIN_INTERFACE_HEIGHT) + self.chrome_height()
-        if mode != EDITOR:
-            return width, height
-        # Taller than the interface when the interface is short, so the toolbar
-        # always has room for its own controls. The canvas does not grow into
-        # that - see Designer, which pins it to the interface's own height.
-        return width + self.toolbar_allowance(), max(height, MIN_EDITOR_HEIGHT)
+        return (
+            max(window.width, MIN_INTERFACE_WIDTH),
+            max(window.height, MIN_INTERFACE_HEIGHT) + self.chrome_height(),
+        )
 
     def apply_size_for_mode(self) -> None:
         """Set the window to the size this mode should be.

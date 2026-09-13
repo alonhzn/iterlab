@@ -116,37 +116,30 @@ def test_a_minimised_window_is_not_recorded(gui, monkeypatch):
 def test_resizing_the_editor_resizes_the_interface(gui):
     """The two describe one number between them.
 
-    This is the reverse of what it used to be. The editor's window was ignored
-    because it held the sidebar *and* a floor of its own, so its size was not
-    the interface's size. Now the window is the interface plus the toolbar and
-    nothing else, so the interface size can be read straight back out of it.
+    The editor window *is* the interface window now, with nothing added on, so
+    the interface size can be read straight back out of it.
     """
-    from iterlab.ui.app import MIN_EDITOR_HEIGHT
-
     gui.toggle()                      # into the editor
-    # Above the editor's floor, so this is a height the researcher chose by
-    # dragging rather than one the toolbar insisted on.
-    height = MIN_EDITOR_HEIGHT + 120
-    _resize(gui, 1000 + gui.toolbar_allowance(), height)
+    _resize(gui, 1000, 640)
     assert gui.remember_size() is True
-    assert gui.interface.layout.window == Window(1000, height - gui.chrome_height())
+    assert gui.interface.layout.window == Window(1000, 640 - gui.chrome_height())
 
     gui.toggle()                      # and the interface follows
-    gui.root.update_idletasks()
+    gui.root.update()
+    assert (gui.root.winfo_width(), gui.root.winfo_height()) == (1000, 640)
     assert gui.content.winfo_width() == 1000
-    assert gui.content.winfo_height() == height - gui.chrome_height()
 
 
 def test_a_small_interface_survives_a_visit_to_the_editor(gui):
-    """The editor no longer has a floor, so it cannot inflate a small interface."""
+    """The editor has no floor of its own, so it cannot inflate a small one."""
     _resize(gui, 620, 400)
     gui.remember_size()
     small = gui.interface.layout.window
 
-    gui.toggle()                       # the editor is taller, for its toolbar
-    gui.root.update_idletasks()
     gui.toggle()
-    gui.root.update_idletasks()
+    gui.root.update()
+    gui.toggle()
+    gui.root.update()
 
     assert gui.interface.layout.window == small
 

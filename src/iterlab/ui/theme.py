@@ -21,6 +21,11 @@ BG = "#f5f6f8"          # sidebar and chrome
 SURFACE = "#ffffff"      # canvas, entry fields
 TOOLTIP_BG = "#2f3238"   # hover text: dark, so it reads as an overlay
 TOOLTIP_TEXT = "#f2f3f5"
+#: Behind the editor canvas. The canvas is a scale picture of the run window,
+#: so its edge has to be findable - against BG, which is what the sidebar and
+#: chrome use, a white canvas has almost no edge at all.
+STAGE = "#e4e7ec"
+
 BORDER = "#dfe3e8"
 BORDER_STRONG = "#c4cad2"
 

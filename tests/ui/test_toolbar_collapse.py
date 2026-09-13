@@ -1,9 +1,10 @@
-"""The editor's toolbar folds away, and the canvas keeps its pixels.
+"""The editor's toolbar folds away, and the canvas grows into the room.
 
-Both modes are now one size: the interface. The editor window is that plus the
-toolbar, so the canvas is the very window the researcher will run in. Folding the
-toolbar therefore has to change the *window*, not the canvas — otherwise tidying
-the desk would quietly resize the interface.
+Both modes are one window size, and the toolbar takes its room from inside that
+window rather than being added beside it. So folding cannot change the window -
+it would change the interface, which is the one thing tidying the desk must not
+do. What it changes is how much room the canvas has, and the canvas is a scale
+picture, so folding shows you the same layout bigger.
 
 Collapsed or not is kept in the layout, so it travels with the project.
 """
@@ -11,7 +12,7 @@ Collapsed or not is kept in the layout, so it travels with the project.
 import pytest
 
 from iterlab.layout.schema import Rect, Window
-from iterlab.ui.app import SIDEBAR_ALLOWANCE, TOOLBAR_ALLOWANCE
+from iterlab.ui.designer import SIDEBAR_WIDTH, TOOLBAR_WIDTH
 
 pytestmark = pytest.mark.ui
 
@@ -79,25 +80,35 @@ def test_the_strip_says_what_it_is(editor):
 
 
 def test_the_strip_is_narrower_than_the_panel(editor):
-    assert TOOLBAR_ALLOWANCE < SIDEBAR_ALLOWANCE
+    assert TOOLBAR_WIDTH < SIDEBAR_WIDTH
 
 
 # -- and the canvas does not move ------------------------------------------
 
 
-def test_folding_keeps_the_canvas_the_same_size(editor):
-    """The point: tidying the desk must not resize the interface."""
+def test_folding_gives_the_canvas_the_room(editor):
+    """The window cannot move, so the freed width has to go somewhere."""
     before = _canvas(editor)
     editor.toggle_toolbar()
-    assert _canvas(editor) == before
+    after = _canvas(editor)
+    assert after[0] > before[0], f"canvas stayed {before} after folding"
 
 
-def test_folding_narrows_the_window_instead(editor):
-    before = editor.app.root.winfo_width()
+def test_folding_does_not_move_the_window(editor):
+    """It is the interface's size. Tidying the desk must not change it."""
+    before = (editor.app.root.winfo_width(), editor.app.root.winfo_height())
     editor.toggle_toolbar()
     editor.app.root.update()
-    after = editor.app.root.winfo_width()
-    assert after == before - (SIDEBAR_ALLOWANCE - TOOLBAR_ALLOWANCE)
+    assert (editor.app.root.winfo_width(), editor.app.root.winfo_height()) == before
+
+
+def test_the_canvas_keeps_its_shape_through_a_fold(editor):
+    """Bigger, not differently shaped - or elements would come out stretched."""
+    width, height = _canvas(editor)
+    before = width / height
+    editor.toggle_toolbar()
+    width, height = _canvas(editor)
+    assert abs(width / height - before) < 0.02
 
 
 def test_the_interface_size_is_unchanged_by_folding(editor):
@@ -144,8 +155,8 @@ def test_it_comes_back_collapsed(editor, make_app):
     assert reopened.built.strip.winfo_ismapped()
 
 
-def test_a_collapsed_project_opens_at_the_right_width(editor, make_app):
-    """The allowance follows the state, or the canvas would come back wrong."""
+def test_a_collapsed_project_opens_at_the_same_window_size(editor, make_app):
+    """The state travels, but it was never a size. The window is the window."""
     editor.toggle_toolbar()
     window = editor.interface.layout.window
     editor.app.close()
@@ -153,9 +164,9 @@ def test_a_collapsed_project_opens_at_the_right_width(editor, make_app):
     reopened = make_app()
     if reopened.mode != "editor":
         reopened.toggle()
-    reopened.root.update_idletasks()
-    assert reopened.root.winfo_width() == window.width + TOOLBAR_ALLOWANCE
-    assert reopened.built.canvas.winfo_width() == window.width
+    reopened.root.update()
+    assert reopened.root.winfo_width() == window.width
+    assert reopened.built.collapsed is True
 
 
 # -- the controls are still reachable --------------------------------------
@@ -184,15 +195,10 @@ def test_an_element_can_still_be_selected_while_folded(editor):
     assert editor.selected == "go"
 
 
-def test_the_allowances_match_the_widths_they_stand_for():
-    """The WYSIWYG guarantee rests on two numbers in two files agreeing.
+def test_the_strip_and_the_panel_are_both_narrower_than_the_window():
+    """Sanity on the two widths the stage is measured against."""
+    from iterlab.ui.app import MIN_INTERFACE_WIDTH
+    from iterlab.ui.designer import SEPARATOR_WIDTH
 
-    `app` adds an allowance to the interface size; `designer` packs a panel of
-    some width beside the canvas. If they ever drift apart the canvas silently
-    stops being the run window - which is the whole thing this is for, and it
-    would go unnoticed because nothing would look broken.
-    """
-    from iterlab.ui.designer import SEPARATOR_WIDTH, SIDEBAR_WIDTH, TOOLBAR_WIDTH
-
-    assert SIDEBAR_ALLOWANCE == SIDEBAR_WIDTH + SEPARATOR_WIDTH
-    assert TOOLBAR_ALLOWANCE == TOOLBAR_WIDTH + SEPARATOR_WIDTH
+    assert SIDEBAR_WIDTH + SEPARATOR_WIDTH < MIN_INTERFACE_WIDTH
+    assert TOOLBAR_WIDTH + SEPARATOR_WIDTH < SIDEBAR_WIDTH + SEPARATOR_WIDTH

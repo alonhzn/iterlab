@@ -584,18 +584,20 @@ the two. Delete them whenever you like; iterlab never reads them back.
 
 ## The window size
 
-**There is one size, and it is your interface's.** The canvas you draw on is exactly the window you
-will run in — the same pixels, not merely the same proportions — so an element that looks square
-while editing comes out square.
+**There is one window, and switching modes does not move it.** The editor and the running interface
+are the same size, always. Whatever you resize one to, the other is already.
 
-Resize either mode and the other follows. The editor window is your interface plus the toolbar
-beside it, so switching modes changes the window by the toolbar's width and nothing else.
+The toolbar takes its room from inside that window rather than being added beside it, so the space
+left for the canvas is narrower than the interface you are drawing. The canvas keeps your
+interface's **proportions** and gives up size instead: it is the largest rectangle of that shape
+which fits, sitting in the middle of the backdrop. Everything on it is smaller than it will run and
+in the right place relative to everything else, which is what a layout is. Positions are fractions,
+so the shape is the part that has to survive the trip.
 
-One exception, and it is visible rather than silent. The toolbar needs a certain height for its own
-controls, so the editor window will not go below that even when your interface is shorter. When that
-happens the canvas keeps its own height and the space below it is left blank, rather than the canvas
-stretching to fill it. Blank space is the honest answer: a canvas that grew there would no longer be
-the window you are going to run in.
+The grey around the canvas is the room the toolbar borrowed. The white rectangle is your window.
+
+If the window is short, the toolbar is short too, and it scrolls — the panel is a scrolling column
+for that reason. Nothing is lost off the bottom.
 
 The size is remembered in `demo.yaml`, so it travels with the project rather than living on one
 machine.
@@ -603,8 +605,9 @@ machine.
 ### The toolbar
 
 Click **Toolbar** at the top of the panel to fold it away to a strip, and click it again to bring it
-back. The window narrows and widens by the difference, so **the canvas keeps exactly the pixels it
-had**: tidying your desk never resizes your interface.
+back. The window does not move. The room the toolbar gives up goes to the canvas, which grows into
+it at the same proportions — so **folding shows you the same layout bigger**, and never changes the
+interface itself.
 
 Folding is remembered with the project too. Selecting an element while folded does not pop the panel
 open — nothing moves unless you move it.
