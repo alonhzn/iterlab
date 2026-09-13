@@ -600,8 +600,32 @@ class PropertiesPanel:
         finally:
             self._busy = False
 
-        self._clear_message()
+        self._report_rename()
         return True
+
+    def _report_rename(self):
+        """Say what a rename rewrote in the researcher's file, if anything.
+
+        This is the one place iterlab edits a line somebody else wrote, and it
+        now reaches past the handler into references and prose. Doing that
+        without a word would be the wrong kind of quiet.
+        """
+        changed = getattr(self.designer, "last_rename", None)
+        if not changed:
+            self._clear_message()
+            return
+
+        parts = []
+        if changed.handlers:
+            parts.append(f"{len(changed.handlers)} handler"
+                         f"{'' if len(changed.handlers) == 1 else 's'}")
+        if changed.references:
+            parts.append(f"{changed.references} reference"
+                         f"{'' if changed.references == 1 else 's'}")
+        if changed.mentions:
+            parts.append(f"{changed.mentions} mention"
+                         f"{'' if changed.mentions == 1 else 's'}")
+        self._show_message("Renamed in your code: " + ", ".join(parts) + ".")
 
     def _show_message(self, text):
         self._message.configure(text=text)

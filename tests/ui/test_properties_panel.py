@@ -85,25 +85,39 @@ def test_editing_the_label_changes_nothing_else(editor):
     assert editor.interface.code_path.read_bytes() == code_before
 
 
-def test_rename_rewrites_the_handler_and_nothing_else(editor):
-    """FR-005d, and the reason rename is the sole exception to Principle V."""
-    code = (
-        "# a comment mentioning run_fit\n"
-        "def on_startup(ev):\n"
-        "    ev.note = 'run_fit'\n"
-        "def on_clicked_run_fit(ev, event):\n"
-        "    run_fit = 1\n"
-        "    return run_fit\n"
-    )
+def test_rename_follows_the_element_through_the_file(editor):
+    """FR-005d, and the reason rename is the sole exception to Principle V.
+
+    Renaming used to touch the handler alone, which left every `ev.run_fit` in
+    the file pointing at an element that no longer existed. It now follows the
+    element into comments, strings and attribute access - but never into a name
+    that merely contains the old one.
+    """
+    code = """\
+# a comment mentioning run_fit
+def on_startup(ev):
+    ev.note = 'run_fit'
+    ev.run_fit.text = 'go'
+    ev.run_fit_cache = None
+def on_clicked_run_fit(ev, event):
+    run_fit = 1
+    return run_fit
+"""
     editor.interface.code_path.write_text(code, encoding="utf-8")
 
     assert _set(editor.built.properties, tag="fit_button") is True
 
     after = editor.interface.code_path.read_text(encoding="utf-8")
     assert "def on_clicked_fit_button(ev, event):" in after
-    assert "# a comment mentioning run_fit" in after
-    assert "ev.note = 'run_fit'" in after
+    assert "# a comment mentioning fit_button" in after
+    assert "ev.note = 'fit_button'" in after
+    assert "ev.fit_button.text = 'go'" in after
+
+    # Not a reference to the element: a local that shares the name, and an
+    # attribute whose name merely starts with it.
     assert "    run_fit = 1" in after
+    assert "ev.run_fit_cache = None" in after
+
     assert "fit_button" in editor.interface.layout.tags()
 
 
@@ -140,3 +154,31 @@ def test_deleting_an_element_leaves_its_handler(editor):
     d.delete_selected()
     assert "run_fit" not in editor.interface.layout.tags()
     assert editor.interface.code_path.read_bytes() == code_before
+
+
+def test_the_panel_says_what_the_rename_rewrote(editor):
+    """Editing someone's file silently is not something to do without a word."""
+    editor.interface.code_path.write_text(
+        "# about run_fit\ndef on_clicked_run_fit(ev, event):\n    ev.run_fit.text = 'x'\n",
+        encoding="utf-8",
+    )
+    panel = editor.built.properties
+    assert _set(panel, tag="fit_button") is True
+
+    said = panel._message.cget("text")
+    assert "Renamed in your code" in said, said
+    assert "handler" in said and "mention" in said, said
+
+
+def test_it_says_nothing_when_no_rename_happened(editor):
+    """An ordinary edit must not leave a rename notice sitting there."""
+    panel = editor.built.properties
+    assert _set(panel, label="Run the fit") is True
+    assert panel._message.cget("text") == ""
+
+
+def test_a_rename_with_no_code_to_change_says_nothing(editor):
+    editor.interface.code_path.write_text("def on_startup(ev):\n    pass\n", encoding="utf-8")
+    panel = editor.built.properties
+    assert _set(panel, tag="fit_button") is True
+    assert panel._message.cget("text") == ""

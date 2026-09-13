@@ -77,8 +77,8 @@ Draw an **Axes** and a **Button**. They will be tagged `ax_0` and `cmd_0`.
 `demo.py` now ends with a handler for each. iterlab appends; it never edits or removes anything you
 wrote.
 
-Prefer better names? Rename them in the editor at any point and iterlab renames the handlers to
-match. The examples below use `ax_0` and `cmd_0` because that is what you just drew.
+Prefer better names? Rename them in the editor at any point and iterlab follows the element through
+your code: handlers, `ev.` references, comments and strings all move with it. The examples below use `ax_0` and `cmd_0` because that is what you just drew.
 
 ### Write the algorithm
 
@@ -439,9 +439,25 @@ out, because its tag is already drawn on it.
 
 Select it and edit **Tag** in the properties panel.
 
-iterlab renames that element's handlers in `demo.py` to match. **This is the only time iterlab
-modifies a line you wrote**, and it changes nothing else: comments, strings, local variables and a
-handler belonging to a different element are all left exactly as they are.
+iterlab follows that element through `demo.py`. Its handlers are renamed, every `ev.old_tag` becomes
+`ev.new_tag`, and mentions of the name in comments and strings move with it — including the ones
+inside an f-string, which is where the generated stub keeps its own. The panel tells you what it
+rewrote. **This is the only time iterlab modifies a line you wrote.**
+
+A name is matched **whole or not at all**, and that is the rule worth trusting. Rename `cmdRun` while
+`cmdRunAlgorithm` is also on the canvas, and the second element is not touched anywhere: not its
+handler, not `ev.cmdRunAlgorithm`, not a comment about it. Your own `ev.cmdRun_cache` is left alone
+too. A search-and-replace would wreck all of them.
+
+One thing it deliberately leaves: a plain variable that happens to share the name.
+
+```python
+def on_clicked_cmdRun(ev, event):
+    cmdRun = compute()        # yours, and left alone
+    ev.cmdRun.text = "done"   # the element, and renamed
+```
+
+Nothing can tell those apart except the dot, so the dot is what it goes by.
 
 If `demo.py` will not parse, the rename is refused and both files are left untouched — renaming
 safely needs a readable file.

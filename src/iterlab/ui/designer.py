@@ -676,6 +676,10 @@ class Designer:
     def apply_properties(self, current_tag, tag=None, position=None, label=None,
                          style=None, extensions=None):
         """Apply typed values. A rename rewrites the code file first (R14)."""
+        #: What the last rename changed in the researcher's file, so the panel
+        #: can say. Rewriting someone's code silently is not something to do
+        #: twice without telling them once.
+        self.last_rename = None
         self.layout.elements[current_tag]  # KeyError if it vanished
 
         if tag and tag != current_tag:
@@ -684,7 +688,9 @@ class Designer:
             )
             # Code file first: if it fails, the layout is untouched and the two
             # files stay consistent.
-            rename_mod.rename_handlers(self.interface.code_path, current_tag, tag)
+            self.last_rename = rename_mod.rename_tag(
+                self.interface.code_path, current_tag, tag
+            )
             self.layout.retag(current_tag, tag)
             # Carry the session's figure across, or the plot would blank on the
             # next switch while its data quietly stayed under the old tag.

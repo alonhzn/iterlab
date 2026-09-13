@@ -6,6 +6,37 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [1.7.0] — unreleased
+
+### Changed
+
+- **Renaming an element now follows it through your code.** It used to rename
+  the element's handlers and nothing else, which left every `ev.old_tag` in the
+  file pointing at an element that no longer existed — working code turned into
+  a runtime error the next time that line ran.
+
+  A rename now moves the handlers, attribute access (`ev.old`, and anything
+  else on the left of the dot), whole-word mentions in comments, and whole-word
+  mentions in strings. The last of those is how `ev.old` written inside an
+  f-string is reached, which matters because the generated stub is exactly that
+  shape. The properties panel reports what it rewrote, because editing someone
+  else's file quietly is not a thing to do twice.
+
+  **A name matches whole or not at all.** With `cmdRun` and `cmdRunAlgorithm`
+  both on the canvas, renaming the first to `cmdRunData` leaves the second
+  untouched everywhere — handler, attribute and prose — and leaves your own
+  `ev.cmdRun_cache` alone as well. A text substitution rewrites all three and
+  silently unwires an element you never touched; that is why the work is driven
+  by the tokenizer rather than by `str.replace`, and why swapping in the naive
+  version fails eight tests.
+
+  Deliberately untouched: a bare local that happens to share the name. Nothing
+  can distinguish it from a coincidence, so the dot is what a reference is
+  recognized by.
+
+  Unchanged: a file that will not parse is still refused outright, and line
+  endings are still preserved to the byte.
+
 ## [1.6.0] — 2026-09-13
 
 ### Changed
