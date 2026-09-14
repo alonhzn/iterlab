@@ -23,6 +23,10 @@ loaded, your plots stay drawn, and you carry on from exactly where you were.
 - **No need to re-run the script when you change code!** Yes you heard correctly, change your algorithm, add axis labels, no need to re-run the app, no need to reload from scratch! Save hours and hours without losing anything already in memory — loaded data, computed results, and plots already drawn all survive.
 - **Made a bug? Just fix it without re-running heavy code.** Code bugs and typos are part of life, that doesn’t mean you should waste time re-running heavy code. Everything survives and stays in memory until you fix the code and continue from where you left off. Restarting is the cost the tool exists to remove.
 
+**Watch the introduction and tutorial:**
+
+[![iterlab introduction and tutorial on YouTube](https://img.youtube.com/vi/G_HzmkInHAs/maxresdefault.jpg)](https://www.youtube.com/watch?v=G_HzmkInHAs)
+
 
 ## Usage
 

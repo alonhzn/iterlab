@@ -12,6 +12,10 @@ iterlab makes the two halves feed each other. Drag a box onto the canvas and it 
 can turn; rewrite a function and the open window uses the new code. **No restart, nothing reloaded,
 nothing recomputed that you did not ask for.**
 
+**Prefer to watch first?** There is an introduction and tutorial video:
+
+[![iterlab introduction and tutorial on YouTube](https://img.youtube.com/vi/G_HzmkInHAs/maxresdefault.jpg)](https://www.youtube.com/watch?v=G_HzmkInHAs)
+
 > This guide grows with the tool. It documents what works **today**, in the version named at the
 > bottom. If something here does not behave as described, that is a bug — please say so.
 
