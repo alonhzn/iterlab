@@ -6,6 +6,25 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [2.0.1] — unreleased
+
+### Changed
+
+- **A new code file separates what you never edit from what you do.** The
+  `TYPE_CHECKING` import that lets your editor complete `ev.` now sits at the
+  very top, inside a frame of `#` characters that says it is boilerplate you
+  do not need to touch, followed by what it is for. Your own imports start
+  below the frame, so the section you will add to is no longer interleaved
+  with the one you can ignore.
+
+  The docstring also loses its line about the top-left toggle: it describes
+  the window, not the code.
+
+  Checked with pycodestyle, which PyCharm's PEP 8 inspection uses, and with
+  ruff: neither flags the imports below the frame as not being at the top of
+  the file. Only new files are affected; iterlab never rewrites a file you
+  already have.
+
 ## [2.0.0] — 2026-09-14
 
 ### Changed

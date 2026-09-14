@@ -15,18 +15,21 @@ from pathlib import Path
 STARTER_FILE = '''"""{name} — an iterlab interface.
 
 Open it:  iterlab {name}
-Switch between editing and using it with the toggle in the top-left corner.
 """
 
+###############################################################################
+# Boilerplate - you don't need to touch this.
+#
+# Only your editor reads this - it never runs, and costs nothing at launch.
+# It is what makes `ev.` complete to the elements you drew, with matplotlib's
+# own signatures on a plot. Delete it and everything still works.
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 if TYPE_CHECKING:
-    # Only your editor reads this - it never runs, and costs nothing at launch.
-    # It is what makes `ev.` complete to the elements you drew, with matplotlib's
-    # own signatures on a plot. Delete it and everything still works.
     from {name}_layout import Ev
+###############################################################################
+
+import numpy as np
 
 
 def on_startup(ev: "Ev"):

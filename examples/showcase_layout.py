@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 LAYOUT = {
     'schema_version': 8,
-    'iterlab_version': '2.0.0',
+    'iterlab_version': '2.0.1',
     'window': {'width': 1120, 'height': 700},
     'toolbar_collapsed': False,
     'elements': {
