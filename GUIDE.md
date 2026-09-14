@@ -14,7 +14,7 @@ nothing recomputed that you did not ask for.**
 
 **Prefer to watch first?** There is an introduction and tutorial video:
 
-[![iterlab introduction and tutorial on YouTube](https://img.youtube.com/vi/G_HzmkInHAs/maxresdefault.jpg)](https://www.youtube.com/watch?v=G_HzmkInHAs)
+<a href="https://www.youtube.com/watch?v=G_HzmkInHAs"><img src="docs/intro.gif" width="50%" alt="iterlab introduction and tutorial - click to watch on YouTube"></a>
 
 > This guide grows with the tool. It documents what works **today**, in the version named at the
 > bottom. If something here does not behave as described, that is a bug — please say so.

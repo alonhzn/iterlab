@@ -25,7 +25,7 @@ loaded, your plots stay drawn, and you carry on from exactly where you were.
 
 **Watch the introduction and tutorial:**
 
-[![iterlab introduction and tutorial on YouTube](https://img.youtube.com/vi/G_HzmkInHAs/maxresdefault.jpg)](https://www.youtube.com/watch?v=G_HzmkInHAs)
+<a href="https://www.youtube.com/watch?v=G_HzmkInHAs"><img src="https://raw.githubusercontent.com/alonhzn/iterlab/main/docs/intro.gif" width="50%" alt="iterlab introduction and tutorial - click to watch on YouTube"></a>
 
 
 ## Usage
