@@ -62,7 +62,6 @@ is *there*; only a person can see that the window still looks like the session t
 | # | What to do | Pass means | Why a machine cannot say |
 |---|---|---|---|
 | 18 | **[!]** Draw a plot, let the 1.5-second load run, then toggle to the editor, move a button, and toggle back | The curve is still on screen and the load does **not** repeat. Rearranging a live interface costs nothing | Line counts are asserted; whether the plot *looks* untouched — same zoom, same axes, no flash of blank canvas — is not |
-| 19 | Pan and zoom a plot, then toggle out and back | Whatever a person judges reasonable here, recorded either way. The figure survives; the toolbar's view stack may not | Nobody has decided yet whether the zoom *should* survive. This item exists to find out by looking |
 | 22 | Edit `on_startup`, then click any element | The strip appears, and its two actions read as clearly different from each other | Visibility is asserted; whether a researcher can tell "re-run" from "restart" at a glance is not |
 | 23 | Press **Re-run startup** with data already loaded | The edit applies and the data is still there | The object identity is asserted; whether the researcher *believes* nothing was lost is not |
 | 25 | Hover each top-bar button, then look at **Hard reset** without pressing it | The text appears without chasing the pointer, reading it makes clear which one costs you your data, and **Hard reset** reads as destructive *before* it is pressed | Presence is asserted; whether it arrives before you have moved on, and whether the danger is legible, are human judgements |
@@ -117,6 +116,7 @@ asserted by the automated suite, and rule 1 above says that is where it belongs.
 | # | Was | Now asserted by |
 |---|---|---|
 | 11 | The banner clears after a fix | Merged into 9 |
+| 19 | Whether a pan or zoom survives a trip to the editor | Decided 2026-09-26 that it should: `test_toolbar.py`, the view and the history Home and Back walk |
 | 20 | One click fires once after several toggles | `test_plot_events.py::test_a_click_fires_once_however_many_switches` |
 | 21 | Hard reset reads as destructive | Merged into 25 |
 | 24 | An edited helper module is picked up by Hard reset | `test_restart_app.py::test_it_picks_up_an_edited_helper_module`, through the real button |

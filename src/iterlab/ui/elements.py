@@ -418,6 +418,33 @@ def new_figure():
     return figure
 
 
+def _keep_view_history(toolbar, figure) -> None:
+    """Give the toolbar the figure's pan/zoom history, not a fresh one.
+
+    The limits live on the axes and survive a trip to the editor with the
+    figure. The history of them - what Home and Back walk - lives on the
+    toolbar, which is rebuilt with the widgets. Without this, a plot came back
+    zoomed with Home doing nothing: no way back to the full view short of
+    redrawing it. The history is kept on the figure it describes, so a rename
+    or a reset carries or drops it along with the plot.
+
+    `_nav_stack` is matplotlib's own name for it. If a release renames it, the
+    history is simply not kept, which is what happened before this existed.
+    """
+    stack = getattr(figure, "_iterlab_view_history", None)
+    if stack is None:
+        stack = getattr(toolbar, "_nav_stack", None)
+        if stack is None:  # pragma: no cover - a matplotlib without it
+            return
+        figure._iterlab_view_history = stack
+        return
+    if hasattr(toolbar, "_nav_stack"):
+        toolbar._nav_stack = stack
+        set_buttons = getattr(toolbar, "set_history_buttons", None)
+        if set_buttons is not None:
+            set_buttons()
+
+
 def build_axes(parent, element, dispatcher, figure=None):
     """Build an axes element, reusing `figure` when the session supplies one.
 
@@ -440,6 +467,7 @@ def build_axes(parent, element, dispatcher, figure=None):
     # a bug in the plot rather than in an order of two lines.
     toolbar = NavigationToolbar2Tk(canvas, frame, pack_toolbar=False)
     toolbar.update()
+    _keep_view_history(toolbar, figure)
     toolbar.pack(side="bottom", fill="x")
 
     canvas.get_tk_widget().pack(side="top", fill="both", expand=True)

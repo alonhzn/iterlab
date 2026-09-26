@@ -132,3 +132,63 @@ def test_a_toolbar_survives_a_mode_switch(several):
     several.root.update_idletasks()
     for tag in ("tall", "short", "wide"):
         assert _toolbar(several, tag).winfo_ismapped(), tag
+
+
+# -- a pan or zoom survives a trip to the editor (was Gate 2 #19) -------------
+#
+# Decided 2026-09-26: it should. Rearranging a button must not throw away the
+# view someone spent a minute zooming into. Both halves of it: the limits on
+# the plot, and the toolbar's history of them, which is what Home and Back walk.
+
+
+def _zoom(app, tag, xlim, ylim):
+    """What the toolbar does for a zoom or a pan: record, change, record."""
+    toolbar = _toolbar(app, tag)
+    axes = app.built.handles[tag]
+    if toolbar._nav_stack() is None:
+        toolbar.push_current()  # the view before the first change is "home"
+    axes.set_xlim(*xlim)
+    axes.set_ylim(*ylim)
+    toolbar.push_current()
+
+
+def _round_trip(app):
+    app.toggle()
+    app.root.update()
+    app.toggle()
+    app.root.update()
+
+
+def _limits(app, tag):
+    axes = app.built.handles[tag]
+    return tuple(axes.get_xlim()), tuple(axes.get_ylim())
+
+
+def test_the_zoomed_view_survives_a_trip_to_the_editor(gui):
+    _zoom(gui, "spectrum", (0.5, 1.5), (0.2, 2.0))
+    _round_trip(gui)
+    assert _limits(gui, "spectrum") == ((0.5, 1.5), (0.2, 2.0))
+
+
+def test_home_still_goes_home_after_the_trip(gui):
+    home = _limits(gui, "spectrum")
+    _zoom(gui, "spectrum", (0.5, 1.5), (0.2, 2.0))
+    _round_trip(gui)
+
+    _toolbar(gui, "spectrum").home()
+    assert _limits(gui, "spectrum") == home
+
+
+def test_back_and_forward_still_walk_the_history_after_the_trip(gui):
+    home = _limits(gui, "spectrum")
+    _zoom(gui, "spectrum", (0.5, 1.5), (0.2, 2.0))
+    _zoom(gui, "spectrum", (0.8, 1.2), (0.5, 1.5))
+    _round_trip(gui)
+
+    toolbar = _toolbar(gui, "spectrum")
+    toolbar.back()
+    assert _limits(gui, "spectrum") == ((0.5, 1.5), (0.2, 2.0))
+    toolbar.back()
+    assert _limits(gui, "spectrum") == home
+    toolbar.forward()
+    assert _limits(gui, "spectrum") == ((0.5, 1.5), (0.2, 2.0))

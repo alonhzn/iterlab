@@ -205,7 +205,8 @@ def on_startup(ev):
 ```
 
 You never call `plt.show()` or `draw()` — iterlab repaints whatever your handler drew. Pan and zoom
-work from the toolbar with no code at all.
+work from the toolbar with no code at all, and survive a trip to the editor: the plot comes back
+as you left it, and **Home** still takes you back to the full view.
 
 | In code | |
 |---|---|

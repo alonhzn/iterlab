@@ -39,6 +39,11 @@ shape, and the command are all consumed directly by researcher-written code.
   crash rather than restart. An upgraded installed library still needs iterlab
   closed and reopened, which the guide now says.
 
+- **After a trip to the editor, a zoomed plot's Home and Back buttons did
+  nothing.** The zoom itself survived, but the toolbar's history of views was
+  rebuilt empty, so there was no way back to the full view short of redrawing.
+  The history now stays with the plot.
+
 - **The Screenshot button's hover text mentioned `.yaml` files**, a format 2.0.0
   retired.
 
@@ -62,9 +67,10 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ### Testing
 
-- **The manual checklist shrinks from 59 items to 38.** Twenty-one came out:
+- **The manual checklist shrinks from 59 items to 37.** Twenty-two came out:
   seven that the suite already asserted, three merged into items that judge the
-  same thing, and eleven now automated. The rule was always that Gate 2 holds
+  same thing, eleven now automated, and one open question (does a zoom survive
+  a trip to the editor?) decided and tested. The rule was always that Gate 2 holds
   only what cannot be automated. Several items claimed that and were wrong.
   Retired numbers are listed in `VERIFICATION.md` with the test that replaced
   each one, and are never reused.
