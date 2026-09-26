@@ -265,7 +265,10 @@ def _parents() -> list:
 
 
 def _named(editor, path) -> bool:
-    return Path(path).name.lower() in editor.processes
+    # Either separator, whatever this platform uses: `Path` on POSIX would not
+    # split a Windows path, and the names are all that matter here.
+    name = str(path).replace("\\", "/").rsplit("/", 1)[-1]
+    return name.lower() in editor.processes
 
 
 def detect(environ=None, parents=None):
