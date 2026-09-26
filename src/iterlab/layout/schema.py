@@ -75,6 +75,12 @@ DEFAULT_INTERACTION = {
     "folder_select": "clicked",
 }
 
+#: The types that fire `changed`. It means a value was committed, so only
+#: something that holds a typed value has it; every other interaction fires on
+#: every type (FR-017a). Offering `on_changed_` for a button would be offering a
+#: function that can never run.
+COMMITS_VALUES = frozenset({"text_box", "number_box"})
+
 #: Prefix used when auto-suggesting a tag in the designer. Short, and the
 #: shorthand a person would use themselves: `ax` for an axes, `cmd` for a command
 #: button, `lbl` for a label, `edt` for an edit box, `val` for a numeric one, so
@@ -415,6 +421,15 @@ class Element:
         if interaction not in INTERACTIONS:
             raise ValueError(f"unknown interaction {interaction!r}")
         return f"on_{interaction}_{self.tag}"
+
+    @property
+    def interactions(self) -> tuple:
+        """What this element can fire, its default first, then the rest in order."""
+        fired = [i for i in INTERACTIONS if i != "changed" or self.type in COMMITS_VALUES]
+        first = self.default_interaction
+        if first is None:
+            return tuple(fired)
+        return (first,) + tuple(i for i in fired if i != first)
 
     def all_handler_names(self):
         """Every handler name this element could have, written or not."""

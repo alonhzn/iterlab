@@ -145,6 +145,12 @@ class Designer:
         self.canvas.bind("<B1-Motion>", self._on_drag)
         self.canvas.bind("<ButtonRelease-1>", self._on_release)
         self.canvas.bind("<Motion>", self._on_hover)
+        # Right-click: the element's handlers. Aqua reports the right button as
+        # 2, and a one-button trackpad sends Control-click for it.
+        self.canvas.bind("<Button-3>", self._on_context)
+        if self.canvas.tk.call("tk", "windowingsystem") == "aqua":
+            self.canvas.bind("<Button-2>", self._on_context)
+            self.canvas.bind("<Control-Button-1>", self._on_context)
         self.canvas.bind("<Leave>", lambda _e: self._tag_tip.hide())
         self.canvas.bind("<Configure>", lambda _e: self.redraw())
         self.canvas.bind("<Escape>", lambda _e: self.select(None))
@@ -439,6 +445,27 @@ class Designer:
             # layout with elements nobody asked for.
             return
         self._drag = {"mode": "create", "origin": (event.x, event.y), "name": None}
+
+    def _on_context(self, event):
+        """Offer the handlers of the element under the pointer."""
+        hit = self._element_at(event.x, event.y)
+        if hit is None:
+            return
+        self._tag_tip.hide()
+        self.properties.commit_pending()
+        if hit != self.selected:
+            self.select(hit)
+        from . import handler_menu
+
+        self._post_menu(handler_menu.build(self, hit), event.x_root, event.y_root)
+
+    def _post_menu(self, menu, x, y):
+        # Its own method so tests can stand in for it: on Windows, tk_popup
+        # runs a loop of its own until the menu closes.
+        try:
+            menu.tk_popup(x, y)
+        finally:
+            menu.grab_release()
 
     def _on_drag(self, event):
         if not self._drag:

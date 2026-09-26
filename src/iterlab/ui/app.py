@@ -329,6 +329,10 @@ class App:
         self.build(GUI)
         self._mode_toggle.refresh()
 
+    def announce(self, message, for_ms=4000) -> None:
+        """A passing line in the top bar - for news, never for a question."""
+        self._mode_toggle.announce(message, for_ms=for_ms)
+
     def save_screenshot(self):
         """Write a PNG of the interface beside the interface's own files.
 

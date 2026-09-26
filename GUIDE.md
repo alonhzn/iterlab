@@ -154,7 +154,36 @@ Available on **every** element type. Write only the ones you want:
 
 Creating an element generates just one of these: **click** for buttons, axes and the two selectors,
 **changed** for text and number boxes. A label gets none, because it is written to rather than
-interacted with. Add any of the others by hand whenever you want them.
+interacted with. Add any of the others by hand, or from the element's right-click menu below.
+
+### Going from an element to its code
+
+**Right-click an element in the editor.** The menu lists its handlers, the main one first and the
+others below it. A handler you have written shows its line; choosing it opens your code there. One
+you have not written says *create*: choosing it adds the handler to the end of your file, the way
+drawing the element added the first one, and opens it.
+
+```text
+Open in VS Code:            >
+------------------------------
+on_clicked_run_fit    line 42
+------------------------------
+on_hover_run_fit       create
+on_motion_run_fit      create
+on_key_run_fit        line 57
+```
+
+The heading names the editor it opens in. iterlab recognises **VS Code** and **PyCharm** when you
+launched it from one of them, from its run button or its terminal. When it cannot tell, the heading
+says **&lt;select IDE&gt;**. Either way, point at the heading to pick one yourself: VS Code, PyCharm,
+Sublime Text or Notepad++, whichever are installed, or your default text editor, which opens the file
+but cannot jump to a line. Your pick is remembered for every interface, and wins over what iterlab
+detects from then on.
+
+If your editor is not found, check that its command-line launcher is installed: in VS Code, run
+**Shell Command: Install 'code' command in PATH** from the command palette.
+
+In GUI mode a right-click is yours: it reaches `on_clicked_<tag>` with `event.button == "right"`.
 
 ### The `event` argument
 
@@ -764,5 +793,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 2.0.1.** Everything above is verified against that release. If a description here
+**Guide version 2.1.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

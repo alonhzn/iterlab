@@ -6,7 +6,29 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [2.0.1] — unreleased
+## [2.1.0] — unreleased
+
+A new way into your code, and so a minor release rather than the 2.0.1 these
+fixes were first gathered under.
+
+### Added
+
+- **Right-click an element in the editor to go to its code.** The menu lists
+  the element's handlers, its main one first. A handler you have written opens
+  in your editor at its line; one you have not is added to the end of your file
+  and then opened, so the menu is also where you find out what else an element
+  can do. Only the interactions an element can fire are offered: `changed`
+  only for the two boxes.
+
+  The heading names the editor. iterlab recognises VS Code and PyCharm when you
+  launched it from one, by what they set in the environment or by finding them
+  among its parent processes, and says `<select IDE>` when it cannot tell.
+  Point at the heading to pick VS Code, PyCharm, Sublime Text, Notepad++ or
+  your default text editor. The pick is remembered outside the project, beside
+  what the file selectors remember, and wins over detection from then on.
+
+  No IDE extension is involved. Each of these editors opens a file at a line
+  from its own command line, and sends that to the window you have open.
 
 ### Fixed
 
@@ -70,7 +92,8 @@ shape, and the command are all consumed directly by researcher-written code.
 
 ### Testing
 
-- **The manual checklist shrinks from 59 items to 37.** Twenty-two came out:
+- **The manual checklist shrinks from 59 items to 37**, before one is added for
+  the right-click menu. Twenty-two came out:
   seven that the suite already asserted, three merged into items that judge the
   same thing, eleven now automated, and one open question (does a zoom survive
   a trip to the editor?) decided and tested. The rule was always that Gate 2 holds

@@ -1,4 +1,7 @@
-"""What a file or folder selector chose last time.
+"""What a file or folder selector chose last time, and the researcher's own picks.
+
+The picks are per user rather than per interface - which editor to open code
+in, so far - and sit in the same file under a key no path can collide with.
 
 A selection has to outlive the process, not just the session: a researcher who
 picked a data directory yesterday should not pick it again today. So it goes to
@@ -72,6 +75,47 @@ def _load_all() -> dict:
     return raw if isinstance(raw, dict) else {}
 
 
+def _write_all(everything) -> bool:
+    try:
+        state_dir().mkdir(parents=True, exist_ok=True)
+        # The same temp-file-and-replace used for the researcher's own files, so
+        # an interrupted write cannot leave a half-written file behind.
+        from ..codegen.templates import atomic_write
+
+        atomic_write(state_file(), json.dumps(everything, indent=2, sort_keys=True))
+        return True
+    except Exception:
+        # A read-only disk or a locked profile costs the researcher the memory,
+        # never the session.
+        return False
+
+
+#: Where choices that belong to the researcher rather than to one interface
+#: live, such as which editor to open code in. Every other key in the file is
+#: an absolute path, which this can never be.
+PREFERENCES = "__preferences__"
+
+
+def load_preference(name):
+    """A remembered per-user choice, or None."""
+    entry = _load_all().get(PREFERENCES)
+    if not isinstance(entry, dict):
+        return None
+    value = entry.get(name)
+    return value if isinstance(value, str) else None
+
+
+def remember_preference(name, value) -> bool:
+    """Record a per-user choice. Returns whether it reached the disk."""
+    everything = _load_all()
+    entry = everything.get(PREFERENCES)
+    if not isinstance(entry, dict):
+        entry = {}
+    entry[str(name)] = str(value)
+    everything[PREFERENCES] = entry
+    return _write_all(everything)
+
+
 def load(interface_path) -> dict:
     """Every remembered selection for one interface, as {tag: path}."""
     entry = _load_all().get(_key(interface_path))
@@ -90,18 +134,7 @@ def remember(interface_path, tag, selection) -> bool:
     entry[str(tag)] = str(selection)
     everything[key] = entry
 
-    try:
-        state_dir().mkdir(parents=True, exist_ok=True)
-        # The same temp-file-and-replace used for the researcher's own files, so
-        # an interrupted write cannot leave a half-written file behind.
-        from ..codegen.templates import atomic_write
-
-        atomic_write(state_file(), json.dumps(everything, indent=2, sort_keys=True))
-        return True
-    except Exception:
-        # A read-only disk or a locked profile costs the researcher the memory,
-        # never the session.
-        return False
+    return _write_all(everything)
 
 
 def forget(interface_path, tag=None) -> bool:
@@ -119,14 +152,7 @@ def forget(interface_path, tag=None) -> bool:
         if not entry:
             everything.pop(key, None)
 
-    try:
-        state_dir().mkdir(parents=True, exist_ok=True)
-        from ..codegen.templates import atomic_write
-
-        atomic_write(state_file(), json.dumps(everything, indent=2, sort_keys=True))
-        return True
-    except Exception:
-        return False
+    return _write_all(everything)
 
 
 def usable(selection, *, expect_dir=False) -> bool:

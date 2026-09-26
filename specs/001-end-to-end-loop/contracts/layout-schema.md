@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 LAYOUT = {
     'schema_version': 8,
-    'iterlab_version': '2.0.1',
+    'iterlab_version': '2.1.0',
     'window': {'width': 960, 'height': 492},
     'toolbar_collapsed': False,
     'elements': {

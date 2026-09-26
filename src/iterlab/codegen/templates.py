@@ -146,6 +146,49 @@ _STUBS = {
 }
 
 
+#: Stubs for the interactions an element does not get by default, written when
+#: the researcher asks for one from the editor's right-click menu.
+_OPTIONAL_STUBS = {
+    "clicked": '''
+
+def on_clicked_{tag}(ev: "Ev", event):
+    # Runs when you click {tag}, with any mouse button.
+    # event.button is "left", "middle" or "right".
+    print(f"{tag} clicked with the {{event.button}} button")
+''',
+    "hover": '''
+
+def on_hover_{tag}(ev: "Ev", event):
+    # Runs when the pointer moves onto {tag}.
+    print("pointer over {tag}")
+''',
+    "motion": '''
+
+def on_motion_{tag}(ev: "Ev", event):
+    # Runs every time the pointer moves over {tag} - many times a second, so
+    # keep it quick. On a plot, event.x and event.y are in data coordinates.
+    pass
+''',
+    "key": '''
+
+def on_key_{tag}(ev: "Ev", event):
+    # Runs when a key is pressed while {tag} has the focus.
+    # event.key is the key's name, such as "a", "Return" or "Up".
+    print(f"{tag}: {{event.key}}")
+''',
+}
+
+
+def stub_for(element, interaction):
+    """The stub for any interaction: the default one, or an optional one."""
+    if interaction == element.default_interaction:
+        return default_stub(element)
+    template = _OPTIONAL_STUBS.get(interaction)
+    if template is None:
+        raise ValueError(f"no stub for {interaction!r} on {element.type}")
+    return template.format(tag=element.tag)
+
+
 def starter_file(name: str) -> str:
     return STARTER_FILE.format(name=name)
 

@@ -84,6 +84,7 @@ decision before the window opens.
 | Canvas | The layout being drawn. Drag to create, click to select, drag or resize a selection, delete a selection |
 | Palette | Every element type that can be added, so the vocabulary is discoverable without documentation (FR-003a) |
 | Properties panel | The selected element's properties, all editable (FR-006a–e) |
+| Right-click menu | On an element: its handlers, main one first, each opening the code file at its line in the researcher's editor; an unwritten one is appended first. The heading names that editor and changes it |
 
 Properties exposed per type:
 

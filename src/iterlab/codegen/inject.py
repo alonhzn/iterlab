@@ -116,21 +116,25 @@ def has_ev_import(source: str, code_path) -> bool:
     )
 
 
-def append_stub(code_path, element, stub_text: str) -> bool:
+def append_stub(code_path, element, stub_text: str, interaction=None) -> bool:
     """Append `stub_text` unless the handler already exists.
+
+    `interaction` names the handler being added; it defaults to the element's
+    default one, which is what creating an element writes.
 
     Returns True when something was written. Raises `CodeFileUnparseable` rather
     than appending blindly: without an AST there is no way to know whether the
     handler is already there, and a duplicate definition would silently shadow
     the researcher's own work.
     """
-    if stub_text is None or element.default_interaction is None:
+    interaction = interaction or element.default_interaction
+    if stub_text is None or interaction is None:
         # A type with no default interaction, such as a label.
         return False
 
     path = Path(code_path)
     source = read_source(path)
-    handler = element.handler_name(element.default_interaction)
+    handler = element.handler_name(interaction)
 
     # Parsing wants LF; the file on disk keeps whatever it already had.
     if handler in top_level_function_names(source.replace(CRLF, LF), path):
