@@ -192,3 +192,72 @@ def test_back_and_forward_still_walk_the_history_after_the_trip(gui):
     assert _limits(gui, "spectrum") == home
     toolbar.forward()
     assert _limits(gui, "spectrum") == ((0.5, 1.5), (0.2, 2.0))
+
+
+# -- the zoom tool itself, across the trip -------------------------------------
+#
+# Found by hand: with the zoom tool pressed, a trip to the editor left the old
+# toolbar connected to the plot, still in zoom mode. Every drag afterwards made
+# it draw on a canvas that no longer existed - a TclError per drag - while the
+# new toolbar showed no tool pressed. The old toolbar lingers in a reference
+# cycle in the real application, so these hold on to it the same way; a test
+# that let it be collected passed against the bug.
+
+
+def _drag(app, tag, start, end):
+    """A left-button drag across the plot, in fractions of the canvas."""
+    from matplotlib.backend_bases import MouseButton, MouseEvent
+
+    canvas = app.built.handles[tag].canvas
+    width, height = canvas.get_width_height()
+    points = [(start[0] * width, start[1] * height), (end[0] * width, end[1] * height)]
+    MouseEvent("button_press_event", canvas, *points[0], button=1)._process()
+    try:
+        # The button is held during the move; a zoom that sees otherwise
+        # assumes the release was missed and abandons itself.
+        moving = MouseEvent("motion_notify_event", canvas, *points[1],
+                            buttons={MouseButton.LEFT})
+    except TypeError:  # an older matplotlib, which does not check
+        moving = MouseEvent("motion_notify_event", canvas, *points[1], button=1)
+    moving._process()
+    MouseEvent("button_release_event", canvas, *points[1], button=1)._process()
+
+
+@pytest.fixture
+def raised(gui):
+    """Exceptions matplotlib would otherwise print and swallow."""
+    caught = []
+    figure = gui.built.handles["spectrum"].figure
+    figure._canvas_callbacks.exception_handler = caught.append
+    return caught
+
+
+def test_the_zoom_tool_is_still_pressed_after_the_trip(gui):
+    _toolbar(gui, "spectrum").zoom()
+    _round_trip(gui)
+    assert _toolbar(gui, "spectrum").mode.name == "ZOOM"
+
+
+def test_the_pan_tool_is_still_pressed_after_the_trip(gui):
+    _toolbar(gui, "spectrum").pan()
+    _round_trip(gui)
+    assert _toolbar(gui, "spectrum").mode.name == "PAN"
+
+
+def test_no_tool_stays_no_tool(gui):
+    _round_trip(gui)
+    assert _toolbar(gui, "spectrum").mode.name == "NONE"
+
+
+def test_zooming_after_the_trip_works_and_raises_nothing(mapped, gui, raised):
+    old = _toolbar(gui, "spectrum")
+    old.zoom()
+    _round_trip(gui)
+    gui.root.update()
+    before = _limits(gui, "spectrum")
+
+    _drag(gui, "spectrum", (0.3, 0.3), (0.6, 0.6))
+
+    assert raised == [], f"the old toolbar answered the drag: {raised}"
+    assert _limits(gui, "spectrum") != before, "the drag did not zoom"
+    assert old is not None  # kept alive, as the application keeps it

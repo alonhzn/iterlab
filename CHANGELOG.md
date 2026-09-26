@@ -39,10 +39,13 @@ shape, and the command are all consumed directly by researcher-written code.
   crash rather than restart. An upgraded installed library still needs iterlab
   closed and reopened, which the guide now says.
 
-- **After a trip to the editor, a zoomed plot's Home and Back buttons did
-  nothing.** The zoom itself survived, but the toolbar's history of views was
-  rebuilt empty, so there was no way back to the full view short of redrawing.
-  The history now stays with the plot.
+- **A plot's toolbar misbehaved after a trip to the editor.** With the zoom or
+  pan tool pressed, the old toolbar stayed connected to the plot and went on
+  answering drags, raising `invalid command name ...canvas` on each one, while
+  the new toolbar showed no tool pressed. And Home and Back did nothing, because
+  the history of views was rebuilt empty, so a zoomed plot had no way back to
+  the full view. The old toolbar is now disconnected, and the pressed tool and
+  the view history both stay with the plot.
 
 - **The Screenshot button's hover text mentioned `.yaml` files**, a format 2.0.0
   retired.

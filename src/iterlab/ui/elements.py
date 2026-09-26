@@ -397,6 +397,7 @@ class AxesHandle(Axes):
             except Exception:
                 pass
         self._iterlab_cids = ()
+        _release_toolbar(getattr(canvas, "toolbar", None), self.figure)
 
         buttons = getattr(getattr(canvas, "toolbar", None), "_buttons", None)
         if buttons is not None:
@@ -416,6 +417,47 @@ def new_figure():
     figure = Figure(figsize=(4, 3), dpi=100)
     figure.add_subplot(111, projection=AxesHandle.name)
     return figure
+
+
+def _release_toolbar(toolbar, figure) -> None:
+    """Unhook a toolbar whose widgets are going, and remember its tool.
+
+    Its mouse handlers are registered on the figure, which survives, and the
+    toolbar itself survives too, in a reference cycle, until a collection
+    happens to run. Left connected, a toolbar still in zoom mode went on
+    answering drags on the plot and drew its rubber band on a canvas that no
+    longer existed: `invalid command name ...canvas`, on every drag, after
+    one trip to the editor with the zoom tool pressed.
+
+    The tool that was pressed is kept on the figure, so the new toolbar comes
+    back with the same button down rather than looking reset.
+    """
+    if toolbar is None:
+        return
+    mode = getattr(toolbar, "mode", None)
+    figure._iterlab_tool = getattr(mode, "name", None)
+    ids = [getattr(toolbar, name, None) for name in ("_id_press", "_id_release", "_id_drag")]
+    # A zoom or pan in progress holds one more connection, for the drag.
+    for info in (getattr(toolbar, "_zoom_info", None), getattr(toolbar, "_pan_info", None)):
+        ids.append(getattr(info, "cid", None))
+    for cid in ids:
+        if cid is None:
+            continue
+        try:
+            figure.canvas.mpl_disconnect(cid)
+        except Exception:
+            pass
+
+
+def _restore_tool(toolbar, figure) -> None:
+    """Press the tool that was pressed before the trip to the editor."""
+    press = {"ZOOM": "zoom", "PAN": "pan"}.get(getattr(figure, "_iterlab_tool", None))
+    if press is None:
+        return
+    try:
+        getattr(toolbar, press)()
+    except Exception:  # pragma: no cover - decoration, never fatal
+        pass
 
 
 def _keep_view_history(toolbar, figure) -> None:
@@ -468,6 +510,7 @@ def build_axes(parent, element, dispatcher, figure=None):
     toolbar = NavigationToolbar2Tk(canvas, frame, pack_toolbar=False)
     toolbar.update()
     _keep_view_history(toolbar, figure)
+    _restore_tool(toolbar, figure)
     toolbar.pack(side="bottom", fill="x")
 
     canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
