@@ -1,9 +1,9 @@
 """Saving a PNG of the interface.
 
-The capture itself is a screen grab, so the interesting tests are the ones that
-do not need a screen: what the file is called, where it lands, that the button
-reaches it, and that a machine which cannot grab the screen says so instead of
-taking the window down.
+Most of these fake the capture, to test what does not need a screen: what the
+file is called, where it lands, that the button reaches it, and that a machine
+which cannot grab the screen says so instead of taking the window down. The
+last few grab the real screen and read the picture back.
 """
 
 import pytest
@@ -131,3 +131,109 @@ def test_a_window_with_no_size_is_refused_rather_than_grabbed(gui):
     tiny = gui.tk.Frame(gui.root)
     with pytest.raises(screenshot_mod.ScreenshotUnavailable):
         screenshot_mod.capture(tiny)
+
+
+# -- the real grab (Gate 2 #26, #27) -------------------------------------------
+#
+# Everything above fakes the capture. These do not: the window is put on top of
+# everything, the real button is pressed, and the PNG is opened and read. CI's
+# display job has a screen, so this is no longer a thing only a person can see.
+# A machine that genuinely cannot grab the screen skips rather than fails.
+
+MARK = (255, 0, 255)
+SPAN = (255, 0, 0)
+
+
+def _near(pixel, colour, tolerance=40):
+    return all(abs(p - c) <= tolerance for p, c in zip(pixel[:3], colour))
+
+
+@pytest.fixture
+def on_screen(mapped, make_app):
+    app = make_app()
+    app.built.create_element("label", Rect(0.55, 0.55, 0.4, 0.4), tag="mark")
+    app.built.create_element("axes", Rect(0.05, 0.05, 0.4, 0.4), tag="plot")
+    app.toggle()
+    app.built.ev.mark.background = "#ff00ff"
+    ax = app.built.ev.plot
+    ax.axvspan(1, 2, color="#ff0000")
+    ax.set_xlim(0, 10)
+
+    root = app.root
+    root.geometry("800x560+40+40")
+    root.attributes("-topmost", True)
+    root.lift()
+    for _ in range(5):
+        root.update()
+        ax.figure.canvas.draw()
+    try:
+        screenshot_mod.capture(app.content)
+    except screenshot_mod.ScreenshotUnavailable as exc:
+        pytest.skip(f"no screen to grab here: {exc}")
+    yield app
+    root.attributes("-topmost", False)
+
+
+def _shoot(app):
+    from PIL import Image
+
+    _button(app).invoke()
+    app.root.update()
+    written = sorted(app.interface.dir.glob("*.png"))
+    assert written, "pressing Screenshot wrote nothing"
+    image = Image.open(written[-1]).convert("RGB")
+    written[-1].unlink()  # the next shot in the same second reuses the name
+    return image
+
+
+
+def _share(image, colour, box):
+    """How much of a region (fractions: left, top, right, bottom) is `colour`."""
+    width, height = image.size
+    left, top, right, bottom = box
+    region = image.crop((int(left * width), int(top * height),
+                         int(right * width), int(bottom * height)))
+    raw = region.tobytes()
+    pixels = [raw[i:i + 3] for i in range(0, len(raw), 3)]
+    return sum(_near(p, colour) for p in pixels) / len(pixels)
+
+
+def test_the_picture_is_the_interface_at_its_size_on_screen(on_screen):
+    content = on_screen.content
+    image = _shoot(on_screen)
+    assert image.size == (content.winfo_width(), content.winfo_height()), (
+        "the picture is not the size the interface is on screen"
+    )
+
+
+def test_the_picture_has_no_top_bar_and_nothing_shifted(on_screen):
+    """An element drawn top-right is top-right in the picture.
+
+    If the top bar were in the picture, or the grab were offset, the label
+    would land somewhere else - the region would be the wrong colour.
+    """
+    image = _shoot(on_screen)
+    # The label is at left 0.55..0.95 and, measured from the top, 0.05..0.45.
+    assert _share(image, MARK, (0.60, 0.10, 0.90, 0.40)) > 0.95
+    # Its edges, a couple of pixels either side: a shift of even a few pixels
+    # moves one of them.
+    height = image.size[1]
+    for y, inside in ((0.05 * height + 3, True), (0.05 * height - 3, False),
+                      (0.45 * height - 3, True), (0.45 * height + 3, False)):
+        pixel = image.getpixel((int(0.75 * image.size[0]), int(y)))
+        assert _near(pixel, MARK) == inside, f"the label's edge is not where it was drawn (y={y:.0f})"
+
+
+def test_the_picture_shows_the_zoom_on_screen(on_screen):
+    """A zoomed plot is captured zoomed: the grab is what you are looking at."""
+    # The plot is at left 0.05..0.45 and, from the top, 0.55..0.95; its middle
+    # is well inside the axes whatever matplotlib's margins.
+    middle = (0.20, 0.70, 0.30, 0.80)
+    assert _share(_shoot(on_screen), SPAN, middle) < 0.05, "the span should be off-centre"
+
+    ax = on_screen.built.ev.plot
+    ax.set_xlim(1.2, 1.8)
+    ax.figure.canvas.draw()
+    on_screen.root.update()
+
+    assert _share(_shoot(on_screen), SPAN, middle) > 0.95, "the zoom is not in the picture"

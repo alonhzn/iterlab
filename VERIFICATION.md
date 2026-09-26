@@ -63,56 +63,35 @@ is *there*; only a person can see that the window still looks like the session t
 |---|---|---|---|
 | 18 | **[!]** Draw a plot, let the 1.5-second load run, then toggle to the editor, move a button, and toggle back | The curve is still on screen and the load does **not** repeat. Rearranging a live interface costs nothing | Line counts are asserted; whether the plot *looks* untouched — same zoom, same axes, no flash of blank canvas — is not |
 | 19 | Pan and zoom a plot, then toggle out and back | Whatever a person judges reasonable here, recorded either way. The figure survives; the toolbar's view stack may not | Nobody has decided yet whether the zoom *should* survive. This item exists to find out by looking |
-| 20 | **[!]** After several toggles, click a plot once and watch the terminal | Exactly one line is printed | The duplicate-firing defect this feature nearly shipped. A test now catches it, but it is worth a human eye — it is invisible unless you are counting |
-| 21 | Press **Restart app** | Everything reloads: data, plots, code, layout. It is obvious that is what happened | Whether the button reads as destructive *before* it is pressed is a human judgement |
 | 22 | Edit `on_startup`, then click any element | The strip appears, and its two actions read as clearly different from each other | Visibility is asserted; whether a researcher can tell "re-run" from "restart" at a glance is not |
 | 23 | Press **Re-run startup** with data already loaded | The edit applies and the data is still there | The object identity is asserted; whether the researcher *believes* nothing was lost is not |
-| 24 | Edit a helper module you import, then press **Hard reset** | The change takes effect. Without the restart it does not | A documented assumption. Worth confirming a researcher can discover the workaround from the guide |
-| 25 | Hover each top-bar button | The text appears without chasing the pointer, and reading it makes clear which one costs you your data | Presence is asserted; whether it arrives before you have moved on is a human judgement |
-| 26 | **[!]** Press **Screenshot**, then open the PNG | It shows your interface, at the size on screen, with no top bar and nothing clipped | The capture is faked in tests, because a screen grab needs a screen. Only a person can look at the picture |
-| 27 | Press **Screenshot** with a plot mid-zoom | The PNG shows the zoom you were looking at | The point of a screen grab over a redraw, and only visible by looking |
+| 25 | Hover each top-bar button, then look at **Hard reset** without pressing it | The text appears without chasing the pointer, reading it makes clear which one costs you your data, and **Hard reset** reads as destructive *before* it is pressed | Presence is asserted; whether it arrives before you have moved on, and whether the danger is legible, are human judgements |
 | 28 | Draw an element, then look at PROPERTIES | The two fields that matter are there and the rest is out of the way; **More** reads as openable | Whether a panel feels uncluttered is exactly what a machine cannot say |
-| 29 | Open **More**, select a different element | The drawer is still open | Asserted, but worth feeling: this is the difference between the drawer helping and annoying |
 | 30 | Drag an element slowly across the canvas | Movement is smooth, not visibly stepped, despite positions snapping to hundredths | One part in a hundred should be below the threshold of notice. If stepping is visible, the grid is too coarse |
-| 31 | **[!]** Open an interface and look at the title bar and taskbar | The iterlab mark is there, and is the mark - not a blank square or a generic placeholder | Tk reports success for an icon that renders as an empty grey box. Only a person looking at the title bar can tell the difference, which is how this shipped broken once |
 | 32 | **[!]** Type into a text box, click a button that changes a label, then toggle to the editor and back | Everything is exactly as you left it - the typed text, the changed label, any colour your code set | Asserted now, but this shipped broken and was found by hand. Worth confirming it *feels* like the same session rather than a reset one |
-| 33 | Change a button's caption in the editor, then return to GUI mode | The new caption is there, not the one the code had set | The rule that makes item 32 safe: an explicit edit beats a remembered value |
 | 34 | **[!]** Draw a file selector and click it | Your operating system's real file chooser opens, looks native, and is not behind the window | Every automated test replaces this dialog, because a suite that waits for a human is not a gate. Nothing but a person has ever seen the real one open |
 | 35 | **[!]** Set **Types** to `txt, csv`, then open the chooser | Only those files are offered, and "All files" is still available in the dropdown | The filter reaching Tk is asserted; whether the OS honours it, and whether the escape hatch is findable, is not |
-| 36 | **[!]** Pick a file, close iterlab completely, reopen and click the selector | It opens where you left off, and `ev.fileselect.path` already holds the choice | The point of storing it outside the process. Asserted against a fake dialog; worth seeing survive a genuine restart |
-| 37 | Pick a file, delete it outside iterlab, then look at the interface | `.path` reads as empty and the chooser opens in the folder it was in | The fallback only matters when it happens to a real file on a real disk |
-| 38 | Move the whole project folder somewhere else and open it | The remembered selection is gone and it behaves like a first run - no error, no stale path | A documented consequence of keeping the memory out of the project. Worth confirming it is uneventful rather than confusing |
 | 39 | **[!]** Draw a number box and an axes, wire the box's handler to redraw the plot, then type a value and press Enter | Nothing happens while typing; the plot redraws once, on Enter | The counts are asserted. What a person is checking is that waiting for Enter feels right rather than unresponsive - if it feels broken, the trade is wrong |
+| 41 | Draw several elements, then open `demo.py` | The `if __name__` block is still at the bottom, with the new handlers above it and one blank line's worth of ordinary spacing | Ordering is asserted; whether the file still reads as something a person wrote is not |
+| 42 | Type into a property field, then click straight onto another element | The value is saved. Repeat a few times with different fields | This broke twice in two releases, in different ways, and both times the automated check passed while a person could see it fail |
 | 39a | Type in the box, then click straight onto another element without pressing Enter | The handler runs once, on the way out | Focus-loss commit is asserted through a synthesised event; only a person can confirm a real click out of the box does it |
 | 39b | Click into a box, change nothing, click away | Nothing runs | The rule that keeps a plot from redrawing when someone merely clicks past |
 | 43 | **[!]** In the editor, move the pointer across several elements without stopping | Tags appear only where you pause, not as a trail of boxes flickering past | The delay is asserted as a number; whether 200 ms *feels* like an answer rather than a flicker or a wait is the only thing that matters and cannot be measured |
-| 44 | Hover an element, then start dragging it | The tag disappears and does not reappear mid-drag | Asserted, but a tooltip left hanging over a moving element is the kind of thing that looks broken rather than wrong |
 | 45 | Clear a label's text in the editor, then switch to GUI mode | The label is blank there, and still shows its tag on the editor canvas | Both halves are asserted. A person is checking that an invisible element is still workable in the editor |
 | 46 | **[!]** Lay out a handful of elements the way you actually would | Picking a type each time reads as deliberate rather than tedious. If it feels like one click too many, the trade is wrong | The counts are asserted. Whether a two-step add is worth it over an accidental element now and then can only be judged by doing it |
-| 47 | With nothing picked, click around the empty canvas | Nothing is created, and the click clears the selection and any field you were typing in | Asserted, but the point is that the background is now safe to click, which is a feeling rather than a count |
-| 48 | **[!]** Put a label, a file selector and a folder selector side by side in the editor | You can tell all three apart at a glance, without reading them | Two colours being "too similar" is the defect that prompted this, and no assertion can judge similarity |
 | 49 | Switch to GUI mode with a label on a coloured background | The label reads as text on that background, with no box and no edge around it | Asserted as a colour match; whether it *looks* like part of the interface is the point |
-| 50 | **[!]** Resize the interface, close iterlab completely, reopen it | It comes back the size you left it | Asserted through the file, but only a real close and relaunch proves the whole path |
-| 51 | Resize the editor, return to GUI mode, close and reopen | The window is the size you left it, in both modes - they are one window | Since 1.6.0 the editor and the interface share a size; this is the whole path from drag to relaunch |
-| 52 | **[!]** Install an older iterlab over a project made by a newer one, and open it | Both `.bak` files appear beside the pair, and the message names the version that wrote them | Two real releases and a real downgrade. Every test simulates the stamp; nothing has ever run the actual crossing between installed versions |
-| 53 | Open a folder holding a 1.x `demo.yaml` | The message names the file and says it was not touched, and a new interface opens beside it | 2.0.0 reads no 1.x layout. The notice is asserted; whether it reads as reassurance rather than as data loss is not |
 | 54 | **[!]** Draw a square element, then switch to GUI mode | It is still square. Repeat at a few window sizes | The canvas's proportions are asserted to match the interface; whether the layout *looks* like what you drew is the reason for the whole change |
-| 55 | **[!]** Resize the editor, switch to GUI, resize there, switch back | Each mode opens at the size the other left, with no drift over several rounds | One number describes both. Drift would accumulate slowly and look like nothing at first |
 | 56 | Fold and unfold the toolbar a few times with elements on the canvas | The window never moves; the canvas grows into the freed room at the same proportions, and shrinks back | Asserted, but a canvas that twitches on every fold would make the feature unusable |
 | 57 | Fold the toolbar on a small interface, then try to edit an element | It is workable: press Toolbar, edit, fold again | The reason folding exists. If it is awkward, a small interface is still hard to edit and the design needs revisiting |
 | 58 | **[!]** Make the interface short and wide - say 800x260 - and open the editor | The canvas keeps the interface's proportions, centred, and the grey around it reads as the editor's margin, not as a broken or half-drawn canvas | The proportions are asserted. Whether the grey reads as deliberate is the judgement the scaled canvas rests on |
 | 59 | **[!]** Write real code against an element, then rename it and read the whole file | It still reads like something you wrote: nothing reflowed, no line you did not expect has moved, and every mention that moved should have | The mechanics are asserted exhaustively. Whether your file still feels like yours after iterlab has edited it is the judgement this whole exception to Principle V rests on |
-| 40 | **[!]** Press your IDE's run button on `demo.py` | The interface opens, exactly as `iterlab demo` would | Tests execute the guard with `run` replaced, so no test has ever watched a real IDE launch a real window |
-| 41 | Draw several elements, then open `demo.py` | The `if __name__` block is still at the bottom, with the new handlers above it and one blank line's worth of ordinary spacing | Ordering is asserted; whether the file still reads as something a person wrote is not |
-| 42 | Type into a property field, then click straight onto another element | The value is saved. Repeat a few times with different fields | This broke twice in two releases, in different ways, and both times the automated check passed while a person could see it fail |
 
 ### Being told things
 
 | # | What to do | Pass means | Why a machine cannot say |
 |---|---|---|---|
-| 9 | **[!]** Click **Break it**, while looking at the plot rather than the terminal | The banner catches your eye without you hunting for it | Tests assert `banner.visible`; whether it is *noticeable* is the whole point |
+| 9 | **[!]** Click **Break it**, while looking at the plot rather than the terminal. Then fix the error and click again | The banner catches your eye without you hunting for it, and clears the moment the fix is in | Tests assert that the banner shows and clears; whether it is *noticeable*, and whether the recovery feels immediate, is the whole point |
 | 10 | **[!]** Draw one more button, write nothing for it, click it | Nothing happens, nothing is reported, and this reads as *intended* rather than broken | Silence is tested; whether it reads as intentional is not |
-| 11 | Fix the error and click again | The banner clears and the recovery feels immediate | State is tested; the felt experience is not |
 | 12 | Read a fault message without looking at the terminal | It tells you which element failed and roughly what went wrong | Message content is tested; usefulness is not |
 
 ### First contact
@@ -129,6 +108,35 @@ is *there*; only a person can see that the window still looks like the session t
 | 15 | Run on Windows, macOS and Linux | Fonts, spacing and the toolbar look right on each | CI asserts it runs; nobody sees the result |
 | 16 | On a Linux box without `python3-tk` | Exit code 3, with a message naming tkinter and the install command | The message is tested; whether a stuck researcher can act on it is not |
 | 17 | Hover each resize handle in editor mode, on each platform you ship to | The pointer changes, and the corner cursors differ from the edge ones | Tk silently ignores a cursor name it does not know. CI now checks the names are *valid*; only a person can see whether the right one appears |
+
+### Retired to Gate 1
+
+Numbers are never reused, so a recorded pass keeps meaning what it said. Each of these is now
+asserted by the automated suite, and rule 1 above says that is where it belongs.
+
+| # | Was | Now asserted by |
+|---|---|---|
+| 11 | The banner clears after a fix | Merged into 9 |
+| 20 | One click fires once after several toggles | `test_plot_events.py::test_a_click_fires_once_however_many_switches` |
+| 21 | Hard reset reads as destructive | Merged into 25 |
+| 24 | An edited helper module is picked up by Hard reset | `test_restart_app.py::test_it_picks_up_an_edited_helper_module`, through the real button |
+| 26 | The Screenshot PNG is the interface, at its size, with no top bar | `test_screenshot.py`, against a real screen grab: size, and an element's edges to the pixel |
+| 27 | The Screenshot PNG shows a mid-zoom plot as zoomed | `test_screenshot.py::test_the_picture_shows_the_zoom_on_screen` |
+| 29 | The drawer stays open across selections | `test_properties_drawer.py::test_it_stays_open_when_another_element_is_selected` |
+| 31 | The title bar shows the mark, not a placeholder | `test_icon.py::test_the_title_bar_shows_the_mark`, on Windows, by grabbing the title bar |
+| 33 | An editor caption edit beats the remembered one | `test_presentation_survives.py::test_editing_the_caption_in_the_editor_beats_the_remembered_one` |
+| 36 | A chosen file survives closing iterlab | `test_real_launch.py`, across two real processes |
+| 37 | A deleted file reads as empty and opens where it was | `test_real_launch.py`, across two real processes |
+| 38 | A moved project starts over quietly | `test_real_launch.py`, across two real processes |
+| 40 | The IDE's run button opens the interface | `test_real_launch.py::test_running_the_file_opens_the_interface`: `python demo.py`, from another directory |
+| 44 | The tag disappears during a drag | `test_tag_tooltip.py::test_dragging_does_not_leave_it_hanging` |
+| 47 | Clicking the empty canvas creates nothing | `test_arming.py::test_clicking_the_canvas_creates_nothing` and the background-click tests beside it |
+| 48 | A label and both selectors can be told apart | `test_element_colours.py`: perceptual colour distance between every pair of types, checked against the pair that shipped broken |
+| 50 | The size survives a real close and relaunch | `test_real_launch.py`, across real processes |
+| 51 | A size set in the editor survives a relaunch | `test_real_launch.py::test_a_resized_editor_reopens_the_interface_that_size` |
+| 52 | A real downgrade backs both files up | The `downgrade` CI job: a project made by this version, opened by the previous release from PyPI |
+| 53 | The 1.x notice | `test_style.py::test_opening_a_1x_project_says_what_happened`. 1.x had no users to meet it |
+| 55 | No drift between modes over several rounds | `test_look.py::test_resizing_in_either_mode_does_not_drift_over_several_rounds`, and the relaunch drift test |
 
 ---
 

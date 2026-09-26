@@ -136,3 +136,86 @@ def test_the_smallest_frames_invert_for_contrast():
 
     assert corner_brightness(256) > 200, "the large frame should sit on a light tile"
     assert corner_brightness(16) < 160, "the small frame should be inverted"
+
+
+# -- what the title bar actually shows (Gate 2 #31) ----------------------------
+#
+# Tk reports success for an icon that renders as a blank grey square, and for
+# one that silently stays the feather, so every check above can pass while the
+# title bar is wrong. That is how this shipped broken once. This looks at the
+# title bar itself: a real window, in a process of its own - a Tk class icon
+# outlives the root that set it, so the shared test root would be looking at
+# whatever an earlier test left - grabbed from the screen and searched for the
+# mark's own blue. Tk's feather and a grey box both have none of it.
+
+TITLE_BAR = r'''
+import ctypes
+import sys
+import time
+from ctypes import wintypes
+
+from PIL import ImageGrab
+
+from iterlab.app import open_interface
+
+app = open_interface("demo", _show=False)
+root = app.root
+root.geometry("600x300+80+80")
+root.attributes("-topmost", True)
+for _ in range(5):
+    root.update()
+    time.sleep(0.1)
+
+user32 = ctypes.windll.user32
+user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+outer = wintypes.RECT()
+user32.GetWindowRect(int(root.wm_frame(), 16), ctypes.byref(outer))
+# The left end of the title bar, where the icon sits, above the interface.
+width = max(root.winfo_rootx() - outer.left, 0) + 96
+ImageGrab.grab(
+    bbox=(outer.left, outer.top, outer.left + width, root.winfo_rooty()),
+    all_screens=True,
+).save(sys.argv[1])
+root.destroy()
+'''
+
+
+def _the_marks_blue():
+    """The commonest opaque colour in the 16 px frame: the mark's own blue."""
+    from collections import Counter
+
+    from PIL import Image
+
+    image = Image.open(icon.ICO)
+    image.size = (16, 16)
+    raw = image.convert("RGBA").tobytes()
+    opaque = [tuple(raw[i:i + 3]) for i in range(0, len(raw), 4) if raw[i + 3] > 200]
+    return Counter(opaque).most_common(1)[0][0]
+
+
+def test_the_title_bar_shows_the_mark(tmp_path):
+    import subprocess
+    import sys
+
+    if sys.platform != "win32":
+        pytest.skip("the title bar is drawn by the window manager; checked on Windows")
+    from PIL import Image
+
+    grab = tmp_path / "title.png"
+    script = tmp_path / "grab_title.py"
+    script.write_text(TITLE_BAR, encoding="utf-8")
+    finished = subprocess.run(
+        [sys.executable, str(script), str(grab)],
+        cwd=str(tmp_path), capture_output=True, text=True, timeout=60,
+    )
+    assert finished.returncode == 0, finished.stderr
+
+    blue = _the_marks_blue()
+    raw = Image.open(grab).convert("RGB").tobytes()
+    pixels = [raw[i:i + 3] for i in range(0, len(raw), 3)]
+    hits = sum(all(abs(p - q) <= 40 for p, q in zip(pixel, blue)) for pixel in pixels)
+    # The 16 px mark is mostly that blue: well over a hundred pixels at 100 %
+    # scaling, more above it. The feather and a grey box score none, and the
+    # 256 px artwork squeezed into the title bar - what `iconphoto` gives on
+    # Windows - is a thin outline scoring about a dozen.
+    assert hits >= 60, f"the title bar shows {hits} pixels of the mark's blue"

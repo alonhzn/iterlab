@@ -22,9 +22,9 @@ def isolated_state(tmp_path, monkeypatch):
 
 @pytest.fixture
 def interface(tmp_path):
-    path = tmp_path / "project" / "demo.yaml"
+    path = tmp_path / "project" / "demo_layout.py"
     path.parent.mkdir(parents=True)
-    path.write_text("schema_version: 5\n", encoding="utf-8")
+    path.write_text("LAYOUT = {'schema_version': 8, 'elements': {}}\n", encoding="utf-8")
     return path
 
 
@@ -50,11 +50,11 @@ def test_it_is_stored_outside_the_project(interface, isolated_state, tmp_path):
 
 
 def test_two_interfaces_do_not_share_a_memory(tmp_path):
-    one = tmp_path / "a" / "demo.yaml"
-    two = tmp_path / "b" / "demo.yaml"
+    one = tmp_path / "a" / "demo_layout.py"
+    two = tmp_path / "b" / "demo_layout.py"
     for path in (one, two):
         path.parent.mkdir(parents=True)
-        path.write_text("schema_version: 5\n", encoding="utf-8")
+        path.write_text("LAYOUT = {'schema_version': 8, 'elements': {}}\n", encoding="utf-8")
 
     remembered.remember(one, "fileselect", "/first")
     remembered.remember(two, "fileselect", "/second")
@@ -72,7 +72,7 @@ def test_two_selectors_in_one_interface_are_kept_apart(interface):
 
 
 def test_the_same_interface_by_a_different_route_is_the_same_memory(interface):
-    """`demo.yaml` and `./sub/../demo.yaml` are one interface, not two."""
+    """`demo_layout.py` and `./sub/../demo_layout.py` are one interface, not two."""
     remembered.remember(interface, "fileselect", "/x")
     indirect = interface.parent / "." / interface.name
     assert remembered.load(indirect) == {"fileselect": "/x"}

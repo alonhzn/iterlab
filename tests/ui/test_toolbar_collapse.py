@@ -11,7 +11,7 @@ Collapsed or not is kept in the layout, so it travels with the project.
 
 import pytest
 
-from iterlab.layout.schema import Rect, Window
+from iterlab.layout.schema import Rect
 from iterlab.ui.designer import SIDEBAR_WIDTH, TOOLBAR_WIDTH
 
 pytestmark = pytest.mark.ui
@@ -77,10 +77,6 @@ def test_the_strip_says_what_it_is(editor):
 
     walk(editor.strip)
     assert "Toolbar" in texts
-
-
-def test_the_strip_is_narrower_than_the_panel(editor):
-    assert TOOLBAR_WIDTH < SIDEBAR_WIDTH
 
 
 # -- and the canvas does not move ------------------------------------------

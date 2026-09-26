@@ -157,18 +157,31 @@ def test_the_window_is_not_resized(gui):
     assert (gui.root.winfo_width(), gui.root.winfo_height()) == before
 
 
-def test_an_unparsable_layout_file_does_not_take_the_window_down(gui):
+# Two ways a hand edit goes wrong: a file that no longer parses, and one that
+# parses and describes something impossible, which only validation catches.
+BAD_LAYOUTS = {
+    "not_python": "LAYOUT = {'schema_version': 8, 'elements': {\n",
+    "invalid_element": (
+        "LAYOUT = {\n"
+        "    'schema_version': 8,\n"
+        "    'window': {'width': 800, 'height': 450},\n"
+        "    'elements': {\n"
+        "        'broken': {'type': 'label', 'position': 'nonsense'},\n"
+        "    },\n"
+        "}\n"
+    ),
+}
+
+
+@pytest.mark.parametrize("bad", sorted(BAD_LAYOUTS))
+def test_a_bad_layout_file_does_not_take_the_window_down(gui, bad):
     """Principle III: the process never dies on the researcher's account.
 
     Reading the layout from disk is what makes this restart cold, and it is also
     what exposes it to a file someone edited by hand and got wrong. Found by a
     test that meant to check something else, and crashed instead.
     """
-    gui.interface.layout_path.write_text(
-        "schema_version: 2\nwindow: {width: 800, height: 450}\n"
-        "elements:\n  broken:\n    type: label\n    position: nonsense\n",
-        encoding="utf-8",
-    )
+    gui.interface.layout_path.write_text(BAD_LAYOUTS[bad], encoding="utf-8")
     _restart_button(gui).invoke()
     gui.root.update()
 
@@ -177,12 +190,9 @@ def test_an_unparsable_layout_file_does_not_take_the_window_down(gui):
     assert "go" in gui.interface.layout.tags(), "the last good layout was kept"
 
 
-def test_the_bad_layout_file_is_reported_not_swallowed(gui):
-    gui.interface.layout_path.write_text(
-        "schema_version: 2\nwindow: {width: 800, height: 450}\n"
-        "elements:\n  broken:\n    type: label\n    position: nonsense\n",
-        encoding="utf-8",
-    )
+@pytest.mark.parametrize("bad", sorted(BAD_LAYOUTS))
+def test_the_bad_layout_file_is_reported_not_swallowed(gui, bad):
+    gui.interface.layout_path.write_text(BAD_LAYOUTS[bad], encoding="utf-8")
     _restart_button(gui).invoke()
     gui.root.update()
     assert gui.built.banner.visible, "a silently ignored layout file is the worst outcome"

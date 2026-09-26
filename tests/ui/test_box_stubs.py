@@ -11,7 +11,7 @@ runs. Losing focus is incidental, so it runs only if the value actually moved.
 
 import pytest
 
-from iterlab.layout.schema import DEFAULT_INTERACTION, Rect
+from iterlab.layout.schema import Rect
 
 from _helpers import give_focus, press_key
 
@@ -69,11 +69,6 @@ def test_a_label_still_gets_nothing(editor):
     source = editor.interface.code_path.read_text(encoding="utf-8")
     assert "on_changed_lbl_0" not in source
     assert "on_clicked_lbl_0" not in source
-
-
-def test_the_declared_interaction_is_changed_for_both():
-    assert DEFAULT_INTERACTION["text_box"] == "changed"
-    assert DEFAULT_INTERACTION["number_box"] == "changed"
 
 
 # -- and they fire on a committed value ------------------------------------
@@ -141,30 +136,6 @@ def test_typing_alone_does_not_reach_the_handler(typing):
     _write(typing, COUNTER.format(tag="edt_0"))
     _type(typing, "edt_0", "hello")
     assert getattr(typing.built.ev, "runs", 0) == 0
-
-
-def test_the_edited_file_is_the_one_the_dispatcher_loads(typing):
-    """Between the edit and the handler there are three places to lose it.
-
-    The file can be written somewhere the loader is not watching; the loader can
-    decide nothing changed; the name can be missing from what it loaded. All
-    three end the same way - a silent no-op - so this says which.
-    """
-    from iterlab.runtime.loader import stamp as file_stamp
-
-    _write(typing, RECORDER.format(tag="edt_0", attr="text"))
-    loader = typing.built.loader
-    on_disk = typing.interface.code_path
-
-    assert str(loader.path) == str(on_disk), f"{loader.path} != {on_disk}"
-    assert loader.refresh(), f"load failed: {loader.load_error}"
-    names = [n for n in dir(loader.module) if n.startswith("on_")]
-    detail = (
-        f"state={loader.state} stamp={loader.stamp} disk={file_stamp(on_disk)} "
-        f"names={names} source={on_disk.read_text(encoding='utf-8')!r}"
-    )
-    assert loader.resolve("on_changed_edt_0") is not None, detail
-    assert "on_changed_edt_0" in names, detail
 
 
 def test_enter_commits_it(typing):

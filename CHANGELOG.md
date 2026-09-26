@@ -60,6 +60,47 @@ shape, and the command are all consumed directly by researcher-written code.
   The feature 001 spec, plan, tasks and research are left as written, as the
   design record they are, with a banner pointing to what is current.
 
+### Testing
+
+- **The manual checklist shrinks from 59 items to 38.** Twenty-one came out:
+  seven that the suite already asserted, three merged into items that judge the
+  same thing, and eleven now automated. The rule was always that Gate 2 holds
+  only what cannot be automated. Several items claimed that and were wrong.
+  Retired numbers are listed in `VERIFICATION.md` with the test that replaced
+  each one, and are never reused.
+
+  - **Real launches.** A new process runs `python demo.py`, the way an IDE's
+    run button does, from another directory. It closes, relaunches, and checks
+    that the window size and a file selector's memory came back. That covers
+    a resize in either mode, a remembered file that was since deleted, and a
+    project folder that was moved.
+  - **Real screenshots.** The Screenshot button is pressed against a real
+    screen and the PNG is read back. The tests check its size, where an element
+    is to the pixel, and that a zoomed plot is captured zoomed.
+  - **The title bar icon** is grabbed from the screen and searched for the
+    mark's colour. Tk reports success for an icon that renders as the feather,
+    a grey box, or the 256 px artwork squeezed to a thin outline, and this
+    catches each of them.
+  - **Telling element types apart** is measured as perceptual colour distance
+    between every pair. The threshold is checked against the label and file
+    selector colours that once shipped looking identical.
+  - **A real downgrade** runs in CI. A project made by this version is opened
+    by the previous release, installed from PyPI, and both backups are checked.
+
+- **Seventeen tests removed**: thirteen that repeated another test's check the
+  same way, three that could not fail, and one diagnostic left over from a
+  debugging session.
+
+- **Five tests that could no longer fail now test what they say.** They wrote
+  1.x YAML into what is now a Python layout file, so they passed at parsing and
+  never reached the validation they were named for. One passed only because its
+  search text happened to match the `Ev` class.
+
+- **A layout with no version stamp no longer calls itself "a build older than
+  1.4.0".** Every iterlab since then stamps what it writes, so an unstamped
+  file was written by hand. The message now says the file does not record which
+  iterlab wrote it. It is still backed up and announced.
+
 ### Changed
 
 - **A new code file separates what you never edit from what you do.** The

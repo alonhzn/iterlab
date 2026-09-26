@@ -6,8 +6,8 @@ them, because a version change is the one moment a file can be rewritten by code
 that was never run against it.
 
 The downgrade is the dangerous direction: an older build meets a key or a type it
-has never heard of. An upgrade is safer, since migrations run forward and are
-tested, but a migration is still a rewrite of the researcher's layout.
+has never heard of. An upgrade is safer, but any future change to the layout
+format rewrites the researcher's layout on its way forward.
 """
 
 import pytest
@@ -198,11 +198,11 @@ def test_the_researcher_is_told(interface, capsys):
 
 
 def test_an_unstamped_project_is_announced_too(interface, capsys):
-    """The commonest crossing of all, and it used to happen in silence.
+    """A layout with no stamp was written by hand, and is still copied and told.
 
-    Every project made before this feature has no stamp, so an early return on
-    "no recorded version" meant the one case everybody would hit was the one
-    nobody was told about.
+    iterlab stamps everything it writes, so there is no version to name. The
+    message must not invent one, and an early return on "no recorded version"
+    would make this the one crossing that happens in silence.
     """
     text = interface.layout_path.read_text(encoding="utf-8")
     kept = [line for line in text.splitlines() if "'iterlab_version'" not in line]
@@ -212,7 +212,8 @@ def test_an_unstamped_project_is_announced_too(interface, capsys):
     guard_version(interface)
     printed = capsys.readouterr().out
     assert f"demo_layout.py.v{UNKNOWN}.bak" in printed
-    assert "older than" in printed
+    assert "does not say which iterlab wrote it" in printed
+    assert "1.4.0" not in printed
     assert _backups(interface) == [
         f"demo.py.v{UNKNOWN}.bak", f"demo_layout.py.v{UNKNOWN}.bak"
     ]

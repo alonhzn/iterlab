@@ -29,9 +29,9 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-#: What goes in the filename when the file has no stamp at all — every layout
-#: written before this feature existed. Not a version number, and deliberately
-#: not made to look like one.
+#: What goes in the filename when the file has no stamp at all. iterlab stamps
+#: everything it writes, so that is a layout written by hand. Not a version
+#: number, and deliberately not made to look like one.
 UNKNOWN = "unknown"
 
 SUFFIX = ".bak"

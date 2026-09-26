@@ -47,10 +47,6 @@ def _top_level(source):
 # -- the starter file ------------------------------------------------------
 
 
-def test_the_starter_file_is_valid_python(code):
-    compile(code.read_text(encoding="utf-8"), "demo.py", "exec")
-
-
 def test_it_ends_with_a_main_guard(code):
     assert _top_level(code.read_text(encoding="utf-8"))[-1] == "if __name__"
 

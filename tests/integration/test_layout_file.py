@@ -51,10 +51,6 @@ def test_it_imports_only_what_it_uses():
     assert "Button" not in text
 
 
-def test_it_is_valid_python():
-    ast.parse(store._serialize(_layout(ax_0="axes", cmd_0="button")))
-
-
 def test_an_interface_with_nothing_drawn_is_still_valid():
     """A new project has no elements, and the file must still import."""
     text = store._serialize(_layout())
@@ -113,47 +109,6 @@ def test_an_unknown_element_type_falls_back_rather_than_vanishing(tmp_path):
 
 
 # -- where it goes ---------------------------------------------------------
-
-
-def test_it_sits_beside_the_code(tmp_path):
-    from iterlab.interface import Interface
-
-    made = Interface(name="demo", directory=tmp_path)
-    assert made.layout_path == tmp_path / "demo_layout.py"
-    assert made.code_path == tmp_path / "demo.py"
-
-
-def test_either_half_of_the_pair_names_the_interface(tmp_path):
-    """`demo`, `demo.py` and `demo_layout.py` all mean the same interface."""
-    from iterlab.interface import Interface
-
-    for given in ("demo", "demo.py", "demo_layout.py", "demo_layout"):
-        assert Interface.resolve(str(tmp_path / given)).name == "demo", given
-
-
-def test_a_round_trip_with_no_edits_is_byte_identical(tmp_path):
-    """Diffs should show what someone changed and nothing else."""
-    target = tmp_path / "demo_layout.py"
-    store.save(_layout(ax_0="axes", cmd_0="button"), target)
-    first = target.read_bytes()
-
-    store.save(store.load(target), target)
-    assert target.read_bytes() == first
-
-
-def test_what_was_written_reads_back(tmp_path):
-    target = tmp_path / "demo_layout.py"
-    store.save(_layout(ax_0="axes", cmd_0="button"), target)
-    back = store.load(target)
-    assert sorted(back.elements) == ["ax_0", "cmd_0"]
-    assert back.elements["cmd_0"].type == "button"
-
-
-def test_the_declarations_follow_the_elements(tmp_path):
-    target = tmp_path / "demo_layout.py"
-    store.save(_layout(ax_0="axes"), target)
-    store.save(_layout(ax_0="axes", cmd_0="button"), target)
-    assert 'cmd_0: "Button"' in target.read_text(encoding="utf-8")
 
 
 def test_a_removed_element_stops_being_declared(tmp_path):

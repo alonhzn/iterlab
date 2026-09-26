@@ -33,14 +33,17 @@ def guard_version(interface) -> list:
     if not versionguard.needs_backup(recorded, __version__):
         return written
 
-    # An unstamped file is the commonest crossing of all - every project made
-    # before this feature existed - so it must not be the one case that happens
-    # in silence.
-    described = recorded if recorded else "a build older than 1.4.0"
+    # Every iterlab since 1.4.0 stamps what it writes, so an unstamped layout was
+    # written by hand or by some other tool. It still gets copied and announced:
+    # it is the one crossing where nothing says what the file was made for.
+    if recorded:
+        described = f"{interface.name} was last edited by {recorded}"
+    else:
+        described = f"{interface.name}'s layout does not say which iterlab wrote it"
 
     if written:
         print(
-            f"iterlab: {interface.name} was last edited by {described}, and this "
+            f"iterlab: {described}, and this "
             f"is {__version__}. Copies of both files were saved first:"
         )
         for path in written:
@@ -50,7 +53,7 @@ def guard_version(interface) -> list:
         # could not be written. Say which, rather than staying silent about a
         # guard that did not run.
         print(
-            f"iterlab: {interface.name} was last edited by {described}, and this "
+            f"iterlab: {described}, and this "
             f"is {__version__}. No new backups were written (they already exist, "
             f"or the folder is not writable)."
         )

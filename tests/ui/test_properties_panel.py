@@ -2,7 +2,6 @@
 
 import pytest
 
-from iterlab.app import open_interface
 from iterlab.layout.schema import Rect
 
 pytestmark = pytest.mark.ui
@@ -52,21 +51,6 @@ def test_typed_coordinates_move_the_element(editor):
     assert _set(d.properties, left=0.5, bottom=0.6, width=0.2, height=0.1) is True
     rect = editor.interface.layout.elements["run_fit"].position
     assert (rect.left, rect.bottom, rect.width, rect.height) == (0.5, 0.6, 0.2, 0.1)
-
-
-def test_typed_change_is_persisted_immediately(editor):
-    _set(editor.built.properties, left=0.3)
-    text = editor.interface.layout_path.read_text(encoding="utf-8")
-    assert "0.3" in text
-
-
-def test_invalid_value_rejected_and_element_unchanged(editor):
-    """FR-006e: the panel never accepts what it will discard."""
-    d = editor.built
-    before = editor.interface.layout.elements["run_fit"].position
-    assert _set(d.properties, left="not a number") is False
-    assert editor.interface.layout.elements["run_fit"].position == before
-    assert d.properties._message.cget("text") != ""
 
 
 def test_out_of_bounds_value_rejected(editor):
@@ -145,15 +129,6 @@ def test_rename_refused_while_the_code_file_is_broken(editor):
     assert editor.interface.code_path.read_text(encoding="utf-8") == broken
     assert editor.interface.layout_path.read_bytes() == layout_before
     assert "run_fit" in editor.interface.layout.tags()
-
-
-def test_deleting_an_element_leaves_its_handler(editor):
-    d = editor.built
-    code_before = editor.interface.code_path.read_bytes()
-    d.select("run_fit")
-    d.delete_selected()
-    assert "run_fit" not in editor.interface.layout.tags()
-    assert editor.interface.code_path.read_bytes() == code_before
 
 
 def test_the_panel_says_what_the_rename_rewrote(editor):

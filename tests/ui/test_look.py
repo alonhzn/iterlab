@@ -92,37 +92,6 @@ def test_every_property_field_is_reachable_at_the_default_window_size(mapped, ma
     assert sidebar._scrollbar_shown, "content overflows but no scrollbar appeared"
 
 
-def test_the_sidebar_scrolls_when_it_overflows(mapped, make_app):
-    from iterlab.layout.schema import Rect
-
-    app = make_app()
-    app.root.geometry("800x420")
-    app.root.update()
-    d = app.built
-    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), tag="go")
-    d.select("go")
-    app.root.update()
-
-    sidebar = d.sidebar
-    if sidebar.inner.winfo_reqheight() > sidebar.canvas.winfo_height():
-        assert sidebar._scrollbar_shown, "content overflows but no scrollbar appeared"
-
-
-def test_the_delete_control_is_reachable_at_a_small_window(mapped, make_app):
-    """A destructive action must never be the thing pushed off the bottom."""
-    from iterlab.layout.schema import Rect
-
-    app = make_app()
-    app.root.geometry("800x450")
-    app.root.update()
-    d = app.built
-    d.create_element("button", Rect(0.25, 0.25, 0.25, 0.25), tag="go")
-    d.select("go")
-    app.root.update()
-
-    assert d.properties._danger_zone.winfo_children(), "no delete control built"
-
-
 def test_the_palette_lists_every_element_type(make_app):
     from iterlab.layout.schema import ELEMENT_TYPES
 
@@ -158,6 +127,33 @@ def test_both_modes_are_the_same_window(mapped, make_app):
     app.toggle()
     app.root.update()
     assert (app.root.winfo_width(), app.root.winfo_height()) == in_editor
+
+
+def test_resizing_in_either_mode_does_not_drift_over_several_rounds(mapped, make_app):
+    """Each mode opens at the size the other left, round after round.
+
+    One number describes both modes, and the editor derives the interface's size
+    from the window rather than from its scaled canvas. A rounding slip in either
+    direction would be invisible once and obvious after a dozen switches.
+    """
+    from iterlab.layout.schema import Rect
+
+    app = make_app()
+    app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1), tag="go")
+    sizes = [(900, 560), (1040, 610), (870, 520), (990, 600)]
+    for width, height in sizes:
+        app.root.geometry(f"{width}x{height}")
+        app.root.update()
+        app.remember_size()
+        recorded = (app.interface.layout.window.width, app.interface.layout.window.height)
+
+        app.toggle()
+        app.root.update()
+        assert (app.root.winfo_width(), app.root.winfo_height()) == (width, height)
+        app.remember_size()
+        assert (
+            app.interface.layout.window.width, app.interface.layout.window.height
+        ) == recorded, f"switching to {app.mode} moved the recorded size"
 
 
 def test_the_window_is_the_interface_plus_the_top_bar(mapped, make_app):
@@ -250,18 +246,3 @@ def test_the_backdrop_is_not_the_canvas_colour(mapped, make_app):
     app = make_app()
     assert app.built.stage.cget("bg") != app.built.canvas.cget("bg")
     assert app.built.stage.cget("bg") == theme.STAGE
-
-
-def test_switching_to_the_editor_never_shrinks_the_window(mapped, make_app):
-    """A size the researcher chose is theirs; toggling should not undo it."""
-    from iterlab.layout.schema import Rect
-
-    app = make_app()
-    app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1), tag="go")
-    app.toggle()
-    app.root.geometry("1400x900")
-    app.root.update()
-    app.toggle()
-    app.root.update()
-    assert app.root.winfo_width() >= 1400
-    assert app.root.winfo_height() >= 900

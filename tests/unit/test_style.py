@@ -83,7 +83,7 @@ def _styled(tmp_path):
     layout.add(Element("go", "button", Rect(0.1, 0.1, 0.2, 0.1), label="Go",
                        style=Style(background="#ff5533", bold=True, edge_width=2)))
     layout.add(Element("plain", "button", Rect(0.4, 0.1, 0.2, 0.1), label="Plain"))
-    path = tmp_path / "demo.yaml"
+    path = tmp_path / "demo_layout.py"
     store.save(layout, path)
     return path, layout
 
@@ -95,31 +95,43 @@ def test_style_round_trips(tmp_path):
 
 def test_an_unstyled_element_gets_no_style_block(tmp_path):
     path, _ = _styled(tmp_path)
-    text = path.read_text(encoding="utf-8")
-    plain = text.split("plain:")[1]
-    assert "style" not in plain, "a plain element should stay a three-line entry"
+    entries = [
+        line for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith("'plain':")
+    ]
+    assert len(entries) == 1, "the plain element should be one line"
+    assert "style" not in entries[0]
 
 
-def test_unknown_style_key_is_rejected(tmp_path):
-    path = tmp_path / "demo.yaml"
+def _one_element(tmp_path, kind, style):
+    """A layout written by hand, with one element carrying `style`."""
+    path = tmp_path / "demo_layout.py"
     path.write_text(
-        f"schema_version: {SCHEMA_VERSION}\nelements:\n  go:\n    type: button\n"
-        "    position: [0, 0, 0.1, 0.1]\n    style:\n      glow: true\n",
+        "LAYOUT = {\n"
+        f"    'schema_version': {SCHEMA_VERSION},\n"
+        "    'elements': {\n"
+        f"        'thing': {{'type': {kind!r}, 'position': [0, 0, 0.4, 0.4],"
+        f" 'style': {style!r}}},\n"
+        "    },\n"
+        "}\n",
         encoding="utf-8",
     )
-    with pytest.raises(LayoutInvalid):
-        store.load(path)
+    return path
 
 
-def test_a_style_a_type_cannot_have_is_rejected(tmp_path):
-    path = tmp_path / "demo.yaml"
-    path.write_text(
-        f"schema_version: {SCHEMA_VERSION}\nelements:\n  spectrum:\n    type: axes\n"
-        "    position: [0, 0, 0.4, 0.4]\n    style:\n      bold: true\n",
-        encoding="utf-8",
-    )
-    with pytest.raises(LayoutInvalid):
-        store.load(path)
+@pytest.mark.parametrize(
+    "kind, bad, good",
+    [
+        ("button", {"glow": True}, {"bold": True}),        # no such key at all
+        ("axes", {"bold": True}, {"visible": False}),      # a key this type lacks
+    ],
+)
+def test_a_style_key_the_type_does_not_have_is_rejected(tmp_path, kind, bad, good):
+    # The same file with a key the type does have loads, so a rejection below
+    # is the style being judged and not the file failing to read.
+    assert store.load(_one_element(tmp_path, kind, good)).elements["thing"]
+    with pytest.raises(LayoutInvalid, match=next(iter(bad))):
+        store.load(_one_element(tmp_path, kind, bad))
 
 
 # -- migration --------------------------------------------------------------

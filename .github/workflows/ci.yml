@@ -2,8 +2,9 @@ name: CI
 
 # Gate 1 of the two release gates in the project constitution (Principle VII).
 # The headless tier runs everywhere; the display-dependent tier runs under a
-# virtual display on Linux. Gate 2 is the recorded manual pass in VERIFICATION.md
-# and cannot be automated by definition.
+# virtual display on Linux, and the downgrade job opens a project with a real
+# older release. Gate 2 is the recorded manual pass in VERIFICATION.md, and holds
+# only what cannot be automated.
 
 on:
   push:
@@ -48,3 +49,32 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Run the display-dependent suite
         run: xvfb-run -a pytest tests/ui -m ui
+
+  downgrade:
+    # Gate 2 #52, automated: two real releases and a real downgrade. Every unit
+    # test simulates the version stamp; this installs an older iterlab over a
+    # project this one made and checks it backed both files up first.
+    name: real downgrade (ubuntu)
+    runs-on: ubuntu-latest
+    env:
+      # The newest release before this one. Move it forward at each release.
+      OLDER: "2.0.0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tkinter and Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk xvfb
+      - name: Make a project with this version
+        run: |
+          pip install -e .
+          python tools/check_downgrade.py make "$RUNNER_TEMP/work"
+      - name: Open it with the older release
+        # From outside the checkout, so the older install is what gets imported.
+        working-directory: ${{ runner.temp }}
+        run: |
+          pip install "iterlab==$OLDER"
+          xvfb-run -a python "$GITHUB_WORKSPACE/tools/check_downgrade.py" open work

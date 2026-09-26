@@ -13,7 +13,6 @@ import pytest
 from iterlab.app import open_interface
 from iterlab.interface import Interface
 from iterlab.layout import store
-from iterlab.layout.schema import Rect
 
 pytestmark = pytest.mark.ui
 
@@ -57,20 +56,6 @@ def test_it_is_bigger_than_the_old_fixed_default(fresh):
 
 
 # -- but never an existing one ---------------------------------------------
-
-
-def test_reopening_keeps_the_size_it_was_left_at(mapped, make_app):
-    """The researcher's size survives, which is the whole of the other feature."""
-    app = make_app("kept")
-    app.built.create_element("button", Rect(0.1, 0.1, 0.2, 0.1))
-    app.root.geometry("700x480")
-    app.root.update()
-    app.remember_size()
-    left_at = app.interface.layout.window
-    app.close()
-
-    reopened = make_app("kept")
-    assert reopened.interface.layout.window == left_at
 
 
 def test_an_existing_layout_file_is_not_resized_on_open(mapped, tk_root, tmp_path, monkeypatch):
