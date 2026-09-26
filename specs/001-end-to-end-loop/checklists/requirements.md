@@ -1,5 +1,11 @@
 # Specification Quality Checklist: End-to-End Minimal Loop
 
+> **Historical design record.** This describes feature 001 as it was designed on 2026-09-07. Later
+> releases changed parts of it - among them the layout file, which was YAML until 2.0.0 and is now
+> `<name>_layout.py`, and renaming, which now follows an element through the code rather than
+> touching only its handlers. For current behaviour see the constitution, the contracts in this
+> feature's `contracts/` folder, and `GUIDE.md`. The text below is kept as it was written.
+
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-09-07
 **Feature**: [spec.md](../spec.md)

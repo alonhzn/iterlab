@@ -6,7 +6,59 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [2.0.1] — 2026-09-14
+## [2.0.1] — unreleased
+
+### Fixed
+
+- **An edit could silently fail to take effect.** The guide's own first example
+  is "change `2` to `5`, save, click". Saved within a second of the last load,
+  that edit did nothing and reported nothing: the loader noticed the change,
+  reloaded, and Python handed back the old compiled code, because it judges its
+  `__pycache__` fresh by whole-second modification time and file size, and `2`
+  and `5` are the same size. A second, separate gap sat underneath it: Windows
+  records file times in ticks of up to about 15 ms, so two same-size saves in
+  one tick were not even noticed.
+
+  People rarely save twice in a second. An editor that formats on save does it
+  routinely, and so does an assistant editing the file. Your code is now
+  compiled from its source on every load, never from a cache, and a change is
+  detected by content as well as by time and size. This is Principle IV - a
+  code change takes effect without a restart - holding when it had quietly not.
+
+- **A helper module beside your code could not be imported under the `iterlab`
+  command.** `import helper` next to `demo.py` worked when launched from an
+  IDE, where Python puts the script's folder on the path, and failed with
+  `ModuleNotFoundError` under `iterlab demo`, where nothing did. The project
+  folder now goes first on the path, exactly as `python demo.py` puts it.
+
+- **Hard reset did not pick up an edited helper module**, though the guide said
+  it did. It forgot your own module, and the helper stayed cached. It now
+  forgets every module loaded from your project folder, and its compiled cache,
+  while never touching installed packages - a project's `.venv` usually sits
+  inside the folder, and re-importing numpy over its running C extensions would
+  crash rather than restart. An upgraded installed library still needs iterlab
+  closed and reopened, which the guide now says.
+
+- **The Screenshot button's hover text mentioned `.yaml` files**, a format 2.0.0
+  retired.
+
+### Documentation
+
+- **The guide, the manual checklist, the contracts and the constitution now
+  match the released product.** The guide's footer claimed it was verified
+  against 1.4.0; its cross-version section described migrations 2.0.0 removed;
+  its event table missed `"changed"` and `event.path`. Five checklist rows
+  tested behaviour 1.6.0 replaced. The layout-schema contract still described
+  schema 4 in YAML, and the handler contract said `event.kind` was `"click"`.
+
+  The constitution is amended to 4.0.0. It had described YAML layouts and
+  handler-only renames for four releases after they stopped being true. The
+  2.0.0 break, taken with no migration while iterlab had no users, is recorded
+  as a dated exception rather than made legal: the compatibility obligations
+  bind every release after it in full.
+
+  The feature 001 spec, plan, tasks and research are left as written, as the
+  design record they are, with a banner pointing to what is current.
 
 ### Changed
 

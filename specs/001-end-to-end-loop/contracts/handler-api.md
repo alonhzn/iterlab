@@ -18,27 +18,33 @@ on_<interaction>_<tag>
 | `hover` | `on_hover_<tag>` | The pointer enters the element |
 | `motion` | `on_motion_<tag>` | The pointer moves within the element |
 | `key` | `on_key_<tag>` | A key is pressed while the element has focus |
+| `changed` | `on_changed_<tag>` | A box's value is committed — Enter, or leaving it after an edit. Never per keystroke |
 
 **Universal**: every interaction is available on every element type (FR-017a). A hover handler on a
-button is as legitimate as one on a plot area.
+button is as legitimate as one on an axes.
 
 **Optional**: a handler exists only if the researcher wrote it. A missing handler is a silent no-op and
 is never an error (FR-017b, FR-029).
 
-**Startup**: `on_startup(ev)` runs once at launch, before any interaction is possible. It is never
-re-run implicitly, including when it is itself what changed (FR-026b). Changing it takes effect by
-starting a fresh session — which the mode toggle provides in one click — and there is no in-session
-re-run (FR-026c, FR-015e). The sole exception is a startup that never completed successfully, which is
-attempted again once the code loads (FR-026d).
+**Startup**: `on_startup(ev)` runs once per session, before any interaction is possible. It is never
+re-run implicitly, including when it is itself what changed (FR-026b). Switching modes preserves the
+session and does not re-run it. When `on_startup` is edited, iterlab notices and offers **Re-run
+startup**, which runs it again over the live `ev` and keeps everything already on it; **Hard reset**
+starts a fresh session from disk. The sole exception to "never implicitly" is a startup that never
+completed successfully, which is attempted again once the code loads (FR-026d).
 
 ---
 
 ## Signature
 
 ```python
-def on_clicked_run_fit(ev, event):
+def on_clicked_run_fit(ev: "Ev", event):
     ...
 ```
+
+The annotation is what lets an editor complete `ev.` inside the handler; `Ev` is declared in
+`<name>_layout.py` and imported under `TYPE_CHECKING`, so it never runs. It does not change the call:
+a handler written without it is wired and called exactly the same way.
 
 | Parameter | What it is |
 |---|---|
@@ -59,11 +65,11 @@ researcher may rename them, though every generated stub uses `ev` and `event`.
 ```python
 def on_startup(ev):
     ev.data = np.loadtxt("measurements.csv")   # loaded ONCE per session
-    ev.plot_0.plot(ev.data)
+    ev.ax_0.plot(ev.data)
 
 def on_clicked_run_fit(ev, event):
     ev.result = fit(ev.data)                   # ev.data still here, not reloaded
-    ev.plot_0.plot(ev.result)
+    ev.ax_0.plot(ev.result)
 ```
 
 | Access | Meaning |
@@ -106,12 +112,13 @@ Normalized across element types, so a handler signature never depends on how an 
 
 | Attribute | Type | Present when |
 |---|---|---|
-| `kind` | str | Always — `"click"`, `"hover"`, `"motion"`, `"key"` |
+| `kind` | str | Always — `"clicked"`, `"hover"`, `"motion"`, `"key"`, `"changed"`; the same word as in the handler's name |
 | `tag` | str | Always — the element's tag |
 | `button` | str or `None` | Click — `"left"`, `"middle"`, `"right"` |
-| `x`, `y` | float or `None` | **Data coordinates** on plot areas; `None` on controls |
+| `x`, `y` | float or `None` | **Data coordinates** on an axes; `None` on controls |
 | `key` | str or `None` | Key events |
 | `double` | bool | Click — whether it was a double click |
+| `path` | str or `None` | A file or folder selector's click — what was chosen. A cancelled dialog fires no handler at all, so this is never empty; `None` on every other event |
 
 `x` and `y` are in the plot's own data coordinates, not pixels. Clicking a spectrum at 512 nm gives you
 `512.0`, not a screen offset. This is the reason plot events come from matplotlib rather than Tk.
@@ -125,11 +132,20 @@ Stubs for other interactions are never generated; the researcher writes those wh
 
 | Element type | Default interaction | Generated |
 |---|---|---|
-| `axes` | click | `on_clicked_<tag>` |
-| `button` | click | `on_clicked_<tag>` |
+| `axes` | clicked | `on_clicked_<tag>` |
+| `button` | clicked | `on_clicked_<tag>` |
+| `file_select` | clicked | `on_clicked_<tag>` |
+| `folder_select` | clicked | `on_clicked_<tag>` |
+| `text_box` | changed | `on_changed_<tag>` |
+| `number_box` | changed | `on_changed_<tag>` |
+| `label` | — | nothing: a label is written to, not interacted with |
+
+The annotation `ev: "Ev"` is written only into a file that already imports `Ev` from its layout
+module, which every file iterlab creates does. A file without that import gets the plain `ev`, so a
+stub never refers to a name its file cannot resolve.
 
 ```python
-def on_clicked_run_fit(ev, event):
+def on_clicked_run_fit(ev: "Ev", event):
     # Runs when you click run_fit.
     # Delete this function if you don't need it — nothing will break.
     print(f"run_fit clicked with the {event.button} button")

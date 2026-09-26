@@ -2,7 +2,7 @@
 
 A selection has to outlive the process, not just the session: a researcher who
 picked a data directory yesterday should not pick it again today. So it goes to
-disk — but **not** into the layout file. `demo.yaml` describes the interface, and
+disk — but **not** into the layout file. `demo_layout.py` describes the interface, and
 writing a runtime choice into it would make it a log of what happened instead
 (Principle II), and would show up as a spurious diff in everyone's repository.
 

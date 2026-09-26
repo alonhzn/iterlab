@@ -31,19 +31,23 @@ would violate Principle I, so no such API exists.
 
 `<name>` may be a bare name or a path.
 
-| Given | Layout | Code |
+| Given | Code | Layout |
 |---|---|---|
-| `demo` | `./demo.yaml` | `./demo.py` |
-| `work/demo` | `work/demo.yaml` | `work/demo.py` |
-| `/abs/path/demo` | `/abs/path/demo.yaml` | `/abs/path/demo.py` |
-| `demo.yaml` or `demo.py` | `demo.yaml` | `demo.py` — the extension is stripped, so either file can be named |
+| `demo` | `./demo.py` | `./demo_layout.py` |
+| `work/demo` | `work/demo.py` | `work/demo_layout.py` |
+| `/abs/path/demo` | `/abs/path/demo.py` | `/abs/path/demo_layout.py` |
+| `demo.py`, `demo_layout.py` or `demo_layout` | `demo.py` | `demo_layout.py` — either file of the pair can be named |
 
 **Everything resolves relative to the pair's own directory, never to the working directory** (FR-035).
 A relative `<name>` is resolved against the working directory *once*, to locate the pair; from then on
 the pair's directory is the reference. Launching from elsewhere must not break an interface.
 
-Accepting `demo.yaml` and `demo.py` interchangeably matters in practice — a researcher with the file
-open in an editor will tab-complete one of them.
+Accepting either file of the pair matters in practice — a researcher with the file open in an editor
+will tab-complete one of them.
+
+The folder holding the pair is also put first on the import path when the code file loads, exactly as
+running `python demo.py` would. So `import helper` beside `demo.py` works the same whether the
+interface was opened with the command or from an IDE's run button.
 
 ---
 
@@ -58,6 +62,7 @@ open in an editor will tab-complete one of them.
 | Layout has elements | Open in **GUI mode** — ready to use (FR-001a) |
 | Code file will not load | **Open anyway**, report the fault, remain usable (FR-032) |
 | Layout has a newer `schema_version` | Report and exit non-zero. Do not open, do not modify |
+| A 1.x `demo.yaml` sits beside it, with no `demo_layout.py` | Print a notice naming the file and saying it was not touched, then open a new interface. 1.x layouts are not read (see the layout schema contract) |
 | Layout is invalid | Report what is wrong and exit non-zero. Do not overwrite |
 
 The asymmetry in the last three rows is deliberate and constitutional. A broken **layout** is a stop,
@@ -167,6 +172,6 @@ Additive and therefore **MINOR**: an optional flag, such as one forcing a start 
 type in the palette; a new property in the panel; a new window affordance; a new accepted name form.
 
 Breaking and therefore **MAJOR**: renaming or removing the command; reintroducing a mode-specific
-command; changing name resolution; changing the `<name>.yaml` / `<name>.py` pairing; making a
+command; changing name resolution; changing the `<name>.py` / `<name>_layout.py` pairing; making a
 currently-optional argument required; changing an exit code's meaning; making a researcher-code fault
 non-zero; removing the toggle or making a mode switch require anything beyond a single action.

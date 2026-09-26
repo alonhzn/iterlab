@@ -87,20 +87,21 @@ your code: handlers, `ev.` references, comments and strings all move with it. Th
 
 ### Write the algorithm
 
-Open `demo.py` in your own editor:
+Open `demo.py` in your own editor. The block at the top, framed in `#`, is boilerplate you never
+need to touch: it is what lets your editor complete `ev.` for you. Your own code starts below it:
 
 ```python
 import numpy as np
 
 
-def on_startup(ev):
+def on_startup(ev: "Ev"):
     # Runs once when the interface opens. Load your data HERE, not at the top
     # of the file - see "The one gotcha" below.
     ev.x = np.linspace(0, 10, 500)
     ev.ax_0.plot(ev.x, np.sin(ev.x))
 
 
-def on_clicked_cmd_0(ev, event):
+def on_clicked_cmd_0(ev: "Ev", event):
     ev.ax_0.clear()
     ev.ax_0.plot(ev.x, np.sin(2 * ev.x))
 ```
@@ -159,12 +160,13 @@ interacted with. Add any of the others by hand whenever you want them.
 
 | Attribute | What it is |
 |---|---|
-| `event.kind` | `"clicked"`, `"hover"`, `"motion"` or `"key"` |
+| `event.kind` | `"clicked"`, `"hover"`, `"motion"`, `"key"` or `"changed"` — the word in the handler's name |
 | `event.tag` | Which element |
 | `event.button` | `"left"`, `"middle"` or `"right"` |
 | `event.x`, `event.y` | **Data coordinates** on an axes; `None` elsewhere |
 | `event.key` | The key, on key events |
 | `event.double` | Whether a click was a double click |
+| `event.path` | On a file or folder selector's click, what was chosen; `None` elsewhere. A cancelled dialog calls no handler |
 
 `event.x` and `event.y` are in your plot's own units. Click a spectrum at 512 nm and you get
 `512.0`, not a pixel offset.
@@ -508,7 +510,8 @@ Almost nothing. For completeness:
 | Fixing a syntax error | Next click |
 | Moving, restyling, adding or deleting an element | Toggle back to GUI mode. Nothing is lost |
 | Editing `on_startup` | iterlab notices and offers to re-run it — see below |
-| Editing a module you `import` | **Hard reset** |
+| Editing a module of your own that `demo.py` imports | **Hard reset** |
+| Upgrading an installed library, such as numpy | Close iterlab and open it again |
 
 **Switching modes costs you nothing.** Your data stays on `ev`, your plots keep what you drew on
 them, and `on_startup` does not run again. Draw a new button, come back, and the session you were
@@ -565,14 +568,18 @@ Dismissing does not mark the edit as accepted: change `on_startup` again and the
 re-launching `iterlab demo` would do without closing the window:
 
 - your layout is re-read **from the file**, so a hand edit to `demo_layout.py` is picked up
-- your code is loaded fresh
+- your code is loaded fresh, **and so is every module of yours in the project folder**
 - `ev` is emptied and `on_startup` runs again
 
 You stay in whichever mode you pressed it in, and the window is not resized.
 
 Reach for it when a warm reload is not enough — most often after editing a **module you import**.
-iterlab assumes imported modules do not change during a session, so if you split your work across
-`demo.py` and `fitting.py`, edits to `fitting.py` are not picked up. Hard reset is the answer.
+A click reloads `demo.py` but not what it imports, so if you split your work across `demo.py` and
+`fitting.py`, edits to `fitting.py` wait for this button. Hard reset is the answer.
+
+The one thing it cannot do is swap an installed library, say after upgrading numpy mid-session.
+Python cannot safely re-import those over the ones already running, so for that, close iterlab and
+open it again.
 
 Every button in the top bar has hover text saying exactly what it will do, because two of them
 differ only in how much they throw away.
@@ -592,22 +599,27 @@ Every `demo_layout.py` records which iterlab last wrote it. Open it with a diffe
 older** — and both files are copied aside before anything touches them:
 
 ```
-demo_layout.py.v1.3.0.bak
-demo.py.v1.3.0.bak
+demo_layout.py.v2.0.0.bak
+demo.py.v2.0.0.bak
 ```
 
-The version in the name is the one that wrote them, because that is what the copy preserves. A
-project made before iterlab 1.4.0 has no stamp at all, so its copies are named `.vunknown.bak`.
+The version in the name is the one that wrote them, because that is what the copy preserves.
 
 Going **back** to an older iterlab is the case this exists for: an older build meets a layout key or
-an element type it has never heard of. Going forward is safer, since migrations run forward and are
-tested, but a migration still rewrites your layout and a copy costs nothing.
+an element type it has never heard of. Going forward is safer, but a future change to the layout
+format rewrites your layout, and a copy costs nothing.
 
 Your `.py` is copied and never otherwise touched by this. A layout can be redrawn; an algorithm
 cannot.
 
 An existing backup is never overwritten — the one already there is the older and more original of
 the two. Delete them whenever you like; iterlab never reads them back.
+
+### Projects from iterlab 1.x
+
+Before 2.0.0 the layout lived in `demo.yaml`, and 2.x does not read that format. Open such a folder
+and iterlab says so, names the file, leaves it untouched, and opens a new, empty interface beside it.
+Your `demo.py` is unaffected and still yours; the layout has to be drawn again.
 
 ## The window size
 
@@ -744,11 +756,12 @@ Worth knowing before they surprise you.
   repaints. Splitting slow work across clicks is the workaround for now.
 - **Seven element types so far.** Checkboxes, radio buttons, dropdowns, lists and sliders are not
   built yet.
-- **Modules you import are assumed not to change** while the session runs. Editing a helper module
-  of your own has no effect until you press **Hard reset**.
+- **Imported modules are not reloaded on each click.** An edit to a helper module of your own takes
+  effect when you press **Hard reset**; an installed library you upgrade mid-session needs iterlab
+  closed and opened again.
 - **Editing `demo_layout.py` by hand** is possible but not the intended path; the editor is.
 
 ---
 
-**Guide version 1.4.0.** Everything above is verified against that release. If a description here
+**Guide version 2.0.1.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

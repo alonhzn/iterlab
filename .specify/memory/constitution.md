@@ -1,6 +1,39 @@
 <!--
 SYNC IMPACT REPORT
 ==================
+Version change: 3.1.1 → 4.0.0
+Bump rationale: MAJOR. Two principles redefined to match released behaviour, and a breach of the
+compatibility obligations recorded. Principle V is not among the non-negotiable principles, and
+the obligations themselves are kept, not weakened.
+
+Modified sections:
+  - Principle II (Layout And Code Are Separate, Name-Linked Files): the pair is `<name>.py` and
+    `<name>_layout.py`, no longer a `.yaml` and a `.py`.
+  - Principle V (The Researcher's Code Is Additive-Only): the rename exception reaches attribute
+    access and whole-word mentions in comments and strings, bounded by whole-name matching.
+  - Technology: the layout format is a Python module, read by parsing and never imported.
+  - Release And Versioning: public surface item 1, and a dated exception under Compatibility
+    obligations for 2.0.0.
+
+What changed: the document had described YAML layouts and handler-only renames for four releases
+after they stopped being true - 1.7.0 widened renaming, and 2.0.0 replaced the format with no
+migration and no deprecation release. A constitution that contradicts the shipped product is
+worse than either rule on its own, because it stops anyone from knowing which one holds.
+
+Argument on record: the 2.0.0 break is recorded, not made legal. It was taken by the maintainer
+when iterlab had no users, so no layout existed to be lost - the one condition under which the
+obligation protects nobody. That condition ended with the first release people installed, so the
+obligations bind every release after 2.0.0 in full. Widening the rename is a real redefinition:
+touching a comment or a string is more than the principle used to allow. The whole-name rule is
+what keeps it inside the principle's purpose - an unrelated element is never unwired.
+
+Follow-up TODOs: none. The contracts (layout schema, commands, handler API) are updated in the
+same change. The feature 001 spec, plan, tasks, research, data model and quickstart carry a
+historical-record banner rather than being rewritten.
+
+==================
+PREVIOUS REPORT
+==================
 Version change: 3.1.0 → 3.1.1
 Bump rationale: PATCH. One factual note corrected to match implemented behaviour. No
 principle added, removed, weakened or redefined.
@@ -24,7 +57,7 @@ reason.
 Follow-up TODOs: none.
 
 ==================
-PREVIOUS REPORT
+EARLIER REPORT
 ==================
 Version change: 3.0.0 → 3.1.0
 Bump rationale: MINOR. Guidance in one section materially expanded; no principle
@@ -220,7 +253,8 @@ one program.
 
 ### II. Layout And Code Are Separate, Name-Linked Files
 
-An interface is a `.yaml` layout file and a `.py` code file sharing a basename in one folder.
+An interface is a `.py` code file the researcher owns and a `_layout.py` file iterlab owns,
+sharing a basename in one folder: `demo.py` and `demo_layout.py`.
 The **only** coupling between them is the *name* of an element. Adding, moving, resizing, or
 restyling an element MUST NOT alter the code file, and editing the code file MUST NOT alter the
 layout file.
@@ -309,9 +343,12 @@ no reordering of code the researcher wrote.
 
 - Creating an element appends a handler stub. An element already known to the file MUST be
   skipped, so re-editing a layout never duplicates or clobbers.
-- **Sole exception**: renaming an element MUST also rename its handlers in the code file, and
-  MUST change nothing else. Leaving a researcher to hand-repair broken name links would defeat
-  the purpose of the tool.
+- **Sole exception**: renaming an element MUST carry the rename through the code file - its
+  handlers, attribute access on it (`ev.old`), and whole-word mentions in comments and strings -
+  and MUST change nothing else. A name matches whole or not at all: a longer name containing the
+  old one belongs to something else and MUST NOT be touched, and neither may a bare identifier
+  that merely shares the name. The rename MUST write nothing when the file does not parse.
+  Leaving a researcher to hand-repair broken name links would defeat the purpose of the tool.
 - Deleting an element MUST NOT delete its handler. Orphaned handlers are acceptable; destroyed
   work is not.
 - All writes to the researcher's file MUST be atomic — write to a temporary file, then replace.
@@ -390,9 +427,12 @@ that gets quietly bypassed.
 - **GUI toolkit**: Tk (`tkinter`), from the standard library. Chosen over PySide/PyQt, Dear
   PyGui, and wxPython specifically because it ships with Python.
 - **Plotting**: matplotlib, embedded — and confined to the role defined in Principle VI.
-- **Layout format**: YAML. Human-readable, diffable in version control, and hand-editable when
-  the designer cannot yet express something. A binary or pickled format would fail all three and
-  MUST NOT be adopted.
+- **Layout format**: a Python module holding one literal, `<name>_layout.py`, which also carries
+  the class an editor reads to complete `ev.`. Human-readable, diffable in version control, and
+  hand-editable when the designer cannot yet express something. It MUST be read by parsing and
+  literal evaluation, and MUST NOT be imported or executed on load: layouts are shared, and running
+  one on open would make every shared interface arbitrary code execution. A binary or pickled
+  format would fail all of this and MUST NOT be adopted.
 - **Element positions**: normalized [0, 1] fractions of the window, so that layouts are
   resolution-independent and window resize is not a special case.
 - **Handler binding**: by naming convention (`on_<event>_<element_name>`), requiring no
@@ -443,7 +483,7 @@ wrote, and breaking any of them breaks that researcher's existing work rather th
 integration:
 
 1. **The layout file schema** — a layout written by any earlier version MUST open in every later
-   version.
+   version, with the single dated exception recorded under *Compatibility obligations*.
 2. **The handler naming convention** (`on_<event>_<element_name>`) — this is how every researcher's
    code is wired. Changing it silently unwires every interface ever built.
 3. **The handler contract** — that `ev` is the first argument, and that elements are reachable from
@@ -489,6 +529,11 @@ under MAJOR-only:
   by Principle II.
 - **Deprecation precedes removal.** Anything on the public surface MUST be deprecated in at least
   one MINOR release, with a warning naming the replacement, before removal in a MAJOR release.
+- **Recorded exception - 2.0.0 (2026-09-14).** 2.0.0 replaced the YAML layout with
+  `<name>_layout.py` and shipped no migration and no deprecation release, in breach of the two
+  obligations above. The maintainer took it deliberately while iterlab had no users, so no layout
+  existed that could be lost. It is recorded, not made legal: these obligations bind every release
+  after 2.0.0 in full, and a project with users is exactly the case they exist for.
 - **Every release MUST have a changelog entry** stating what changed and, for any breaking change,
   what a researcher must do about it.
 
@@ -540,4 +585,4 @@ that cannot satisfy all of these is not made.
 `CLAUDE.md`) and MUST remain consistent with this constitution. Where the two disagree, this
 document governs and the guidance file is corrected.
 
-**Version**: 3.1.1 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-08
+**Version**: 4.0.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-26

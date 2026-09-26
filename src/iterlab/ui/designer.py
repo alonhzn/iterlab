@@ -47,8 +47,8 @@ SIDEBAR_WIDTH = 210
 #: expanding gets you, where a chevron on an empty strip does not.
 TOOLBAR_WIDTH = 86
 
-#: The hair line between the toolbar and the canvas. Named because the window
-#: allowances in `app` are these widths plus this, and a test holds them in step.
+#: The hair line between the toolbar and the canvas. Part of the room the
+#: toolbar takes from inside the window, which the canvas is fitted around.
 SEPARATOR_WIDTH = 1
 FILL = theme.ELEMENT_FILL
 OUTLINE = theme.ELEMENT_EDGE

@@ -4,8 +4,8 @@ Every layout file records which iterlab last wrote it. When that differs from th
 version now opening it — **in either direction** — both files are copied aside
 before anything touches them:
 
-    demo.yaml  ->  demo.yaml.v1.2.0.bak
-    demo.py    ->  demo.py.v1.2.0.bak
+    demo_layout.py  ->  demo_layout.py.v2.0.0.bak
+    demo.py         ->  demo.py.v2.0.0.bak
 
 The version in the name is the one that *wrote* the files, because that is what
 the copy preserves.
@@ -13,8 +13,8 @@ the copy preserves.
 Either direction matters, and the downgrade is the dangerous one. Opening a newer
 file with an older build is the case where a key it has never heard of can be
 dropped, or a type it does not know can be rejected outright. An upgrade is
-safer, since migrations run forward and are tested — but a migration is still a
-rewrite of the researcher's layout, and a copy costs nothing next to losing it.
+safer, but any future change to the layout format rewrites the researcher's
+layout on its way forward, and a copy costs nothing next to losing it.
 
 The `.py` file is copied and never otherwise touched here. iterlab appends
 handler stubs to it and renames handlers in it, and if either of those ever went
@@ -38,7 +38,7 @@ SUFFIX = ".bak"
 
 
 def backup_path(path, version: str) -> Path:
-    """`demo.yaml` + `1.2.0` -> `demo.yaml.v1.2.0.bak`."""
+    """`demo_layout.py` + `2.0.0` -> `demo_layout.py.v2.0.0.bak`."""
     path = Path(path)
     return path.with_name(f"{path.name}.v{version or UNKNOWN}{SUFFIX}")
 

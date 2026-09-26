@@ -120,8 +120,8 @@ def default_text(element_type) -> str:
 #:
 #: Fractions scale with the window, so no single pair is ideal at every size;
 #: these are chosen so a maximised window does not produce an absurdly large
-#: control. On 1920x1080 a button lands at 173x32 px and a plot at 864x432; on
-#: the 800x450 default, 72x14 and 360x180.
+#: control. On a 1920x1080 window a button lands at 173x32 px and a plot at
+#: 864x432; on an 800x450 one, 72x14 and 360x180.
 #:
 #: Everything that is a single line of text shares one height, so a row of them
 #: lines up without anyone resizing anything. Widths still differ, because a
