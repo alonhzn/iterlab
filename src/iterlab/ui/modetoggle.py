@@ -28,7 +28,7 @@ RERUN_TOOLTIP = (
     "Everything already on ev is kept, so your data is not reloaded."
 )
 SCREENSHOT_TOOLTIP = (
-    "Saves a PNG of the interface next to your .py and .yaml files.\n"
+    "Saves a PNG of the interface next to your two project files.\n"
     "Captures what you built, without this top bar."
 )
 RESET_TOOLTIP = (

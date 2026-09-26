@@ -186,3 +186,36 @@ def test_the_bad_layout_file_is_reported_not_swallowed(gui):
     _restart_button(gui).invoke()
     gui.root.update()
     assert gui.built.banner.visible, "a silently ignored layout file is the worst outcome"
+
+
+def test_it_picks_up_an_edited_helper_module(gui, monkeypatch):
+    """The guide promised this, and the button did not do it.
+
+    An edited helper stayed cached across Hard reset: the researcher's own
+    module was forgotten, but `import helper` found the old one still in
+    `sys.modules`. Pressed through the real button, twice.
+    """
+    import sys
+    import time
+    import uuid
+
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    helper = f"helper_{uuid.uuid4().hex[:8]}"
+    helper_path = gui.interface.dir / f"{helper}.py"
+    try:
+        helper_path.write_text("def answer():\n    return 'v1'\n", encoding="utf-8")
+        gui.interface.code_path.write_text(
+            f"import {helper}\n\n\ndef on_startup(ev):\n    ev.answer = {helper}.answer()\n",
+            encoding="utf-8",
+        )
+        _restart_button(gui).invoke()
+        gui.root.update()
+        assert gui.built.ev.answer == "v1"
+
+        time.sleep(0.01)
+        helper_path.write_text("def answer():\n    return 'v2'\n", encoding="utf-8")
+        _restart_button(gui).invoke()
+        gui.root.update()
+        assert gui.built.ev.answer == "v2", "the helper edit did not survive into the restart"
+    finally:
+        sys.modules.pop(helper, None)

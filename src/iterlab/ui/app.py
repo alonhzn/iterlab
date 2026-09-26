@@ -378,9 +378,10 @@ class App:
         """Restart cold: everything from disk, as if freshly launched.
 
         Stronger than `restart_session`, which keeps the layout that is already
-        in memory. This re-reads the layout file, forgets the researcher's
-        module, and begins a new session — so it also picks up a layout file
-        edited by hand, and leaves nothing at all carried over.
+        in memory. This re-reads the layout file, forgets every module loaded
+        from the project's folder - the researcher's own and any helper it
+        imports - and begins a new session. So it picks up a layout file edited
+        by hand and an edited helper module, and leaves nothing carried over.
 
         It stays in the mode it was pressed in. Restarting is not a request to
         be moved to a different screen, and a researcher who presses this while
@@ -396,6 +397,7 @@ class App:
             return
         self.teardown()
         loader_mod.forget(self.interface.code_path)
+        loader_mod.forget_project_modules(self.interface.dir)
         self.session.restart()
 
         # A layout file edited by hand can be invalid, and a restart that died

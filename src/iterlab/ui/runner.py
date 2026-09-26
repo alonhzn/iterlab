@@ -163,7 +163,8 @@ class Runner:
         nothing a researcher can feel, where reloading the module would re-run
         its top-level code on a timer, uninvited.
 
-        The stamp gate means an untouched file is a single `stat` per check.
+        The stamp gate means an untouched file costs a `stat` and one small
+        read per check, and is never parsed.
         """
         if not self.session.startup_done:
             return False
