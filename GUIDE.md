@@ -142,15 +142,19 @@ error, and nothing is reported.
 
 ### Interactions
 
-Available on **every** element type. Write only the ones you want:
+Write only the ones you want:
 
-| Handler | Fires when |
-|---|---|
-| `on_clicked_<tag>(ev, event)` | A mouse button is pressed on it |
-| `on_hover_<tag>(ev, event)` | The pointer enters it |
-| `on_motion_<tag>(ev, event)` | The pointer moves over it |
-| `on_key_<tag>(ev, event)` | A key is pressed while it has focus |
-| `on_changed_<tag>(ev, event)` | A box's value is committed — Enter, or leaving it after an edit |
+| Handler | Fires when | On |
+|---|---|---|
+| `on_clicked_<tag>(ev, event)` | A mouse button is pressed on it | Every element |
+| `on_hover_<tag>(ev, event)` | The pointer enters it | Every element |
+| `on_motion_<tag>(ev, event)` | The pointer moves over it | Every element |
+| `on_key_<tag>(ev, event)` | A key is pressed while it has focus | Axes, text box, number box |
+| `on_changed_<tag>(ev, event)` | A box's value is committed — Enter, or leaving it after an edit | Text box, number box |
+
+`on_key_` exists only on what a click gives the keyboard to. Clicking a button, a selector or a
+label leaves the keyboard where it was, so a key pressed after clicking one goes to whatever had it
+before.
 
 Creating an element generates just one of these: **click** for buttons, axes and the two selectors,
 **changed** for text and number boxes. A label gets none, because it is written to rather than
@@ -168,9 +172,8 @@ Open in VS Code:            >
 ------------------------------
 on_clicked_run_fit    line 42
 ------------------------------
-on_hover_run_fit       create
+on_hover_run_fit      line 57
 on_motion_run_fit      create
-on_key_run_fit        line 57
 ```
 
 The heading names the editor it opens in. iterlab recognises **VS Code** and **PyCharm** when you

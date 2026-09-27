@@ -18,7 +18,7 @@ fixes were first gathered under.
   in your editor at its line; one you have not is added to the end of your file
   and then opened, so the menu is also where you find out what else an element
   can do. Only the interactions an element can fire are offered: `changed`
-  only for the two boxes.
+  only for the two boxes, `key` only for those and a plot.
 
   The heading names the editor. iterlab recognises VS Code and PyCharm when you
   launched it from one, by what they set in the environment or by finding them
@@ -29,6 +29,17 @@ fixes were first gathered under.
 
   No IDE extension is involved. Each of these editors opens a file at a line
   from its own command line, and sends that to the window you have open.
+
+### Changed
+
+- **`on_key_` is gone from buttons, selectors and labels.** It could not fire
+  from a click: none of them takes the keyboard when clicked, and a label
+  cannot take it at all, so a key pressed after clicking one went to whatever
+  had focus before - a number box, in the case that found this. It was
+  documented as working on every element, and only ever did after a Tab, which
+  nobody does in an interface like this. They no longer listen for keys, so a
+  hand-written one cannot half-work. `on_key_` stays on plots and the two boxes,
+  which do take the keyboard.
 
 ### Fixed
 
@@ -118,6 +129,15 @@ fixes were first gathered under.
     selector colours that once shipped looking identical.
   - **A real downgrade** runs in CI. A project made by this version is opened
     by the previous release, installed from PyPI, and both backups are checked.
+
+- **The display suite could crash Windows Tk partway through.** Every interface
+  opened set the window icon again, and on Windows each time loads the `.ico`
+  afresh and never frees the last one: 21 GDI objects, against a limit of
+  10,000 per process. A launch does it once, so no researcher met it, but the
+  suite opens hundreds of interfaces on one shared window, and reached about
+  9,900 by the end. The next few tests added crashed it with an access
+  violation. The icon is now set once per window, and a full run peaks at a
+  few hundred.
 
 - **Seventeen tests removed**: thirteen that repeated another test's check the
   same way, three that could not fail, and one diagnostic left over from a

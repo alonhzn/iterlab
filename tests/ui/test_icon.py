@@ -88,12 +88,32 @@ def test_windows_uses_the_ico_so_each_size_gets_its_own_frame(make_app):
 
 
 def test_the_app_actually_applies_it(make_app):
-    """Wiring, not mechanism: a window built the normal way carries the icon."""
+    """Wiring, not mechanism: a window built the normal way carries the icon.
+
+    `test_the_title_bar_shows_the_mark` proves it on screen; this proves the
+    App asks for it, from any platform.
+    """
+    import tkinter
+
+    root = tkinter.Toplevel()
+    try:
+        calls = _spy(root)
+        from iterlab.app import open_interface
+
+        app = open_interface("fresh", _show=False, _root=root)
+        assert calls, "opening an interface never reached the icon at all"
+        app.close()
+    finally:
+        root.destroy()
+
+
+def test_a_window_is_given_the_icon_once(make_app):
+    """Each time costs Windows GDI objects that are never given back."""
     app = make_app()
     calls = _spy(app.root)
-    # Rebuilding an App over the same root runs the same path a launch does.
-    icon.apply(app.root)
-    assert calls, "opening an interface never reached the icon at all"
+    for _ in range(3):
+        assert icon.apply_once(app.root) is True
+    assert calls == [], "the icon was set again on a window that had it"
 
 
 def test_a_missing_icon_file_never_takes_the_window_down(make_app, monkeypatch):

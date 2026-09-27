@@ -129,7 +129,6 @@ def test_the_main_handler_comes_first_then_the_optional_ones(designer):
         "---",
         ("on_hover_go", "create"),
         ("on_motion_go", "create"),
-        ("on_key_go", "create"),
     ]
 
 
@@ -199,10 +198,10 @@ def test_a_written_handler_opens_at_its_line(designer, detected, opened):
 def test_an_unwritten_one_is_written_then_opened_there(designer, detected, opened):
     detected["id"] = "pycharm"
     menu = handler_menu.build(designer, "go")
-    menu.invoke(_index(menu, "on_key_go"))
+    menu.invoke(_index(menu, "on_hover_go"))
 
     source = designer.interface.code_path.read_text(encoding="utf-8")
-    line = source.splitlines().index("def on_key_go(ev, event):") + 1
+    line = source.splitlines().index("def on_hover_go(ev, event):") + 1
     assert opened == [("pycharm", "demo.py", line)]
 
 
@@ -246,3 +245,62 @@ def test_a_file_that_does_not_parse_offers_its_error_line(designer, detected, op
 
     menu.invoke(2)
     assert opened == [("vscode", "demo.py", 4)]
+
+
+# -- key is offered only where a click gives it the keyboard ---------------------
+#
+# Measured, not assumed: clicking a button, a selector or a label leaves the
+# focus where it was, so a key pressed next goes to whatever had it - a number
+# box, in the case that prompted this. `on_key_` for those would never run, so
+# they do not offer it and do not listen for it.
+
+
+def test_what_offers_key_is_what_a_click_gives_the_keyboard(mapped, make_app, monkeypatch):
+    from iterlab.ui import dialogs
+
+    monkeypatch.setattr(dialogs, "ask_open_file", lambda **kwargs: "")
+    monkeypatch.setattr(dialogs, "ask_directory", lambda **kwargs: "")
+    app = make_app()
+    kinds = ["button", "label", "text_box", "number_box", "file_select", "folder_select", "axes"]
+    for i, kind in enumerate(kinds):
+        app.built.create_element(kind, Rect(0.02 + 0.13 * i, 0.3, 0.12, 0.3), tag=f"e{i}")
+    app.toggle()
+    app.root.geometry("1000x400")
+    app.root.focus_force()
+    app.root.update()
+
+    for i, kind in enumerate(kinds):
+        handle = app.built.handles[f"e{i}"]
+        target = handle.canvas.get_tk_widget() if kind == "axes" else handle.widget
+        if kind in ("text_box", "number_box"):
+            target = next(w for w in [target, *target.winfo_children()] if w.winfo_class() == "Entry")
+        app.root.focus_set()
+        app.root.update()
+        target.event_generate("<ButtonPress-1>", x=5, y=5)
+        target.event_generate("<ButtonRelease-1>", x=5, y=5)
+        app.root.update()
+
+        took_it = app.root.focus_get() is target
+        offered = "key" in app.interface.layout.elements[f"e{i}"].interactions
+        assert took_it == offered, f"{kind}: takes the keyboard {took_it}, offers key {offered}"
+
+
+@pytest.mark.parametrize("kind", ["button", "label", "file_select", "folder_select"])
+def test_they_do_not_listen_for_keys_either(mapped, make_app, kind):
+    """Not offered and not fired: a hand-written one must not half-work after a Tab."""
+    app = make_app()
+    app.built.create_element(kind, Rect(0.1, 0.1, 0.3, 0.2), tag="thing")
+    app.interface.code_path.write_text(
+        "def on_startup(ev):\n    ev.keys = 0\n\n"
+        "def on_key_thing(ev, event):\n    ev.keys += 1\n",
+        encoding="utf-8",
+    )
+    app.toggle()
+    app.root.update()
+    widget = app.built.handles["thing"].widget
+    widget.focus_force()  # what Tab would do
+    app.root.update()
+    widget.event_generate("<KeyPress-a>")
+    widget.event_generate("<KeyRelease-a>")
+    app.root.update()
+    assert app.built.ev.keys == 0

@@ -80,7 +80,7 @@ class App:
 
         from . import icon
 
-        icon.apply(self.root)
+        icon.apply_once(self.root)
 
         # Chrome lives outside the content frame so it survives every rebuild.
         self._chrome = self.tk.Frame(self.root, bg=theme.BG)

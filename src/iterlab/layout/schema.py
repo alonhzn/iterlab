@@ -41,22 +41,21 @@ SELECT_TYPES = ("file_select", "folder_select")
 #: folder chooser by file type would mean nothing.
 EXTENSION_TYPES = ("file_select",)
 
-#: Interactions available on every element type. Universal, not per-type
-#: (FR-017a); what varies per type is which single stub is generated.
+#: Every interaction there is. `clicked`, `hover` and `motion` fire on every
+#: element type (FR-017a); `changed` and `key` only where they can - see
+#: COMMITS_VALUES and KEYBOARD_TYPES - and `Element.interactions` says which.
 #:
-#: `changed` is universal in the same sense the rest are: any element may have a
-#: handler written for it, and one that never changes simply never fires — the
-#: same as an element nobody wrote a handler for. It exists because a box needs
-#: an event meaning "the researcher finished entering a value", which is not the
-#: same question as "a key went down" and cannot be built out of `key` without
-#: every researcher reimplementing the same debounce.
+#: `changed` exists because a box needs an event meaning "the researcher
+#: finished entering a value", which is not the same question as "a key went
+#: down" and cannot be built out of `key` without every researcher
+#: reimplementing the same debounce.
 INTERACTIONS = ("clicked", "hover", "motion", "key", "changed")
 
 #: The one stub generated when an element is created (FR-017d).
 #:
 #: A label is `None`: it is written to rather than interacted with, so a click
 #: handler on every one would leave a researcher with a pile of dead functions.
-#: Every interaction stays available on any type if they write the handler
+#: Every interaction a label can fire stays available if they write the handler
 #: themselves (FR-017a) — only the automatic stub is withheld.
 DEFAULT_INTERACTION = {
     "axes": "clicked",
@@ -76,10 +75,15 @@ DEFAULT_INTERACTION = {
 }
 
 #: The types that fire `changed`. It means a value was committed, so only
-#: something that holds a typed value has it; every other interaction fires on
-#: every type (FR-017a). Offering `on_changed_` for a button would be offering a
+#: something that holds a typed value has it. Offering `on_changed_` for a button would be offering a
 #: function that can never run.
 COMMITS_VALUES = frozenset({"text_box", "number_box"})
+
+#: The types that fire `key`: the ones a click gives the keyboard to. A button,
+#: a selector and a label never take focus when clicked - a label cannot take
+#: it at all - so a key pressed "on" one goes to whatever had focus before, and
+#: `on_key_` for one of them would be a function that never runs.
+KEYBOARD_TYPES = frozenset({"axes", "text_box", "number_box"})
 
 #: Prefix used when auto-suggesting a tag in the designer. Short, and the
 #: shorthand a person would use themselves: `ax` for an axes, `cmd` for a command
@@ -425,7 +429,11 @@ class Element:
     @property
     def interactions(self) -> tuple:
         """What this element can fire, its default first, then the rest in order."""
-        fired = [i for i in INTERACTIONS if i != "changed" or self.type in COMMITS_VALUES]
+        fired = [
+            i for i in INTERACTIONS
+            if (i != "changed" or self.type in COMMITS_VALUES)
+            and (i != "key" or self.type in KEYBOARD_TYPES)
+        ]
         first = self.default_interaction
         if first is None:
             return tuple(fired)

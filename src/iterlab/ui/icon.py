@@ -73,3 +73,23 @@ def apply(root) -> bool:
     if sys.platform == "win32":
         return _apply_bitmap(root) or _apply_photo(root)
     return _apply_photo(root) or _apply_bitmap(root)
+
+
+def apply_once(root) -> bool:
+    """`apply`, unless this window already has the icon.
+
+    Setting it again is not free: on Windows every `iconbitmap` loads the
+    `.ico` afresh, and the frames of the last one are never released - 21 GDI
+    objects a time, against a limit of 10,000 per process. A launch sets it
+    once. The test suite opens hundreds of interfaces on one shared window, and
+    ran out partway through; anything else that builds an App twice over one
+    root would too.
+    """
+    if getattr(root, "_iterlab_icon_applied", False):
+        return True
+    applied = apply(root)
+    try:
+        root._iterlab_icon_applied = applied
+    except Exception:  # pragma: no cover - a root that refuses attributes
+        pass
+    return applied

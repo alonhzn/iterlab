@@ -266,7 +266,6 @@ def build_button(parent, element, dispatcher):
 
     widget.bind("<Enter>", lambda _e: fire("hover"))
     widget.bind("<Motion>", lambda _e: fire("motion"))
-    widget.bind("<Key>", lambda e: fire("key", key=e.keysym))
 
     handle = ButtonHandle(element, widget)
     handle._apply()
@@ -606,7 +605,6 @@ def build_label(parent, element, dispatcher):
     widget.bind("<ButtonRelease-3>", lambda _e: fire("clicked", button="right"))
     widget.bind("<Enter>", lambda _e: fire("hover"))
     widget.bind("<Motion>", lambda _e: fire("motion"))
-    widget.bind("<Key>", lambda e: fire("key", key=e.keysym))
 
     handle = LabelHandle(element, widget)
     handle._apply()
@@ -899,7 +897,6 @@ def _build_select(parent, element, dispatcher, *, handle_class, interface_path):
 
     widget.bind("<Enter>", lambda _e: fire("hover"))
     widget.bind("<Motion>", lambda _e: fire("motion"))
-    widget.bind("<Key>", lambda e: fire("key", key=e.keysym))
 
     handle = handle_class(element, widget, interface_path)
     handle_box["handle"] = handle

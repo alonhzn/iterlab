@@ -30,13 +30,20 @@ def test_only_a_box_offers_changed():
         assert offered == (kind in ("text_box", "number_box")), kind
 
 
-def test_every_type_offers_the_rest():
+def test_only_what_takes_the_keyboard_offers_key():
+    """A click never gives a button, selector or label the keyboard."""
     for kind in ELEMENT_TYPES:
-        assert {"clicked", "hover", "motion", "key"} <= set(_element(kind).interactions)
+        offered = "key" in _element(kind).interactions
+        assert offered == (kind in ("axes", "text_box", "number_box")), kind
+
+
+def test_every_type_offers_click_hover_and_motion():
+    for kind in ELEMENT_TYPES:
+        assert {"clicked", "hover", "motion"} <= set(_element(kind).interactions)
 
 
 def test_a_label_has_no_main_handler_and_lists_the_rest_in_order():
-    assert _element("label").interactions == ("clicked", "hover", "motion", "key")
+    assert _element("label").interactions == ("clicked", "hover", "motion")
 
 
 def test_nothing_is_listed_twice():
@@ -75,10 +82,10 @@ def test_an_optional_handler_is_appended(code):
 
 def test_it_is_not_appended_twice(code):
     element = _element("button", "go")
-    stub = templates.stub_for(element, "key")
-    inject.append_stub(code, element, stub, "key")
-    assert not inject.append_stub(code, element, stub, "key")
-    assert code.read_text(encoding="utf-8").count("def on_key_go") == 1
+    stub = templates.stub_for(element, "hover")
+    inject.append_stub(code, element, stub, "hover")
+    assert not inject.append_stub(code, element, stub, "hover")
+    assert code.read_text(encoding="utf-8").count("def on_hover_go") == 1
 
 
 def test_it_lands_above_the_launcher(code):

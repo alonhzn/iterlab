@@ -17,11 +17,13 @@ on_<interaction>_<tag>
 | `clicked` | `on_clicked_<tag>` | A mouse button is pressed on the element |
 | `hover` | `on_hover_<tag>` | The pointer enters the element |
 | `motion` | `on_motion_<tag>` | The pointer moves within the element |
-| `key` | `on_key_<tag>` | A key is pressed while the element has focus |
-| `changed` | `on_changed_<tag>` | A box's value is committed — Enter, or leaving it after an edit. Never per keystroke |
+| `key` | `on_key_<tag>` | A key is pressed while the element has focus. `axes`, `text_box` and `number_box` only |
+| `changed` | `on_changed_<tag>` | A box's value is committed — Enter, or leaving it after an edit. Never per keystroke. `text_box` and `number_box` only |
 
-**Universal**: every interaction is available on every element type (FR-017a). A hover handler on a
-button is as legitimate as one on an axes.
+**Universal where it can fire**: `clicked`, `hover` and `motion` are available on every element type
+(FR-017a). A hover handler on a button is as legitimate as one on an axes. `changed` needs a value
+to commit, and `key` needs an element a click gives the keyboard to; a button, a selector or a label
+never takes focus when clicked, so iterlab neither offers nor listens for `key` on them.
 
 **Optional**: a handler exists only if the researcher wrote it. A missing handler is a silent no-op and
 is never an error (FR-017b, FR-029).
