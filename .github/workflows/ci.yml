@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # The newest release before this one. Move it forward at each release.
-      OLDER: "2.0.0"
+      OLDER: "2.0.1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

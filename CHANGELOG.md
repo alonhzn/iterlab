@@ -6,10 +6,7 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [2.1.0] — unreleased
-
-A new way into your code, and so a minor release rather than the 2.0.1 these
-fixes were first gathered under.
+## [2.1.0] — 2026-09-26
 
 ### Added
 
@@ -159,6 +156,8 @@ fixes were first gathered under.
   1.4.0".** Every iterlab since then stamps what it writes, so an unstamped
   file was written by hand. The message now says the file does not record which
   iterlab wrote it. It is still backed up and announced.
+
+## [2.0.1] — 2026-09-14
 
 ### Changed
 

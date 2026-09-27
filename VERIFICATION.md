@@ -165,6 +165,7 @@ One row per release. An empty table means nothing has been released.
 | 1.5.0 | 2026-09-12 | Windows 11 | Pass — reported by the maintainer | 0 |
 | 1.6.0 | 2026-09-13 | Windows 11 | Pass — reported by the maintainer | 0 |
 | 2.0.0 | 2026-09-14 | Windows 11 | Pass — reported by the maintainer | 0 |
+| 2.1.0 | 2026-09-26 | Windows 11 | Pass — reported by the maintainer | 0 in the pass; 3 found by hand before it (see below) |
 
 ### 2026-09-07 — development walkthrough
 
@@ -219,3 +220,25 @@ Nothing recorded as found.
 
 1.7.0 was the last version published. 1.7.1 was prepared and gated but
 overtaken before upload; its changes ship here.
+
+### 2026-09-26 — 2.1.0
+
+The first pass against the shortened list: 59 items became 37, with eleven
+moved into Gate 1 as real launches, real screenshots and a real downgrade, and
+one new item (60) for the right-click menu that opens a handler in your
+editor. The maintainer had already seen that menu reach the right line in VS
+Code before the pass.
+
+Worked through on Windows 11 by the maintainer, who reported it passing.
+Nothing recorded as found in the pass itself.
+
+Found by hand during this release's development, and each fixed with a Gate 1
+test before the pass:
+
+- A plot's toolbar left in zoom mode kept answering drags after a trip to the
+  editor, raising `invalid command name ...canvas` on each one. The test that
+  first covered zoom surviving the trip never pressed the zoom tool.
+- `on_key_` never fired on a button: none of button, selector or label takes
+  the keyboard when clicked. It is now offered only where it can fire.
+- The first switch to the interface paused while matplotlib imported. It now
+  imports while the window opens.
