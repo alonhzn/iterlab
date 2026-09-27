@@ -91,7 +91,16 @@ def open_interface(name: str, _show=True, _root=None):
     interface.load_layout()
     guard_version(interface)
 
-    from .ui.app import App
+    from .ui.app import App, require_tkinter
+
+    # Matplotlib, now, before the window exists. The editor never draws a plot,
+    # so left to itself the import - about a third of a second, and seventy-odd
+    # modules - lands on the first switch to the interface, where it reads as
+    # iterlab being slow to run what was drawn. Here it is part of opening,
+    # which is already a wait. After the tkinter check, so a missing tkinter is
+    # still reported as that rather than as an ImportError from matplotlib.
+    require_tkinter()
+    from .ui import elements  # noqa: F401
 
     app = App(interface, start_mode=choose_start_mode(interface.layout), root=_root)
     if created:

@@ -32,6 +32,13 @@ fixes were first gathered under.
 
 ### Changed
 
+- **The first switch to your interface no longer pauses.** The editor never
+  draws a plot, so matplotlib - about a third of a second to import, and
+  seventy-odd modules - used to load the first time you pressed the toggle,
+  and read as iterlab being slow to run what you drew. It now loads while the
+  window is opening, before anything is on screen. Opening takes that much
+  longer; the first switch takes as long as every later one.
+
 - **`on_key_` is gone from buttons, selectors and labels.** It could not fire
   from a click: none of them takes the keyboard when clicked, and a label
   cannot take it at all, so a key pressed after clicking one went to whatever

@@ -322,3 +322,51 @@ def test_a_moved_project_starts_over_quietly(tmp_path, state_home, probe, chosen
 
     assert record["path"] == ""
     assert not _same_place(record["opens_in"], chosen.parent)
+
+
+# -- matplotlib is paid for at opening, not at the first switch ----------------
+
+FIRST_SWITCH = r'''
+import json
+import sys
+import tkinter
+
+seen = {}
+original = tkinter.Tk.__init__
+
+
+def recording(self, *args, **kwargs):
+    seen["plots_ready_before_the_window"] = "matplotlib.backends.backend_tkagg" in sys.modules
+    original(self, *args, **kwargs)
+
+
+tkinter.Tk.__init__ = recording
+
+from iterlab.app import open_interface
+
+app = open_interface("demo", _show=False)  # a new interface: opens in the editor
+seen["mode"] = app.mode
+before = set(sys.modules)
+app.built.create_element(
+    "axes", __import__("iterlab.layout.schema", fromlist=["Rect"]).Rect(0.1, 0.1, 0.8, 0.8)
+)
+app.toggle()
+app.root.update()
+seen["imported_by_first_switch"] = sorted(
+    m for m in set(sys.modules) - before if m.split(".")[0] == "matplotlib"
+)
+app.root.destroy()
+json.dump(seen, open(sys.argv[1], "w"))
+'''
+
+
+def test_matplotlib_is_imported_before_the_window_not_on_first_run(tmp_path, state_home, probe):
+    """The first "Run it" used to carry the matplotlib import, a third of a second."""
+    script = tmp_path / "first_switch.py"
+    script.write_text(FIRST_SWITCH, encoding="utf-8")
+    _launch([str(script), str(probe)], tmp_path, state_home)
+    seen = json.loads(probe.read_text(encoding="utf-8"))
+
+    assert seen["mode"] == "editor"
+    assert seen["plots_ready_before_the_window"], "matplotlib was not imported before Tk"
+    assert seen["imported_by_first_switch"] == [], seen["imported_by_first_switch"]
