@@ -165,6 +165,7 @@ One row per release. An empty table means nothing has been released.
 | 1.5.0 | 2026-09-12 | Windows 11 | Pass — reported by the maintainer | 0 |
 | 1.6.0 | 2026-09-13 | Windows 11 | Pass — reported by the maintainer | 0 |
 | 2.0.0 | 2026-09-14 | Windows 11 | Pass — reported by the maintainer | 0 |
+| 2.0.1 | 2026-09-14 | Windows 11 | Pass — reported by the maintainer, recorded 2026-09-26 | 0 |
 | 2.1.0 | 2026-09-26 | Windows 11 | Pass — reported by the maintainer | 0 in the pass; 3 found by hand before it (see below) |
 
 ### 2026-09-07 — development walkthrough
@@ -220,6 +221,14 @@ Nothing recorded as found.
 
 1.7.0 was the last version published. 1.7.1 was prepared and gated but
 overtaken before upload; its changes ship here.
+
+### 2026-09-14 — 2.0.1
+
+The starter code file gained its boilerplate frame. Worked through by the
+maintainer before upload and reported passing, but the row was not written at
+the time: it was added on 2026-09-26, on the maintainer's report, when the gap
+was noticed while preparing 2.1.0. Recorded late rather than left looking as
+though the pass never happened.
 
 ### 2026-09-26 — 2.1.0
 
