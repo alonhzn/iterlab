@@ -6,7 +6,37 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
-## [2.1.1] — unreleased
+## [2.2.0] — unreleased
+
+A new element type, and so a minor release rather than the 2.1.1 the fixes
+below were first gathered under. Nothing between them was published.
+
+### Added
+
+- **A list element.** Rows of text that your code fills and someone clicks:
+  `ev.lst_0.append("run 12")`, `insert`, `del ev.lst_0[i]`, `ev.lst_0[i] = ...`,
+  `clear()`, and `ev.lst_0.length`. Deleting a row closes the gap, and there
+  are no holes: an index that does not exist raises `IndexError`.
+
+  Clicking a row calls `on_clicked_lst_0` with `event.index` and `event.text`,
+  and highlights it; `ev.lst_0.selected` reads or sets it. Up and Down move the
+  selection. **Multi-select**, ticked in the editor, adds rows with Ctrl+click
+  and removes them with Alt+click (Cmd and Option on a Mac), and makes
+  `.selected` a tuple.
+
+  The list's font, colours, bold and italic are set in the editor, plus
+  **Rows**, the background behind each row. `ev.lst_0.style_line(i, ...)`
+  overrides any of them for one row, and that style belongs to the row: it
+  moves with it when rows above are added or removed, as the selection does.
+
+  A scrollbar appears when the rows do not fit, and the list follows new rows
+  at the bottom unless you have scrolled up to read. Long rows are cut off;
+  **Scroll sideways** in the editor gives a horizontal scrollbar instead.
+
+  Rows survive a trip to the editor, and a hard reset empties them: they are
+  the session's, and never written to the layout.
+
+  The event gains `index` and `text`, both `None` on every other element.
 
 ### Fixed
 

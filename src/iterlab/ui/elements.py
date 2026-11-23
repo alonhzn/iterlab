@@ -930,6 +930,12 @@ BUILDERS = {
 
 
 def build(parent, element, dispatcher, figure=None, interface_path=None):
+    if element.type == "list":
+        # Its own module: a list is a widget of its own rather than a variation
+        # on a captioned control, and it imports from here.
+        from .list_element import build_list
+
+        return build_list(parent, element, dispatcher)
     if element.type == "axes":
         return build_axes(parent, element, dispatcher, figure=figure)
     if element.type in SELECT_TYPES:

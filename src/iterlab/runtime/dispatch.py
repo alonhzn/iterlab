@@ -42,6 +42,11 @@ class Event:
     #: so a handler can tell "not that kind of event" from "chose nothing" -
     #: which the element reports as `.path` being "" rather than through here.
     path: str | None = None
+    #: A list's row: the one clicked, or under the pointer for hover and motion.
+    #: `None` on every other element, and over a list's empty space.
+    index: int | None = None
+    #: That row's text, so a handler need not look it up. `None` with `index`.
+    text: str | None = None
 
 
 class Dispatcher:

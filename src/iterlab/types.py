@@ -28,6 +28,7 @@ from .ui.elements import (
     NumberBoxHandle,
     TextBoxHandle,
 )
+from .ui.list_element import ListHandle
 
 #: An axes *is* a matplotlib `Axes` - not a wrapper around one - so every call
 #: a researcher already knows resolves to matplotlib's own signature, with
@@ -39,6 +40,7 @@ TextBox = TextBoxHandle
 NumberBox = NumberBoxHandle
 FileSelect = FileSelectHandle
 FolderSelect = FolderSelectHandle
+List = ListHandle
 
 #: The base every element type shares: `.tag`, `.visible`, and the style
 #: properties. Used for an element type a generated stub does not recognize,
@@ -50,5 +52,5 @@ Event = Event
 
 __all__ = [
     "Axes", "Button", "Label", "TextBox", "NumberBox",
-    "FileSelect", "FolderSelect", "Element", "Event",
+    "FileSelect", "FolderSelect", "List", "Element", "Event",
 ]

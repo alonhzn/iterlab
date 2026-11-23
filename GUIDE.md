@@ -149,7 +149,7 @@ Write only the ones you want:
 | `on_clicked_<tag>(ev, event)` | A mouse button is pressed on it | Every element |
 | `on_hover_<tag>(ev, event)` | The pointer enters it | Every element |
 | `on_motion_<tag>(ev, event)` | The pointer moves over it | Every element |
-| `on_key_<tag>(ev, event)` | A key is pressed while it has focus | Axes, text box, number box |
+| `on_key_<tag>(ev, event)` | A key is pressed while it has focus | Axes, text box, number box, list |
 | `on_changed_<tag>(ev, event)` | A box's value is committed — Enter, or leaving it after an edit | Text box, number box |
 
 `on_key_` exists only on what a click gives the keyboard to. Clicking a button, a selector or a
@@ -199,6 +199,7 @@ In GUI mode a right-click is yours: it reaches `on_clicked_<tag>` with `event.bu
 | `event.key` | The key, on key events |
 | `event.double` | Whether a click was a double click |
 | `event.path` | On a file or folder selector's click, what was chosen; `None` elsewhere. A cancelled dialog calls no handler |
+| `event.index`, `event.text` | On a list, the row clicked or under the pointer, and its text; `None` elsewhere |
 
 `event.x` and `event.y` are in your plot's own units. Click a spectrum at 512 nm and you get
 `512.0`, not a pixel offset.
@@ -207,9 +208,9 @@ In GUI mode a right-click is yours: it reaches `on_clicked_<tag>` with `event.bu
 
 ## Elements
 
-Seven types so far. Each is drawn in the editor and reached in code as `ev.<tag>`.
+Eight types so far. Each is drawn in the editor and reached in code as `ev.<tag>`.
 
-New elements are tagged by type — `ax_0`, `cmd_0`, `lbl_0`, `edt_0`, `val_0` — and numbered upward.
+New elements are tagged by type — `ax_0`, `cmd_0`, `lbl_0`, `edt_0`, `val_0`, `lst_0` — and numbered upward.
 The two selectors are the exception: the first is just `fileselect` and `folderselect`, with no
 number, because an interface almost always has one of each. A second becomes `fileselect_1`.
 Rename any of them in the editor.
@@ -413,6 +414,72 @@ folder chooser by file type would mean nothing.
 
 Both fire `on_clicked_<tag>` **after** a choice, so `.path` is already set when your code runs.
 Cancelling the dialog does nothing at all: no handler, no change.
+
+### List
+
+Rows of text that your code fills, and someone clicks.
+
+```python
+def on_startup(ev):
+    for name in ("spectrum_a.csv", "spectrum_b.csv", "spectrum_c.csv"):
+        ev.lst_0.append(name)
+
+def on_clicked_lst_0(ev, event):
+    ev.data = np.loadtxt(event.text)      # event.index is the row, 0 at the top
+```
+
+A list is empty until code adds rows. It behaves much like a Python list of strings:
+
+| In code | |
+|---|---|
+| `ev.lst_0.append(text)` | add a row at the bottom |
+| `ev.lst_0.extend(texts)` | add several, faster than one at a time |
+| `ev.lst_0.insert(i, text)` | add a row so it becomes row `i`; the rows from there move down |
+| `del ev.lst_0[i]`, `ev.lst_0.delete(i)` | remove a row; the rows below move up to close the gap |
+| `ev.lst_0[i]` | a row's text; `ev.lst_0[-1]` is the last |
+| `ev.lst_0[i] = text` | replace a row's text, keeping its style |
+| `ev.lst_0.length`, `len(ev.lst_0)` | how many rows |
+| `ev.lst_0.lines` | every row's text, as a tuple |
+| `ev.lst_0.clear()` | remove every row |
+| `ev.lst_0.selected` | the selected row's index, or `None` |
+| `ev.lst_0.style_line(i, ...)` | how one row looks |
+
+There are no holes: `insert` takes any index from `0` to `length`, and asking for a row that does
+not exist raises `IndexError`, which shows in the banner like any other mistake. Anything you add
+is turned into text, so `append(3.5)` works.
+
+**Clicking a row** calls `on_clicked_lst_0` with `event.index` and `event.text`, and highlights
+the row. It stays highlighted until another row is clicked; set `ev.lst_0.selected` to change it
+from code. Clicking the empty space below the last row does nothing. The **Up** and **Down** keys
+move the selection and count as clicking the new row, with `event.key` set to say so. A right-click
+reports its row with `event.button == "right"` and leaves the selection alone.
+
+**Multi-select**, ticked in the editor, lets several rows be selected at once: **Ctrl**+click adds a
+row and **Alt**+click removes one (**Cmd** and **Option** on a Mac). A plain click starts again
+from that row. `ev.lst_0.selected` is then a tuple of indexes, `()` when nothing is selected.
+
+**One row's look** is set by its index, and any of these can be given:
+
+```python
+ev.lst_0.style_line(2, text_color="red", highlight="#fff4d6", bold=True,
+                    italic=False, font="Consolas", font_size=12)
+ev.lst_0.style_line(2, text_color=None)     # back to the list's own colour
+```
+
+A row's style belongs to the row, not to its position. Delete row 0 and the red row moves from
+index 2 to 1, and is still red. Its selection moves with it the same way.
+
+The list's own look is set in the editor like any other element's, with one more colour,
+**Rows**: the background behind every row. **Fill** is the empty area around them. Code can
+change either: `ev.lst_0.highlight = "#eef"`.
+
+**Long lists** get a scrollbar when the rows do not fit. When code adds a row at the bottom while
+you are looking at the bottom, the list follows it, like a log. If you have scrolled up to read,
+it leaves you where you are. **Long rows** are cut off at the edge. Tick **Scroll sideways** in the
+editor to get a horizontal scrollbar instead.
+
+Rows, their styles and the selection survive a trip to the editor. **Hard reset** and closing the
+window empty the list, since what is in it came from your code.
 
 ---
 
@@ -796,5 +863,5 @@ Worth knowing before they surprise you.
 
 ---
 
-**Guide version 2.1.1.** Everything above is verified against that release. If a description here
+**Guide version 2.2.0.** Everything above is verified against that release. If a description here
 does not match what you see, please report it — a wrong guide is worse than a missing one.

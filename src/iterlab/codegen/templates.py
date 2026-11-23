@@ -109,6 +109,23 @@ def on_clicked_{tag}(ev: "Ev", event):
     print(f"{tag}: {{ev.{tag}.path}}")
 '''
 
+_LIST_STUB = '''
+
+def on_clicked_{tag}(ev: "Ev", event):
+    # Runs when you click a row of {tag}.
+    # event.index is the row (0 is the top one) and event.text is its text.
+    #
+    # {tag} is empty until your code fills it:
+    #
+    #     ev.{tag}.append("first row")      # add a row at the bottom
+    #     del ev.{tag}[0]                   # remove one; the rows below move up
+    #     ev.{tag}.length                   # how many rows there are
+    #     ev.{tag}.selected                 # the selected row, or None
+    #
+    # Delete this function if you don't need it — nothing will break.
+    print(f"{tag}: row {{event.index}} is {{event.text!r}}")
+'''
+
 _TEXT_BOX_STUB = '''
 
 def on_changed_{tag}(ev: "Ev", event):
@@ -143,6 +160,7 @@ _STUBS = {
     "number_box": _NUMBER_BOX_STUB,
     "file_select": _FILE_SELECT_STUB,
     "folder_select": _FOLDER_SELECT_STUB,
+    "list": _LIST_STUB,
 }
 
 

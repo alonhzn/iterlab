@@ -35,7 +35,7 @@ from .schema import (
     validate_tag,
 )
 
-_ELEMENT_KEYS = {"type", "position", "label", "style", "extensions"}
+_ELEMENT_KEYS = {"type", "position", "label", "style", "extensions", "multi_select", "scroll_x"}
 _TOP_KEYS = {
     "schema_version", "iterlab_version", "window", "elements", "toolbar_collapsed",
 }
@@ -179,11 +179,20 @@ def load(path) -> Layout:
                 label=body.get("label", "") or "",
                 style=_read_style(body.get("style"), element_type),
                 extensions=body.get("extensions", "") or "",
+                multi_select=_flag(body, "multi_select"),
+                scroll_x=_flag(body, "scroll_x"),
             )
         except Exception as exc:
             raise LayoutInvalid(f"element {tag!r} is invalid: {exc}") from exc
         layout.elements[element.tag] = element
     return layout
+
+
+def _flag(body, key) -> bool:
+    value = body.get(key, False)
+    if not isinstance(value, bool):
+        raise ValueError(f"{key} must be True or False, got {value!r}")
+    return value
 
 
 def _read_style(raw, element_type) -> Style:
@@ -235,6 +244,7 @@ TYPE_NAMES = {
     "number_box": "NumberBox",
     "file_select": "FileSelect",
     "folder_select": "FolderSelect",
+    "list": "List",
 }
 
 #: An element type this build does not know - a file from a newer iterlab -
@@ -331,6 +341,10 @@ def _serialize(layout: Layout) -> str:
         # Only what differs from the defaults, so a plain element stays terse.
         if element.extensions:
             entry["extensions"] = element.extensions
+        if element.multi_select:
+            entry["multi_select"] = True
+        if element.scroll_x:
+            entry["scroll_x"] = True
         style = element.style.non_defaults()
         if style:
             entry["style"] = style

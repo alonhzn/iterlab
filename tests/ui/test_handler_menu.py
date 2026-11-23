@@ -261,9 +261,9 @@ def test_what_offers_key_is_what_a_click_gives_the_keyboard(mapped, make_app, mo
     monkeypatch.setattr(dialogs, "ask_open_file", lambda **kwargs: "")
     monkeypatch.setattr(dialogs, "ask_directory", lambda **kwargs: "")
     app = make_app()
-    kinds = ["button", "label", "text_box", "number_box", "file_select", "folder_select", "axes"]
+    kinds = ["button", "label", "text_box", "number_box", "file_select", "folder_select", "axes", "list"]
     for i, kind in enumerate(kinds):
-        app.built.create_element(kind, Rect(0.02 + 0.13 * i, 0.3, 0.12, 0.3), tag=f"e{i}")
+        app.built.create_element(kind, Rect(0.02 + 0.12 * i, 0.3, 0.11, 0.3), tag=f"e{i}")
     app.toggle()
     app.root.geometry("1000x400")
     app.root.focus_force()
@@ -274,7 +274,9 @@ def test_what_offers_key_is_what_a_click_gives_the_keyboard(mapped, make_app, mo
         target = handle.canvas.get_tk_widget() if kind == "axes" else handle.widget
         if kind in ("text_box", "number_box"):
             target = next(w for w in [target, *target.winfo_children()] if w.winfo_class() == "Entry")
-        app.root.focus_set()
+        if kind == "list":
+            target = handle._text
+        app.root.focus_force()  # focus_set is ignored while another window is in front
         app.root.update()
         target.event_generate("<ButtonPress-1>", x=5, y=5)
         target.event_generate("<ButtonRelease-1>", x=5, y=5)

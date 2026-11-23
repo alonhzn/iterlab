@@ -34,7 +34,7 @@ def test_only_what_takes_the_keyboard_offers_key():
     """A click never gives a button, selector or label the keyboard."""
     for kind in ELEMENT_TYPES:
         offered = "key" in _element(kind).interactions
-        assert offered == (kind in ("axes", "text_box", "number_box")), kind
+        assert offered == (kind in ("axes", "text_box", "number_box", "list")), kind
 
 
 def test_every_type_offers_click_hover_and_motion():

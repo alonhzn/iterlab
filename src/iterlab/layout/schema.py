@@ -19,7 +19,7 @@ SCHEMA_VERSION = 8
 #: recognized schema version is a defect, not something to skip over.
 ELEMENT_TYPES = (
     "axes", "button", "label", "text_box", "number_box",
-    "file_select", "folder_select",
+    "file_select", "folder_select", "list",
 )
 
 #: Types that display text. One field, `label`, holds it for all of them: a
@@ -36,6 +36,11 @@ INPUT_TYPES = ("text_box", "number_box")
 
 #: Types that open an operating-system dialog and remember what was chosen.
 SELECT_TYPES = ("file_select", "folder_select")
+
+#: Types that hold rows of text filled in by code. Their content is never in
+#: the layout - only how the rows look and how they behave - because a list's
+#: rows are what the research produced, not what was drawn.
+LIST_TYPES = ("list",)
 
 #: Types carrying the `extensions` filter. Only the file selector: filtering a
 #: folder chooser by file type would mean nothing.
@@ -72,6 +77,8 @@ DEFAULT_INTERACTION = {
     # finds out the attribute is called `.path`.
     "file_select": "clicked",
     "folder_select": "clicked",
+    # A click on a row, with the row's index and text on the event.
+    "list": "clicked",
 }
 
 #: The types that fire `changed`. It means a value was committed, so only
@@ -83,7 +90,7 @@ COMMITS_VALUES = frozenset({"text_box", "number_box"})
 #: a selector and a label never take focus when clicked - a label cannot take
 #: it at all - so a key pressed "on" one goes to whatever had focus before, and
 #: `on_key_` for one of them would be a function that never runs.
-KEYBOARD_TYPES = frozenset({"axes", "text_box", "number_box"})
+KEYBOARD_TYPES = frozenset({"axes", "text_box", "number_box", "list"})
 
 #: Prefix used when auto-suggesting a tag in the designer. Short, and the
 #: shorthand a person would use themselves: `ax` for an axes, `cmd` for a command
@@ -97,6 +104,7 @@ TAG_PREFIX = {
     "number_box": "val",
     "file_select": "fileselect",
     "folder_select": "folderselect",
+    "list": "lst",
 }
 
 #: Types whose first element takes the bare prefix — `fileselect`, not
@@ -149,6 +157,7 @@ DEFAULT_SIZE = {
     "number_box": (0.07, 0.04),
     "file_select": (0.12, LINE_HEIGHT),
     "folder_select": (0.13, LINE_HEIGHT),
+    "list": (0.20, 0.30),
 }
 
 #: Style properties, and which element types carry them.
@@ -160,6 +169,10 @@ TEXT_STYLE = (
     "background", "text_color", "edge", "edge_width",
     "font", "font_size", "bold", "italic", "align", "enabled",
 )
+
+#: A list's rows also take a background of their own, behind each row's text
+#: rather than the whole element: `background` is the empty area around them.
+LIST_STYLE = ("highlight",)
 
 ALIGNMENTS = ("left", "center", "right")
 
@@ -185,6 +198,9 @@ BASIC_PROPERTIES = {
     # researcher meant to draw.
     "file_select": ("label", "extensions"),
     "folder_select": ("label",),
+    # Both change what the list *is*: one row or several at once, and whether a
+    # long row can be read in full. Decided when drawing, so not in the drawer.
+    "list": ("multi_select", "scroll_x"),
 }
 
 
@@ -341,6 +357,8 @@ class Style:
     align: str = "center"
     enabled: bool = True
     visible: bool = True
+    #: Lists only: the background behind each row.
+    highlight: str | None = None
 
     def __post_init__(self):
         if self.align not in ALIGNMENTS:
@@ -349,7 +367,7 @@ class Style:
             raise ValueError(f"edge_width must be a non-negative whole number")
         if self.font_size is not None and not (1 <= self.font_size <= 200):
             raise ValueError("font_size must be between 1 and 200")
-        for name in ("background", "text_color", "edge"):
+        for name in ("background", "text_color", "edge", "highlight"):
             value = getattr(self, name)
             if value is not None and not _is_colour(value):
                 raise ValueError(f"{name} must be a colour like '#3366ff', got {value!r}")
@@ -381,6 +399,8 @@ def style_fields_for(element_type: str):
     """Which style properties an element of this type actually has."""
     if element_type in TEXT_TYPES:
         return UNIVERSAL_STYLE + TEXT_STYLE
+    if element_type in LIST_TYPES:
+        return UNIVERSAL_STYLE + TEXT_STYLE + LIST_STYLE
     return UNIVERSAL_STYLE
 
 
@@ -397,6 +417,12 @@ class Element:
     #: "txt, csv". Empty means every file. Meaningless on any other type, and
     #: rejected there rather than silently ignored.
     extensions: str = ""
+    #: Lists only. Whether several rows can be selected at once - Ctrl+click to
+    #: add a row, Alt+click to remove one - which makes `.selected` a tuple.
+    multi_select: bool = False
+    #: Lists only. Whether a row too long to fit can be scrolled to sideways,
+    #: rather than cut off at the edge.
+    scroll_x: bool = False
 
     def __post_init__(self):
         if self.type not in ELEMENT_TYPES:
@@ -407,6 +433,8 @@ class Element:
             raise ValueError(f"{self.type} elements do not display text")
         if self.type not in EXTENSION_TYPES and self.extensions:
             raise ValueError(f"{self.type} elements do not filter by extension")
+        if self.type not in LIST_TYPES and (self.multi_select or self.scroll_x):
+            raise ValueError(f"{self.type} elements have no rows to select or scroll")
 
     @property
     def default_interaction(self):
@@ -420,6 +448,10 @@ class Element:
     @property
     def filters_files(self) -> bool:
         return self.type in EXTENSION_TYPES
+
+    @property
+    def has_rows(self) -> bool:
+        return self.type in LIST_TYPES
 
     def handler_name(self, interaction: str) -> str:
         if interaction not in INTERACTIONS:
@@ -532,6 +564,16 @@ class Layout:
         """Set which file types a file selector offers."""
         element = self.elements[tag]
         self.elements[tag] = replace(element, extensions=str(extensions or "").strip())
+
+    def set_list_options(self, tag: str, multi_select=None, scroll_x=None) -> None:
+        """Set how a list behaves. `None` leaves an option as it is."""
+        element = self.elements[tag]
+        changes = {}
+        if multi_select is not None:
+            changes["multi_select"] = bool(multi_select)
+        if scroll_x is not None:
+            changes["scroll_x"] = bool(scroll_x)
+        self.elements[tag] = replace(element, **changes)
 
     def next_tag(self, element_type: str) -> str:
         """The tag offered when an element is created (FR-005a).

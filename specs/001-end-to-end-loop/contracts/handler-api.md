@@ -17,7 +17,7 @@ on_<interaction>_<tag>
 | `clicked` | `on_clicked_<tag>` | A mouse button is pressed on the element |
 | `hover` | `on_hover_<tag>` | The pointer enters the element |
 | `motion` | `on_motion_<tag>` | The pointer moves within the element |
-| `key` | `on_key_<tag>` | A key is pressed while the element has focus. `axes`, `text_box` and `number_box` only |
+| `key` | `on_key_<tag>` | A key is pressed while the element has focus. `axes`, `text_box`, `number_box` and `list` only |
 | `changed` | `on_changed_<tag>` | A box's value is committed — Enter, or leaving it after an edit. Never per keystroke. `text_box` and `number_box` only |
 
 **Universal where it can fire**: `clicked`, `hover` and `motion` are available on every element type
@@ -90,6 +90,7 @@ however many times the code is edited.
 |---|---|
 | `axes` | A matplotlib `Axes`. Use the matplotlib API you already know. Plus `visible`. |
 | `button`, `label` | `text`, and every style property below. |
+| `list` | A sequence of row texts: `append`, `extend`, `insert`, `del [i]`/`delete`, `[i]` read and assign, `clear`, `length`/`len()`, `lines`, `selected`, `style_line(i, ...)`, and every style property plus `highlight`. A row's style and selection belong to the row and move with it as indexes change. |
 
 **Style from code.** A button or label exposes `background`, `text_color`,
 `edge`, `edge_width`, `font`, `font_size`, `bold`, `italic`, `align`, `enabled`
@@ -121,6 +122,8 @@ Normalized across element types, so a handler signature never depends on how an 
 | `key` | str or `None` | Key events |
 | `double` | bool | Click — whether it was a double click |
 | `path` | str or `None` | A file or folder selector's click — what was chosen. A cancelled dialog fires no handler at all, so this is never empty; `None` on every other event |
+| `index` | int or `None` | A list's click, hover, motion or key — the row, `0` at the top. `None` over empty space and on every other element |
+| `text` | str or `None` | That row's text, alongside `index` |
 
 `x` and `y` are in the plot's own data coordinates, not pixels. Clicking a spectrum at 512 nm gives you
 `512.0`, not a screen offset. This is the reason plot events come from matplotlib rather than Tk.
@@ -138,6 +141,7 @@ Stubs for other interactions are never generated; the researcher writes those wh
 | `button` | clicked | `on_clicked_<tag>` |
 | `file_select` | clicked | `on_clicked_<tag>` |
 | `folder_select` | clicked | `on_clicked_<tag>` |
+| `list` | clicked | `on_clicked_<tag>` |
 | `text_box` | changed | `on_changed_<tag>` |
 | `number_box` | changed | `on_changed_<tag>` |
 | `label` | — | nothing: a label is written to, not interacted with |

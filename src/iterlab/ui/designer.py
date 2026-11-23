@@ -319,6 +319,8 @@ class Designer:
                 width=2 if selected else max(style.edge_width, 1),
                 stipple="" if style.visible else "gray50",
             )
+            if element.has_rows:
+                self._draw_placeholder_rows(x0, y0, x1, y1, style)
             self.canvas.create_text(
                 (x0 + x1) / 2, (y0 + y1) / 2,
                 text=element.label or tag if element.displays_text else tag,
@@ -330,6 +332,26 @@ class Designer:
             self._items[rect_id] = tag
             if selected:
                 self._draw_handles(x0, y0, x1, y1)
+
+    def _draw_placeholder_rows(self, x0, y0, x1, y1, style):
+        """Grey bars where rows will be, so a list reads as a list here.
+
+        Its rows only exist once code adds them, so without these it would be
+        an empty box like any other. In the rows' own highlight when one is set.
+        """
+        row = 14
+        pad = 6
+        widths = (0.75, 0.55, 0.65, 0.45)
+        y = y0 + pad
+        for index in range(int((y1 - y0 - pad) // row)):
+            if y + row / 2 > y1 - pad:
+                break
+            fraction = widths[index % len(widths)]
+            self.canvas.create_rectangle(
+                x0 + pad, y + 3, x0 + pad + (x1 - x0 - 2 * pad) * fraction, y + row - 3,
+                fill=style.highlight or theme.BORDER, outline="",
+            )
+            y += row
 
     def _draw_handles(self, x0, y0, x1, y1):
         for hx, hy in self._handle_points(x0, y0, x1, y1).values():
@@ -701,7 +723,8 @@ class Designer:
     # -- property edits --------------------------------------------------
 
     def apply_properties(self, current_tag, tag=None, position=None, label=None,
-                         style=None, extensions=None):
+                         style=None, extensions=None, multi_select=None,
+                         scroll_x=None):
         """Apply typed values. A rename rewrites the code file first (R14)."""
         #: What the last rename changed in the researcher's file, so the panel
         #: can say. Rewriting someone's code silently is not something to do
@@ -732,6 +755,10 @@ class Designer:
             self.layout.restyle(current_tag, **style)
         if extensions is not None and self.layout.elements[current_tag].filters_files:
             self.layout.set_extensions(current_tag, extensions)
+        if self.layout.elements[current_tag].has_rows:
+            self.layout.set_list_options(
+                current_tag, multi_select=multi_select, scroll_x=scroll_x
+            )
 
         self.interface.save_layout()
         self.select(current_tag)

@@ -24,6 +24,7 @@ DISPLAY_NAME = {
     "number_box": "Number box",
     "file_select": "File select",
     "folder_select": "Folder select",
+    "list": "List",
 }
 
 #: Deliberately compact: one line per type, icon and name only. The vocabulary

@@ -47,6 +47,7 @@ ELEMENT_FILL = {
     "axes": "#dbeafe", "button": "#e9e3fb", "label": SURFACE,
     "text_box": "#fdf0e3", "number_box": "#fce9ee",
     "file_select": "#e6f0ea", "folder_select": "#fdf6de",
+    "list": "#eceff1",
 }
 #: Black for the label, since it has no fill to identify it by - and it is what
 #: separates it from the file selector, which was a near-identical green.
@@ -54,6 +55,7 @@ ELEMENT_EDGE = {
     "axes": "#7ba7f0", "button": "#a48fe0", "label": "#000000",
     "text_box": "#e0a86a", "number_box": "#d98aa3",
     "file_select": "#79b394", "folder_select": "#ddc164",
+    "list": "#78909c",
 }
 
 FONT = ("Segoe UI", 9)
@@ -228,6 +230,17 @@ def _folder_select_icon(canvas, size, colour):
     )
 
 
+def _list_icon(canvas, size, colour):
+    """Three rows, each a dot and a line."""
+    for row in (0.30, 0.50, 0.70):
+        y = size * row
+        canvas.create_oval(
+            size * 0.20, y - size * 0.04, size * 0.28, y + size * 0.04,
+            fill=colour, outline=colour,
+        )
+        canvas.create_line(size * 0.38, y, size * 0.80, y, fill=colour, width=2)
+
+
 ICONS = {
     "axes": _axes_icon,
     "button": _button_icon,
@@ -236,6 +249,7 @@ ICONS = {
     "number_box": _number_box_icon,
     "file_select": _file_select_icon,
     "folder_select": _folder_select_icon,
+    "list": _list_icon,
 }
 
 

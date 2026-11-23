@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 LAYOUT = {
     'schema_version': 8,
-    'iterlab_version': '2.1.1',
+    'iterlab_version': '2.2.0',
     'window': {'width': 960, 'height': 492},
     'toolbar_collapsed': False,
     'elements': {
@@ -86,10 +86,12 @@ import sit under `TYPE_CHECKING` and exist only for editors.
 | `window.height` | int | no | half the screen less the top bar | > 0 |
 | `toolbar_collapsed` | bool | no | `False` | Whether the editor's toolbar is folded |
 | `elements` | map | **yes** | `{}` | Keys are element tags |
-| `elements.<tag>.type` | str | **yes** | — | `axes`, `button`, `label`, `text_box`, `number_box`, `file_select`, `folder_select` |
+| `elements.<tag>.type` | str | **yes** | — | `axes`, `button`, `label`, `text_box`, `number_box`, `file_select`, `folder_select`, `list` |
 | `elements.<tag>.position` | list[float] × 4 | **yes** | — | `[left, bottom, width, height]`, each in `[0,1]`; `left+width ≤ 1`; `bottom+height ≤ 1` |
-| `elements.<tag>.label` | str | no | `""` | Text-bearing types only: everything except `axes` |
+| `elements.<tag>.label` | str | no | `""` | Text-bearing types only: everything except `axes` and `list` |
 | `elements.<tag>.extensions` | str | no | `""` | `file_select` only. Comma-separated, e.g. `"csv, txt"`; empty means every file |
+| `elements.<tag>.multi_select` | bool | no | `False` | `list` only. Several rows selectable at once; written only when `True` |
+| `elements.<tag>.scroll_x` | bool | no | `False` | `list` only. Long rows scroll sideways rather than being cut off; written only when `True` |
 | `elements.<tag>.style` | map | no | `{}` | Appearance; only non-defaults are written |
 
 ### `style`
@@ -110,6 +112,10 @@ the rest of how a plot looks.
 | `align` | `left`/`center`/`right` | `center` | every text-bearing type |
 | `enabled` | bool | `True` | every text-bearing type |
 | `visible` | bool | `True` | every type |
+| `highlight` | colour | none | `list` only: the background behind each row |
+
+A `list` takes every property a text-bearing type does, plus `highlight`. It has no `label`, and
+its rows are never in the layout: they are what code puts there at run time.
 
 A colour is `#rgb`, `#rrggbb`, or a Tk colour name. A style key a type does not have is a validation
 error, not something ignored.

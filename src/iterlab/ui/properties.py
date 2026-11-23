@@ -34,9 +34,16 @@ STYLE_LABELS = {
     "align": "Align",
     "enabled": "Enabled",
     "visible": "Visible",
+    "highlight": "Rows",
 }
 
-COLOUR_FIELDS = ("background", "text_color", "edge")
+COLOUR_FIELDS = ("background", "text_color", "edge", "highlight")
+
+#: A list's two behaviours, shown as checkboxes among its basic properties.
+LIST_OPTIONS = {
+    "multi_select": "Multi-select",
+    "scroll_x": "Scroll sideways",
+}
 
 LABELS = {
     "tag": "Tag",
@@ -148,6 +155,8 @@ class PropertiesPanel:
                 elif prop == "extensions":
                     self._row("extensions", element.extensions)
                     self._hint("Comma separated, e.g. txt, csv. Blank shows every file.")
+                elif prop in LIST_OPTIONS:
+                    self._option_row(prop, getattr(element, prop))
 
             # Everything else lives behind the drawer. It is *built* either way,
             # so the values are always there to commit and nothing depends on
@@ -358,6 +367,16 @@ class PropertiesPanel:
             ).pack(side="left", padx=(0, 10))
             self._entries[field] = var
 
+    def _option_row(self, field, value):
+        var = tk.BooleanVar(value=bool(value))
+        tk.Checkbutton(
+            self._target, text=LIST_OPTIONS[field], variable=var,
+            bg=theme.BG, fg=theme.TEXT, font=theme.FONT_SMALL,
+            activebackground=theme.BG, selectcolor=theme.SURFACE,
+            highlightthickness=0, anchor="w", command=self._commit,
+        ).pack(fill="x", pady=1)
+        self._entries[field] = var
+
     def _align_row(self, value):
         row = tk.Frame(self._target, bg=theme.BG)
         row.pack(fill="x", pady=2)
@@ -512,6 +531,9 @@ class PropertiesPanel:
         if element.filters_files:
             if str(raw.get("extensions", element.extensions)).strip() != element.extensions:
                 return False
+        for option in LIST_OPTIONS:
+            if option in raw and bool(raw[option]) != getattr(element, option):
+                return False
         try:
             changes = self._style_changes(element)
         except (TypeError, ValueError):
@@ -593,6 +615,8 @@ class PropertiesPanel:
                 label=raw.get("label"),
                 style=style_changes,
                 extensions=raw.get("extensions"),
+                multi_select=raw.get("multi_select"),
+                scroll_x=raw.get("scroll_x"),
             )
         except (IterlabError, ValueError) as exc:
             self._show_message(str(exc))
