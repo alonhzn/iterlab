@@ -157,7 +157,11 @@ def _drop_bytecode(module) -> None:
     made within a second would come back as the old code. Only a compiled
     cache is removed, which Python writes again on the next import.
     """
-    cached = getattr(module, "__cached__", None)
+    # From the spec, not `module.__cached__`: Python 3.15 removed that
+    # attribute, and reading it there found nothing, so the stale cache was
+    # silently kept. The spec has carried the same path since 3.4.
+    spec = getattr(module, "__spec__", None)
+    cached = getattr(spec, "cached", None) or getattr(module, "__cached__", None)
     if not cached:
         return
     try:

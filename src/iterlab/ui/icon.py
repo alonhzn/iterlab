@@ -44,6 +44,13 @@ def _apply_bitmap(root) -> bool:
         # `default` also gives it to every toplevel opened later, so a dialog
         # never shows the placeholder instead.
         root.iconbitmap(default=str(ICO))
+        # And on this window itself. Tk 9 gives the window the `default` icon
+        # from the wrong frame - the 256 px art squeezed into the title bar, a
+        # thin outline - while setting it on the window directly still picks
+        # the 16 px one. Tk 8.6 shows the right one either way. Both calls are
+        # `iconbitmap`, so this is still one mechanism, not the two that blank
+        # it.
+        root.iconbitmap(str(ICO))
         return True
     except Exception:
         return False

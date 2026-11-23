@@ -6,6 +6,30 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [2.1.1] — unreleased
+
+### Fixed
+
+- **On Python 3.15, Hard reset kept an edited helper module.** Before
+  re-importing your project's modules, iterlab deletes their compiled cache, so
+  a same-size edit saved within a second is not read back as the old code. It
+  found that cache through `module.__cached__`, which Python 3.15 removed, so
+  on 3.15 it found nothing and deleted nothing, without any error. It now reads
+  `module.__spec__.cached`, which has held the same path since Python 3.4.
+
+- **On Python 3.15, the window icon was a thin outline.** 3.15 ships Tk 9,
+  which gives a window its default icon from the wrong frame of the `.ico`:
+  the 256 px artwork squeezed into the title bar. The icon is now also set on
+  the window itself, which picks the 16 px frame on Tk 9 and on Tk 8.6 alike.
+
+### Testing
+
+- **CI runs the headless suite on Python 3.15** as well as 3.10 and 3.12. Both
+  bugs above were caught by existing tests the first time the suite ran on
+  3.15, and the first one would have been caught by CI.
+
+- **The downgrade job now opens a project with 2.1.0**, the newest release.
+
 ## [2.1.0] — 2026-09-26
 
 ### Added
