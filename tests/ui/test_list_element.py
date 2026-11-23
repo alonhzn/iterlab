@@ -315,6 +315,10 @@ def test_the_arrows_move_the_selection(gui):
     lst = _lst(gui)
     lst.extend(["a", "b", "c"])
     _click(gui, 0)
+    # A click focuses the list on a real desktop. A virtual display has no
+    # window manager to give the window the keyboard, so take it explicitly.
+    lst._text.focus_force()
+    gui.root.update()
     lst._text.event_generate("<Down>")
     gui.root.update()
     assert lst.selected == 1
