@@ -181,3 +181,72 @@ def test_the_shipped_layout_records_the_current_version():
 
     layout = store.load(EXAMPLES / "showcase_layout.py")
     assert layout.iterlab_version == iterlab.__version__
+
+
+# -- the list of regions ---------------------------------------------------
+
+BAR, DIMMED = "#2f6feb", "#c4cad2"
+
+
+def _click_row(app, index, sequence="<Button-1>"):
+    text = app.built.handles["lst_regions"]._text
+    app.root.update()
+    x, y, _w, h, _b = text.dlineinfo(f"{index + 1}.0")
+    text.event_generate(sequence, x=x + 5, y=y + h // 2)
+    app.root.update()
+
+
+def _bar_colours(app):
+    from matplotlib.colors import to_hex
+
+    return [to_hex(bar.get_facecolor(), keep_alpha=False) for bar in app.built.ev.ax_bars.patches]
+
+
+def test_startup_lists_every_region_with_its_reading(showcase):
+    ev = showcase.built.ev
+    assert ev.lst_regions.length == 5
+    assert ev.lst_regions[0].startswith("north")
+    assert f"{ev.reading[0]:.2f}" in ev.lst_regions[0]
+
+
+def test_the_best_and_worst_regions_are_marked(showcase):
+    import numpy as np
+
+    lst = showcase.built.ev.lst_regions
+    best, worst = int(np.argmax(showcase.built.ev.reading)), int(np.argmin(showcase.built.ev.reading))
+    assert lst._rows[best].style == {"text_color": "#1a7f37", "bold": True}
+    assert lst._rows[worst].style == {"text_color": "#b42318", "highlight": "#fde8e8"}
+    others = [r.style for i, r in enumerate(lst._rows) if i not in (best, worst)]
+    assert all(style == {} for style in others)
+
+
+def test_clicking_regions_picks_their_bars(showcase):
+    _click_row(showcase, 1)
+    add = "<Command-Button-1>" if showcase.root.tk.call("tk", "windowingsystem") == "aqua" else "<Control-Button-1>"
+    _click_row(showcase, 3, add)
+    assert showcase.built.ev.lst_regions.selected == (1, 3)
+    colours = _bar_colours(showcase)
+    assert [i for i, c in enumerate(colours) if c == BAR] == [1, 3]
+    assert [i for i, c in enumerate(colours) if c == DIMMED] == [0, 2, 4]
+    assert "east, west" in showcase.built.ev.ax_bars.get_title(loc="left")
+
+
+def test_shuffle_keeps_the_picked_regions_and_moves_the_marks(showcase):
+    import numpy as np
+
+    showcase.built.ev.lst_regions.selected = (2,)
+    for _ in range(3):
+        showcase.built.handles["cmd_shuffle"].widget.invoke()
+        showcase.root.update()
+        lst = showcase.built.ev.lst_regions
+        assert lst.selected == (2,)
+        assert lst._rows[int(np.argmax(showcase.built.ev.reading))].style.get("bold")
+        assert sum(bool(r.style) for r in lst._rows) == 2
+
+
+def test_reset_clears_the_picked_regions(showcase):
+    _click_row(showcase, 0)
+    showcase.built.handles["cmd_reset"].widget.invoke()
+    showcase.root.update()
+    assert showcase.built.ev.lst_regions.selected == ()
+    assert set(_bar_colours(showcase)) == {BAR}, "nothing picked: every bar in full colour"

@@ -38,6 +38,11 @@ below were first gathered under. Nothing between them was published.
 
   The event gains `index` and `text`, both `None` on every other element.
 
+- **The showcase in `examples/` features a list**: one row per region, the best
+  and worst marked with `style_line`, and Ctrl+click to pick several regions,
+  whose bars stay coloured while the rest grey out. Shuffle rewrites the rows
+  in place, so what you picked stays picked.
+
 ### Fixed
 
 - **On Python 3.15, Hard reset kept an edited helper module.** Before

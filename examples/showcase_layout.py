@@ -11,7 +11,7 @@ than computed.
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from iterlab.types import Axes, Button, Label, NumberBox, TextBox
+    from iterlab.types import Axes, Button, Label, List, NumberBox, TextBox
 
 LAYOUT = {
     'schema_version': 8,
@@ -33,7 +33,13 @@ LAYOUT = {
         },
         'ax_waves': {'type': 'axes', 'position': [0.03, 0.52, 0.6, 0.39]},
         'ax_scatter': {'type': 'axes', 'position': [0.66, 0.52, 0.31, 0.39]},
-        'ax_bars': {'type': 'axes', 'position': [0.03, 0.15, 0.6, 0.33]},
+        'ax_bars': {'type': 'axes', 'position': [0.03, 0.15, 0.43, 0.33]},
+        'lst_regions': {
+            'type': 'list',
+            'position': [0.48, 0.15, 0.15, 0.33],
+            'multi_select': True,
+            'style': {'font_size': 10, 'align': 'left'},
+        },
         'lbl_freq': {
             'type': 'label',
             'position': [0.66, 0.44, 0.31, 0.04],
@@ -61,7 +67,7 @@ LAYOUT = {
         'lbl_hint': {
             'type': 'label',
             'position': [0.2, 0.05, 0.77, 0.05],
-            'label': 'Edit showcase.py and click Redraw - the data stays loaded',
+            'label': 'Click a region (Ctrl+click for several), or edit showcase.py and click Redraw',
             'style': {'text_color': '#5c6470', 'align': 'left'},
         },
     },
@@ -76,6 +82,7 @@ class Ev:
     ax_waves: "Axes"
     ax_scatter: "Axes"
     ax_bars: "Axes"
+    lst_regions: "List"
     lbl_freq: "Label"
     edt_freq: "TextBox"
     lbl_points: "Label"

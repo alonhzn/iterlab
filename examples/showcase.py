@@ -1,4 +1,4 @@
-"""A showcase interface: three plots, a handful of controls, and the loop.
+"""A showcase interface: three plots, a list, a handful of controls, and the loop.
 
     iterlab examples/showcase
 
@@ -22,6 +22,11 @@ DEFAULT_NOISE = "0.25"
 
 CATEGORIES = ("north", "east", "south", "west", "centre")
 
+#: Bar colours. Picking regions in the list greys out the others, so the
+#: picked bars stay in the same blue the list selects them in.
+BAR = "#2f6feb"
+DIMMED = "#c4cad2"
+
 
 # -- the session ------------------------------------------------------------
 
@@ -35,7 +40,36 @@ def on_startup(ev):
     ev.rng = np.random.default_rng(7)
     ev.t = np.linspace(0, SPAN, 1200)
     ev.reading = ev.rng.normal(1.0, 0.25, size=len(CATEGORIES))
+    fill_regions(ev)
     redraw(ev)
+
+
+# -- the list of regions ----------------------------------------------------
+
+
+def fill_regions(ev):
+    """One row per region, its reading beside it, best and worst marked.
+
+    The rows are written once and then *rewritten* in place: replacing a row's
+    text keeps it selected, so shuffling the data does not lose what you picked.
+    Its style is set afresh, since the best and the worst move with the data.
+    """
+    lst = ev.lst_regions
+    rows = [f"{name}   {value:.2f}" for name, value in zip(CATEGORIES, ev.reading)]
+    if lst.length != len(rows):
+        lst.clear()
+        lst.extend(rows)
+    for index, row in enumerate(rows):
+        lst[index] = row
+        lst.style_line(index, text_color=None, highlight=None, bold=None)
+
+    lst.style_line(int(np.argmax(ev.reading)), text_color="#1a7f37", bold=True)
+    lst.style_line(int(np.argmin(ev.reading)), text_color="#b42318", highlight="#fde8e8")
+
+
+def on_clicked_lst_regions(ev, event):
+    """Click a region to pick its bar; Ctrl+click to pick several."""
+    draw_bars(ev)
 
 
 # -- reading the controls ---------------------------------------------------
@@ -97,18 +131,27 @@ def draw_scatter(ev):
 
 
 def draw_bars(ev):
-    """Response per region, with the noise control as the error bars."""
+    """Response per region, with the noise control as the error bars.
+
+    Picking regions in the list greys out the rest. Multi-select is ticked in
+    the editor, so `.selected` is a tuple of row indexes, `()` for none.
+    """
     ax = ev.ax_bars
     ax.clear()
+    picked = ev.lst_regions.selected
     ax.bar(
         CATEGORIES,
         ev.reading,
         yerr=noise(ev) * ev.reading,
-        color="#3b6fd4",
+        color=[BAR if not picked or i in picked else DIMMED for i in range(len(CATEGORIES))],
         alpha=0.85,
         capsize=4,
     )
-    ax.set_title("Response by region", fontsize=10, loc="left")
+    names = ", ".join(CATEGORIES[i] for i in picked)
+    ax.set_title(
+        f"Response by region - {names}" if names else "Response by region",
+        fontsize=10, loc="left",
+    )
     ax.set_ylabel("gain", fontsize=8)
     ax.grid(alpha=0.25, axis="y")
     ax.tick_params(labelsize=8)
@@ -135,6 +178,7 @@ def on_clicked_cmd_redraw(ev, event):
 def on_clicked_cmd_shuffle(ev, event):
     """New draws from the same generator, so every plot moves but nothing reloads."""
     ev.reading = ev.rng.normal(1.0, 0.25, size=len(CATEGORIES))
+    fill_regions(ev)
     redraw(ev)
 
 
@@ -142,6 +186,7 @@ def on_clicked_cmd_reset(ev, event):
     ev.edt_freq.text = DEFAULT_FREQUENCIES
     ev.val_points.text = DEFAULT_SAMPLES
     ev.val_noise.text = DEFAULT_NOISE
+    ev.lst_regions.selected = ()
     redraw(ev)
 
 
