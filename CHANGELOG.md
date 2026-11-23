@@ -6,6 +6,12 @@ section, where the public surface is larger than the Python API: the layout
 schema, the handler naming convention, the `ev` contract, the generated stub
 shape, and the command are all consumed directly by researcher-written code.
 
+## [2.2.1] — unreleased
+
+### Testing
+
+- **The downgrade job now opens a project with 2.2.0**, the newest release.
+
 ## [2.2.0] — 2026-11-22
 
 A new element type, and so a minor release rather than the 2.1.1 the fixes
