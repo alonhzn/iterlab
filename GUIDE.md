@@ -448,6 +448,36 @@ There are no holes: `insert` takes any index from `0` to `length`, and asking fo
 not exist raises `IndexError`, which shows in the banner like any other mistake. Anything you add
 is turned into text, so `append(3.5)` works.
 
+**A whole Python list at once** goes in with `extend`, below any rows already there. It is faster
+than `append` in a loop, which matters with thousands of rows, and takes any iterable:
+
+```python
+names = ["spectrum_a.csv", "spectrum_b.csv", "spectrum_c.csv"]
+ev.lst_0.extend(names)
+```
+
+To **replace** what the list holds rather than add to it, clear it first. That drops the old rows'
+styles and selection too, since those belong to the rows:
+
+```python
+from pathlib import Path
+
+ev.lst_0.clear()
+ev.lst_0.extend(sorted(Path(folder).glob("*.csv")))   # Path objects become text
+```
+
+`.lines` gives the rows back as a tuple, but only reads: assigning to it is an error.
+
+**Reading the selection.** `ev.lst_0.selected` is the selected row's index, or `None`. Read it from
+anywhere, such as a button that acts on the chosen row:
+
+```python
+def on_clicked_cmd_0(ev, event):
+    row = ev.lst_0.selected
+    if row is not None:
+        ev.data = np.loadtxt(ev.lst_0[row])
+```
+
 **Clicking a row** calls `on_clicked_lst_0` with `event.index` and `event.text`, and highlights
 the row. It stays highlighted until another row is clicked; set `ev.lst_0.selected` to change it
 from code. Clicking the empty space below the last row does nothing. The **Up** and **Down** keys
@@ -456,7 +486,17 @@ reports its row with `event.button == "right"` and leaves the selection alone.
 
 **Multi-select**, ticked in the editor, lets several rows be selected at once: **Ctrl**+click adds a
 row and **Alt**+click removes one (**Cmd** and **Option** on a Mac). A plain click starts again
-from that row. `ev.lst_0.selected` is then a tuple of indexes, `()` when nothing is selected.
+from that row. `ev.lst_0.selected` is then a tuple of indexes in order, `()` when nothing is
+selected:
+
+```python
+for row in ev.lst_0.selected:            # e.g. (1, 3, 4)
+    print(row, ev.lst_0[row])
+```
+
+Setting it works in both modes: `ev.lst_0.selected = 2`, `= (0, 2)` with Multi-select, or `= None`.
+Inside `on_clicked_lst_0`, `event.index` is the row just clicked, which is not always selected:
+after an Alt+click it is the row just removed. Read `.selected` for what is selected now.
 
 **One row's look** is set by its index, and any of these can be given:
 
@@ -465,6 +505,25 @@ ev.lst_0.style_line(2, text_color="red", highlight="#fff4d6", bold=True,
                     italic=False, font="Consolas", font_size=12)
 ev.lst_0.style_line(2, text_color=None)     # back to the list's own colour
 ```
+
+`text_color` is the colour of the row's text and `highlight` the background behind it. For
+example, marking each result as it comes in:
+
+```python
+def on_clicked_run_all(ev, event):
+    ev.lst_0.clear()
+    for name in ev.files:
+        ev.lst_0.append(name)
+        if fit(name).ok:
+            ev.lst_0.style_line(-1, text_color="#1a7f37")                       # green text
+        else:
+            ev.lst_0.style_line(-1, text_color="#b42318", highlight="#fde8e8")  # red on pink
+```
+
+Each call adds to what the row already has, so a later `style_line(i, bold=True)` keeps the
+colours. `None` takes one property back to the list's own. The properties are `text_color`,
+`highlight`, `font`, `font_size`, `bold` and `italic`; anything else, or a colour Tk does not
+know, is refused and the row is left as it was.
 
 A row's style belongs to the row, not to its position. Delete row 0 and the red row moves from
 index 2 to 1, and is still red. Its selection moves with it the same way.
