@@ -168,6 +168,7 @@ One row per release. An empty table means nothing has been released.
 | 2.0.0 | 2026-09-14 | Windows 11 | Pass — reported by the maintainer | 0 |
 | 2.0.1 | 2026-09-14 | Windows 11 | Pass — reported by the maintainer, recorded 2026-09-26 | 0 |
 | 2.1.0 | 2026-09-26 | Windows 11 | Pass — reported by the maintainer | 0 in the pass; 3 found by hand before it (see below) |
+| 2.2.0 | 2026-11-22 | Windows 11, Python 3.15 | Pass — reported by the maintainer | 0 |
 
 ### 2026-09-07 — development walkthrough
 
@@ -252,3 +253,17 @@ test before the pass:
   the keyboard when clicked. It is now offered only where it can fire.
 - The first switch to the interface paused while matplotlib imported. It now
   imports while the window opens.
+
+### 2026-11-22 — 2.2.0
+
+The list element, and the first release run on Python 3.15 and Tk 9. One new
+item (61) for how a list reads and selects; the showcase in `examples/` now
+features one, which is the easiest way to work through it.
+
+Worked through on Windows 11 under Python 3.15 by the maintainer, who reported
+it passing. Nothing recorded as found in the pass itself.
+
+Found before the pass, and fixed with Gate 1 tests: on Python 3.15, Hard reset
+kept an edited helper module, because `module.__cached__` was removed; and the
+title-bar icon was the 256 px art squeezed into the title bar under Tk 9. Both
+were caught by existing tests the first time the suite ran on 3.15.
