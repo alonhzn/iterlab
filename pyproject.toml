@@ -38,7 +38,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "twine>=5.0"]  # twine: tools/preflight.py checks the build with it
 
 [project.scripts]
 iterlab = "iterlab.cli:main"
